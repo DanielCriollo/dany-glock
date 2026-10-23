@@ -34,3 +34,7 @@ Este espacio almacena la documentación viva, decisiones arquitectónicas, estra
 
 9. [09-skills-inventory.md](file:///c:/Users/DUCKER/Documents/dany-glock/local/_ai-workspace/09-skills-inventory.md)  
    *Evaluación de skills del ecosistema Antigravity, recomendaciones de adopción y creación interna.*
+
+10. [DANY-GLOCK-RESEARCH-BRAIN.md](file:///c:/Users/DUCKER/Documents/dany-glock/local/_ai-workspace/DANY-GLOCK-RESEARCH-BRAIN.md)  
+   *Investigación pública preliminar sobre el artista, discografía verificada y fuentes de prensa.*
+
