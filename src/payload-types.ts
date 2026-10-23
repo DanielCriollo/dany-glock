@@ -231,20 +231,36 @@ export interface Release {
   id: number;
   title: string;
   /**
-   * Texto normalizado para la URL (ej: los-glocks-no-lloran).
+   * Texto normalizado para la URL (ej: sig-sauer).
    */
   slug: string;
   type: 'single' | 'ep' | 'album';
+  /**
+   * Distingue lanzamientos donde Dany Glock es el artista principal de colaboraciones como invitado.
+   */
+  artistRole?: ('main' | 'featured' | 'collaborator') | null;
   coverImage: number | Media;
+  coverStatus?: ('confirmed' | 'pending' | 'placeholder') | null;
   releaseDate: string;
   description?: string | null;
   catalogNumber?: string | null;
   featured?: boolean | null;
   streamingLinks?: {
     spotify?: string | null;
+    spotifyEmbedUrl?: string | null;
     appleMusic?: string | null;
     youtube?: string | null;
+    amazonMusic?: string | null;
     tidal?: string | null;
+  };
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
   };
   seo?: {
     metaTitle?: string | null;
@@ -267,12 +283,17 @@ export interface Track {
    * Asocia esta pista a un single, EP o álbum oficial.
    */
   release: number | Release;
+  /**
+   * Distingue pistas donde Dany Glock es artista principal o invitado.
+   */
+  artistRole?: ('main' | 'featured' | 'collaborator') | null;
   trackNumber: number;
   duration: string;
   /**
    * Muestra de 30-60 segundos para el reproductor flotante inercial.
    */
   audioPreview?: (number | null) | Media;
+  appleMusicUrl?: string | null;
   featuredArtists?: string | null;
   credits?: {
     producers?: string | null;
@@ -286,6 +307,15 @@ export interface Track {
    */
   lyrics?: string | null;
   featured?: boolean | null;
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -299,8 +329,13 @@ export interface Video {
   id: number;
   title: string;
   slug: string;
-  type: 'official_music_video' | 'live_session' | 'visualizer' | 'behind_the_scenes';
+  type: 'official_music_video' | 'trailer' | 'live_session' | 'visualizer' | 'behind_the_scenes';
   youtubeUrl: string;
+  /**
+   * Identificador único de 11 caracteres del video en YouTube para embeds y miniaturas.
+   */
+  youtubeId?: string | null;
+  duration?: string | null;
   /**
    * Póster de alta definición para anular la miniatura automática de YouTube.
    */
@@ -311,6 +346,15 @@ export interface Video {
   cinematographer?: string | null;
   description?: string | null;
   featured?: boolean | null;
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -324,6 +368,10 @@ export interface Video {
 export interface Event {
   id: number;
   eventName: string;
+  /**
+   * Identificador para URLs y rutas del evento (ej: pasto-vive-flow-2026).
+   */
+  slug: string;
   date: string;
   city: string;
   country: string;
@@ -332,9 +380,25 @@ export interface Event {
   ticketUrl?: string | null;
   vipPackageUrl?: string | null;
   posterImage?: (number | null) | Media;
+  /**
+   * Fotografías oficiales del show para cobertura editorial.
+   */
+  gallery?: (number | Media)[] | null;
+  relatedVideoUrl?: string | null;
+  instagramPostUrl?: string | null;
   additionalInfo?: string | null;
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Diario del artista, notas de prensa, comunicados editoriales y entrevistas.
@@ -371,6 +435,15 @@ export interface Article {
   seo?: {
     metaTitle?: string | null;
     metaDescription?: string | null;
+  };
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -593,7 +666,9 @@ export interface ReleasesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   type?: T;
+  artistRole?: T;
   coverImage?: T;
+  coverStatus?: T;
   releaseDate?: T;
   description?: T;
   catalogNumber?: T;
@@ -602,9 +677,19 @@ export interface ReleasesSelect<T extends boolean = true> {
     | T
     | {
         spotify?: T;
+        spotifyEmbedUrl?: T;
         appleMusic?: T;
         youtube?: T;
+        amazonMusic?: T;
         tidal?: T;
+      };
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
       };
   seo?:
     | T
@@ -623,9 +708,11 @@ export interface ReleasesSelect<T extends boolean = true> {
 export interface TracksSelect<T extends boolean = true> {
   title?: T;
   release?: T;
+  artistRole?: T;
   trackNumber?: T;
   duration?: T;
   audioPreview?: T;
+  appleMusicUrl?: T;
   featuredArtists?: T;
   credits?:
     | T
@@ -638,6 +725,14 @@ export interface TracksSelect<T extends boolean = true> {
   isrcCode?: T;
   lyrics?: T;
   featured?: T;
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -650,6 +745,8 @@ export interface VideosSelect<T extends boolean = true> {
   slug?: T;
   type?: T;
   youtubeUrl?: T;
+  youtubeId?: T;
+  duration?: T;
   customThumbnail?: T;
   releaseDate?: T;
   relatedTrack?: T;
@@ -657,6 +754,14 @@ export interface VideosSelect<T extends boolean = true> {
   cinematographer?: T;
   description?: T;
   featured?: T;
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -667,6 +772,7 @@ export interface VideosSelect<T extends boolean = true> {
  */
 export interface EventsSelect<T extends boolean = true> {
   eventName?: T;
+  slug?: T;
   date?: T;
   city?: T;
   country?: T;
@@ -675,9 +781,21 @@ export interface EventsSelect<T extends boolean = true> {
   ticketUrl?: T;
   vipPackageUrl?: T;
   posterImage?: T;
+  gallery?: T;
+  relatedVideoUrl?: T;
+  instagramPostUrl?: T;
   additionalInfo?: T;
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -696,6 +814,14 @@ export interface ArticlesSelect<T extends boolean = true> {
     | {
         metaTitle?: T;
         metaDescription?: T;
+      };
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -766,6 +892,10 @@ export interface ArtistProfile {
   id: number;
   stageName: string;
   tagline?: string | null;
+  /**
+   * Indica si la biografía ha sido revisada y confirmada directamente por el artista o su management.
+   */
+  bioStatus?: ('editorial_draft' | 'approved') | null;
   manifesto?: string | null;
   /**
    * Usada en tarjetas de vista rápida, metadatos y programas de prensa.
@@ -794,6 +924,22 @@ export interface ArtistProfile {
     city?: string | null;
     country?: string | null;
   };
+  translations?: {
+    en?: {
+      status?: ('draft_pending_review' | 'approved') | null;
+      shortBio?: string | null;
+      mediumBio?: string | null;
+    };
+  };
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -809,12 +955,16 @@ export interface SiteSetting {
   siteDescription?: string | null;
   socialLinks?: {
     instagram?: string | null;
-    spotify?: string | null;
     youtube?: string | null;
+    youtubeChannelId?: string | null;
     appleMusic?: string | null;
+    spotify?: string | null;
     tiktok?: string | null;
     twitter?: string | null;
   };
+  /**
+   * Correos oficiales de contacto. Solo publicar cuando hayan sido confirmados por el management.
+   */
   contactEmails?: {
     booking?: string | null;
     press?: string | null;
@@ -822,6 +972,15 @@ export interface SiteSetting {
   };
   copyrightText?: string | null;
   maintenanceMode?: boolean | null;
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -832,6 +991,7 @@ export interface SiteSetting {
 export interface ArtistProfileSelect<T extends boolean = true> {
   stageName?: T;
   tagline?: T;
+  bioStatus?: T;
   manifesto?: T;
   shortBio?: T;
   mediumBio?: T;
@@ -841,6 +1001,25 @@ export interface ArtistProfileSelect<T extends boolean = true> {
     | {
         city?: T;
         country?: T;
+      };
+  translations?:
+    | T
+    | {
+        en?:
+          | T
+          | {
+              status?: T;
+              shortBio?: T;
+              mediumBio?: T;
+            };
+      };
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -857,9 +1036,10 @@ export interface SiteSettingsSelect<T extends boolean = true> {
     | T
     | {
         instagram?: T;
-        spotify?: T;
         youtube?: T;
+        youtubeChannelId?: T;
         appleMusic?: T;
+        spotify?: T;
         tiktok?: T;
         twitter?: T;
       };
@@ -872,6 +1052,14 @@ export interface SiteSettingsSelect<T extends boolean = true> {
       };
   copyrightText?: T;
   maintenanceMode?: T;
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

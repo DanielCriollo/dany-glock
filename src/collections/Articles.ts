@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { authenticated, authenticatedOrPublished } from '@/access';
+import { verificationField } from '@/fields/verification';
 
 export const Articles: CollectionConfig = {
   slug: 'articles',
@@ -94,5 +95,6 @@ export const Articles: CollectionConfig = {
         },
       ],
     },
+    verificationField,
   ],
 };

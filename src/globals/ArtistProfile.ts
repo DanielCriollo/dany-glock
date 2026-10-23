@@ -1,5 +1,6 @@
 import type { GlobalConfig } from 'payload';
 import { anyone, authenticated } from '@/access';
+import { verificationField } from '@/fields/verification';
 
 export const ArtistProfile: GlobalConfig = {
   slug: 'artist-profile',
@@ -27,11 +28,24 @@ export const ArtistProfile: GlobalConfig = {
       defaultValue: 'Artist Digital Experience — Dark Cinematic Editorial',
     },
     {
+      name: 'bioStatus',
+      type: 'select',
+      label: 'Estado de Aprobación de la Biografía',
+      defaultValue: 'editorial_draft',
+      options: [
+        { label: 'Propuesta Editorial (Borrador pendiente de aprobación)', value: 'editorial_draft' },
+        { label: 'Aprobado Oficialmente por el Artista', value: 'approved' },
+      ],
+      admin: {
+        description: 'Indica si la biografía ha sido revisada y confirmada directamente por el artista o su management.',
+      },
+    },
+    {
       name: 'manifesto',
       type: 'textarea',
       label: 'Manifiesto Artístico',
       defaultValue:
-        'La música urbana como cinematografía sonora: una narrativa nocturna nacida en el altiplano de Guatemala y proyectada a la escena global.',
+        'La música urbana como cinematografía sonora: una narrativa nocturna nacida en el sur de Colombia y proyectada a la escena global.',
     },
     {
       name: 'shortBio',
@@ -41,7 +55,7 @@ export const ArtistProfile: GlobalConfig = {
         description: 'Usada en tarjetas de vista rápida, metadatos y programas de prensa.',
       },
       defaultValue:
-        'Dany Glock es un artista de música urbana originario de Quetzaltenango, Guatemala. Su propuesta combina trap contemporáneo, reggaetón de autor y una estética visual nocturna de alto impacto cinematográfico.',
+        'Dany Glock es un artista de música urbana originario de Pasto, Nariño, Colombia. Su propuesta combina trap contemporáneo, identidad lírica y una estética visual nocturna de alto impacto cinematográfico.',
     },
     {
       name: 'mediumBio',
@@ -51,7 +65,7 @@ export const ArtistProfile: GlobalConfig = {
         description: 'Usada en la sección Bio de la página principal.',
       },
       defaultValue:
-        'Originario de Quetzaltenango, Guatemala, Dany Glock ha consolidado una propuesta musical y visual que redefine el género urbano centroamericano. A través de una estética oscura, elegante y editorial, su trabajo fusiona letras introspectivas con producción de clase mundial.',
+        'Originario de Pasto, Nariño, Colombia, Dany Glock ha consolidado una propuesta musical y visual que redefine el género urbano latino. A través de una estética oscura, elegante y editorial, su trabajo fusiona letras introspectivas con producción de primer nivel.',
     },
     {
       name: 'fullBio',
@@ -67,15 +81,54 @@ export const ArtistProfile: GlobalConfig = {
           name: 'city',
           type: 'text',
           label: 'Ciudad de Origen',
-          defaultValue: 'Quetzaltenango',
+          defaultValue: 'Pasto',
         },
         {
           name: 'country',
           type: 'text',
           label: 'País de Origen',
-          defaultValue: 'Guatemala',
+          defaultValue: 'Colombia',
         },
       ],
     },
+    {
+      name: 'translations',
+      type: 'group',
+      label: 'Traducciones Internacionales',
+      fields: [
+        {
+          name: 'en',
+          type: 'group',
+          label: 'Versión en Inglés (English Version)',
+          fields: [
+            {
+              name: 'status',
+              type: 'select',
+              label: 'Estado de la Traducción',
+              defaultValue: 'draft_pending_review',
+              options: [
+                { label: 'Borrador Editorial en Inglés (Draft Pending Review)', value: 'draft_pending_review' },
+                { label: 'Aprobado (Approved)', value: 'approved' },
+              ],
+            },
+            {
+              name: 'shortBio',
+              type: 'textarea',
+              label: 'Short Bio (English)',
+              defaultValue:
+                'Dany Glock is an urban music and Latin trap artist from Pasto, Colombia. His sonic vision merges nocturnal storytelling with a dark, high-impact cinematic editorial aesthetic.',
+            },
+            {
+              name: 'mediumBio',
+              type: 'textarea',
+              label: 'Medium Bio (English)',
+              defaultValue:
+                'Hailing from Pasto, Nariño, Colombia, Dany Glock brings a distinct and sophisticated perspective to contemporary Latin urban music. Anchored by heavy atmospheric beats and introspective lyrics, his work defines a dark cinematic visual and sonic experience.',
+            },
+          ],
+        },
+      ],
+    },
+    verificationField,
   ],
 };

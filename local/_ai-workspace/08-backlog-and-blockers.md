@@ -78,7 +78,28 @@
 
 ---
 
-## 7. Backlog Preparado para Misión 006 (Home Experience & Architectural Scenes)
+## 6-B. Registro de Tareas de Misión 006-A.1 (Real Artist Data Seeding & CMS Expansion)
+
+- [x] **DATA-01:** Implementar grupo de trazabilidad y verificación de fuentes (`src/fields/verification.ts`) con estados `verified`, `to_confirm`, `editorial_proposal` y campo de notas interno protegido por RBAC. *(Evidencia: `src/fields/verification.ts`)*
+- [x] **DATA-02:** Ampliar esquemas de colecciones (`Releases`, `Tracks`, `Videos`, `Events`, `Articles`) y Globals (`ArtistProfile`, `SiteSettings`) con roles de artista, YouTube IDs, duraciones, galerías y versión con borradores. *(Evidencia: `src/collections/*.ts`, `src/globals/*.ts`)*
+- [x] **DATA-03:** Generar y aplicar migración versionada no destructiva en PostgreSQL 17 (`20261023_150557_add_artist_data_and_verification.ts`) con sentencias idempotentes y seguras contra tipos existentes. *(Evidencia: `payload migrate:status` con 3 lotes completados)*
+- [x] **DATA-04:** Crear script de siembra reproducible e idempotente (`src/scripts/seed-artist-data.ts`) alimentado exclusivamente de `13-research-inventory.md` (4 lanzamientos verificados, 1 borrador, 5 canciones, 6 videos oficiales de YouTube, globals en Pasto/Colombia y 1 evento borrador). *(Evidencia: ejecución doble con 0 duplicados)*
+- [x] **DATA-05:** Proteger estrictamente los borradores (`sig-sauer-remix`, `pasto-vive-flow-2026`) para que no se publiquen accidentalmente ni sean legibles por usuarios anónimos. *(Evidencia: `src/tests/artist-data-seed.test.ts`)*
+- [x] **DATA-06:** Fortalecer utilidades de contenido `src/lib/content-utils.ts` con validación estricta de dominios de YouTube, URLs de miniaturas y slugs normalizados con 9 pruebas unitarias. *(Evidencia: `src/lib/content-utils.test.ts`)*
+- [x] **DATA-07:** Certificación total de calidad: 39/39 pruebas pasando en Vitest, `typecheck` en 0 errores, `lint` en 0 errores, `build` de Next.js 15 completado al 100%.
+
+---
+
+## 7. Backlog Preparado para Misión 006-A.2 (Conexión de Vistas Públicas con Datos Reales del CMS)
+
+- [ ] **PUB-01:** Conectar el Hero de la Home al último lanzamiento oficial (`Cicatrices` / `SO FRESH, SO CLEAN`) consumido desde Payload Local API en Server Components.
+- [ ] **PUB-02:** Renderizar enlaces oficiales verificados de YouTube, Apple Music e Instagram en el header y footer desde `site-settings`.
+- [ ] **PUB-03:** Validar que los borradores del CMS (`sig-sauer-remix`, `pasto-vive-flow-2026`) devuelvan 404 para peticiones públicas anónimas.
+- [ ] **PUB-04:** Configurar estados visuales elegantes (*empty states*) para secciones sin contenido publicado (Shows, Journal).
+
+---
+
+## 8. Backlog Preparado para Misión 006-B (Discografía, Reproductor y Lanzamientos)
 
 - [ ] **HOM-01:** Escena 1 — Hero Cinematográfico con soporte de video loop (WCAG 2.2.2 control de pausa), tipografía póster sangrada y CTA dinámico de último lanzamiento.
 - [ ] **HOM-02:** Escena 2 — Último Lanzamiento (Single Spotlight) con arte de portada, ficha técnica, enlaces a plataformas y micro-reproductor de preescucha.
@@ -88,5 +109,6 @@
 - [ ] **HOM-06:** Escena 6 — Tour & Próximos Shows con estado dinámico de boletería (`sold-out`, `tickets`, `anuncio`) conectado a `Events`.
 - [ ] **HOM-07:** Escena 7 — Journal Editorial & Notas de Prensa conectado a colección `Articles`.
 - [ ] **HOM-08:** Escena 8 — Direct Booking & Contact Form con validación en servidor, protección honeypot y rate limiting.
+
 
 

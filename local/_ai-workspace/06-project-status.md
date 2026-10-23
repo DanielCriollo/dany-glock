@@ -3,12 +3,10 @@
 ## 1. Ficha del Proyecto
 
 - **Nombre del Proyecto:** Dany Glock — Artist Digital Experience
-- **Fase Actual:** Misión 005 — Cinematic Layout & Kinetic Navigation (Completada — En Espera de Revisión Humana)
-- **Última Misión Completada:** **Misión 005 — Cinematic Layout & Kinetic Navigation**
-- **Misión en Curso:** En espera de revisión humana antes de **Misión 006 — Home Experience & Architectural Scenes**
+- **Fase Actual:** Misión 006-A.1 — Retomar Trabajo Interrumpido y Sembrar Contenido Real en Payload CMS (Completada)
+- **Última Misión Completada:** **Misión 006-A.1 — Retomar Trabajo Interrumpido y Sembrar Contenido Real en Payload CMS**
+- **Misión en Curso:** Preparada para **Misión 006-A.2 — Conexión de Vistas Públicas con Datos Reales del CMS**
 - **Bloqueos Activos:** Ninguno.
-
-
 
 ---
 
@@ -20,9 +18,55 @@
 | **Node.js** | `v22.12.0` | Cumple el requisito de Payload 3 (`>= 20.18.1`) |
 | **NPM** | `10.9.0` | Funcional |
 | **PNPM** | `10.34.4` | Gestor de paquetes primario con `pnpm-lock.yaml` |
-| **Git** | `2.45.2.windows.1` | Inicializado y activo en rama `main` |
+| **Git** | `2.45.2.windows.1` | Activo en rama de respaldo `wip/mision-006a` |
 | **PostgreSQL** | `PostgreSQL 17.6` (Docker / local: 5432) | Motor relacional local activo; BD `dany_glock_dev` |
 | **Docker** | `docker 27.x` | Contenedor `my_postgres` ejecutando Postgres 17.6 |
+
+---
+
+### [2026-10-23] — Misión 006-A.1: Retomar Trabajo Interrumpido y Sembrar Contenido Real en Payload CMS
+- **Misión:** Misión 006-A.1
+- **Implementaciones realizadas:**
+  - **Trazabilidad y Verificación de Fuentes (`src/fields/verification.ts`):**
+    - Grupo reutilizable con campos `status` (`verified`, `to_confirm`, `editorial_proposal`), `sourceUrl`, `consultedAt`, y `notes` protegido con permisos RBAC (solo legible por usuarios autenticados).
+    - Integrado transversalmente en `Releases`, `Tracks`, `Videos`, `Events`, `Articles`, `ArtistProfile` y `SiteSettings`.
+  - **Expansión y Corrección de Esquema CMS:**
+    - `Releases`: añadidos `artistRole` (`main`, `featured`, `collaborator`), `coverStatus`, enlaces streaming extendidos (`spotifyEmbedUrl`, `amazonMusic`).
+    - `Tracks`: añadidos `artistRole`, `appleMusicUrl`.
+    - `Videos`: añadido tipo `trailer`, `youtubeId` (11 caracteres), `duration`.
+    - `Events`: versión con borradores activada (`versions: { drafts: true }`), control de acceso público condicional (`authenticatedOrPublished`), campo `slug` único, galería multimedia (`gallery`), enlaces de video e Instagram.
+    - `ArtistProfile`: eliminación definitiva de placeholders ficticios de Guatemala; origen corregido a Pasto, Nariño, Colombia; `bioStatus` (`editorial_draft`), grupo de traducciones `translations.en`.
+    - `SiteSettings`: perfiles oficiales verificados de Instagram, canal oficial de YouTube con ID `UCf-4AJMV8QZz1jj4OVBzaxg`, Apple Music; sin correos inventados.
+  - **Migración Segura en PostgreSQL 17:**
+    - Generada y aplicada migración versionada `20261023_150557_add_artist_data_and_verification.ts` con sentencias protegidas e idempotentes (`DO $$ BEGIN ... EXCEPTION WHEN duplicate_object THEN null; END $$;`, `IF NOT EXISTS`).
+    - Adaptador de base de datos en `payload.config.ts` configurado con `prodMigrations: migrations`.
+    - Eliminado registro dev residual (`batch: -1`) garantizando compilaciones y migraciones desatendidas sin bloqueos interactivos.
+  - **Siembra Real e Idempotente (`src/scripts/seed-artist-data.ts`):**
+    - 4 lanzamientos verificados publicados (`sig-sauer`, `so-fresh-so-clean`, `cicatrices`, `exceso` con rol `featured`).
+    - 1 lanzamiento en borrador protegido (`sig-sauer-remix`).
+    - 5 canciones correspondientes vinculadas a sus lanzamientos y créditos de producción (Nick Montana Beatmen, Dark Pro).
+    - 6 producciones audiovisuales en YouTube con metadatos y clasificación oficial.
+    - 1 evento regional en borrador (`pasto-vive-flow-2026`).
+    - Idempotencia probada al 100%: ejecutar el script sucesivamente produce 0 filas duplicadas.
+  - **Utilidades de Contenido Reforzadas (`src/lib/content-utils.ts`):**
+    - Extracción y validación estricta de IDs de YouTube, control de whitelist de hosts, rechazo de protocolos inseguros, y generación de miniaturas y slugs limpios.
+  - **Pruebas y Calidad:**
+    - `src/lib/content-utils.test.ts`: 9 pruebas unitarias pasando.
+    - `src/tests/artist-data-seed.test.ts`: 7 pruebas de integración y seguridad de borradores pasando.
+    - `pnpm test`: 39/39 pruebas pasando (5 suites de test).
+    - `pnpm typecheck`: 0 errores.
+    - `pnpm lint`: 0 errores, 0 advertencias.
+    - `pnpm build`: compilación de producción exitosa al 100%.
+- **Recuento Real en PostgreSQL:**
+  - `Releases`: 7 (4 verificados + 1 borrador + 2 demos previos).
+  - `Tracks`: 6 (5 sembrados + 1 demo previo).
+  - `Videos`: 6 (todos verificados en YouTube).
+  - `Events`: 1 (`pasto-vive-flow-2026` en borrador).
+  - `Articles`: 0 (listo para notas editoriales oficiales).
+  - `Media`: 1 (arte temporal referenciado sin duplicación innecesaria).
+  - `Contacts`: 57 (mensajes de contacto y pruebas de seguridad preservados).
+  - `Users`: 1 (`admin@danyglock.com`).
+- **Arquitectura y decisiones:** Registrado ADR-013 en `05-technical-decisions.md`.
 
 ---
 

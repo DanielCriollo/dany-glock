@@ -1,16 +1,20 @@
 import type { CollectionConfig } from 'payload';
-import { anyone, authenticated } from '@/access';
+import { authenticated, authenticatedOrPublished } from '@/access';
+import { verificationField } from '@/fields/verification';
 
 export const Events: CollectionConfig = {
   slug: 'events',
   admin: {
     useAsTitle: 'eventName',
     group: 'Gira y Prensa',
-    defaultColumns: ['eventName', 'city', 'venue', 'date', 'ticketStatus'],
+    defaultColumns: ['eventName', 'city', 'venue', 'date', 'ticketStatus', '_status'],
     description: 'Conciertos en vivo, festivales internacionales y fechas de gira.',
   },
+  versions: {
+    drafts: true,
+  },
   access: {
-    read: anyone,
+    read: authenticatedOrPublished,
     create: authenticated,
     update: authenticated,
     delete: authenticated,
@@ -22,7 +26,17 @@ export const Events: CollectionConfig = {
       label: 'Nombre del Evento / Show',
       required: true,
       admin: {
-        placeholder: 'ej: Dany Glock Live — Pepsi Center WTC',
+        placeholder: 'ej: Dany Glock Live — Pasto Vive Flow',
+      },
+    },
+    {
+      name: 'slug',
+      type: 'text',
+      label: 'Slug URL (Identificador Único)',
+      required: true,
+      unique: true,
+      admin: {
+        description: 'Identificador para URLs y rutas del evento (ej: pasto-vive-flow-2026).',
       },
     },
     {
@@ -41,13 +55,14 @@ export const Events: CollectionConfig = {
       type: 'text',
       label: 'Ciudad',
       required: true,
+      defaultValue: 'Pasto',
     },
     {
       name: 'country',
       type: 'text',
       label: 'País',
       required: true,
-      defaultValue: 'Guatemala',
+      defaultValue: 'Colombia',
     },
     {
       name: 'venue',
@@ -55,7 +70,7 @@ export const Events: CollectionConfig = {
       label: 'Recinto / Venue',
       required: true,
       admin: {
-        placeholder: 'ej: Fórum Majadas, Ciudad de Guatemala',
+        placeholder: 'ej: Centro de Eventos Andino, Pasto',
       },
     },
     {
@@ -89,9 +104,36 @@ export const Events: CollectionConfig = {
       label: 'Póster Oficial del Evento (Opcional)',
     },
     {
+      name: 'gallery',
+      type: 'upload',
+      relationTo: 'media',
+      hasMany: true,
+      label: 'Galería de Fotos del Show (Opcional)',
+      admin: {
+        description: 'Fotografías oficiales del show para cobertura editorial.',
+      },
+    },
+    {
+      name: 'relatedVideoUrl',
+      type: 'text',
+      label: 'URL de Video / Recap Relacionado (Opcional)',
+      admin: {
+        placeholder: 'https://www.youtube.com/watch?v=...',
+      },
+    },
+    {
+      name: 'instagramPostUrl',
+      type: 'text',
+      label: 'URL de Publicación / Anuncio en Instagram (Opcional)',
+      admin: {
+        placeholder: 'https://www.instagram.com/p/...',
+      },
+    },
+    {
       name: 'additionalInfo',
       type: 'textarea',
       label: 'Información Adicional (Restricciones de edad, accesos, etc.)',
     },
+    verificationField,
   ],
 };

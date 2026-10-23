@@ -1,12 +1,13 @@
 import type { CollectionConfig } from 'payload';
 import { authenticated, authenticatedOrPublished } from '@/access';
+import { verificationField } from '@/fields/verification';
 
 export const Releases: CollectionConfig = {
   slug: 'releases',
   admin: {
     useAsTitle: 'title',
     group: 'Música',
-    defaultColumns: ['title', 'type', 'releaseDate', 'featured', '_status'],
+    defaultColumns: ['title', 'type', 'artistRole', 'releaseDate', 'featured', '_status'],
     description: 'Catálogo oficial de lanzamientos discográficos: Álbumes, EPs y Singles.',
   },
   versions: {
@@ -32,7 +33,7 @@ export const Releases: CollectionConfig = {
       required: true,
       unique: true,
       admin: {
-        description: 'Texto normalizado para la URL (ej: los-glocks-no-lloran).',
+        description: 'Texto normalizado para la URL (ej: sig-sauer).',
       },
     },
     {
@@ -48,11 +49,36 @@ export const Releases: CollectionConfig = {
       ],
     },
     {
+      name: 'artistRole',
+      type: 'select',
+      label: 'Rol de Dany Glock en el Lanzamiento',
+      defaultValue: 'main',
+      options: [
+        { label: 'Artista Principal (Lead Artist)', value: 'main' },
+        { label: 'Artista Invitado (Featured Artist)', value: 'featured' },
+        { label: 'Colaborador / Co-autor', value: 'collaborator' },
+      ],
+      admin: {
+        description: 'Distingue lanzamientos donde Dany Glock es el artista principal de colaboraciones como invitado.',
+      },
+    },
+    {
       name: 'coverImage',
       type: 'upload',
       relationTo: 'media',
       label: 'Portada Oficial (Cover Artwork)',
       required: true,
+    },
+    {
+      name: 'coverStatus',
+      type: 'select',
+      label: 'Estado del Arte de Portada',
+      defaultValue: 'confirmed',
+      options: [
+        { label: 'Portada Oficial Confirmada', value: 'confirmed' },
+        { label: 'Pendiente de Aprobación / Material Oficial', value: 'pending' },
+        { label: 'Placeholder Visual Temporal', value: 'placeholder' },
+      ],
     },
     {
       name: 'releaseDate',
@@ -68,14 +94,14 @@ export const Releases: CollectionConfig = {
     {
       name: 'description',
       type: 'textarea',
-      label: 'Descripción / Manifiesto del Lanzamiento',
+      label: 'Descripción / Ficha Editorial del Lanzamiento',
     },
     {
       name: 'catalogNumber',
       type: 'text',
-      label: 'Número de Catálogo Oficial (Opcional)',
+      label: 'Número de Catálogo / Código Oficial (Opcional)',
       admin: {
-        placeholder: 'ej: DG-2026-001',
+        placeholder: 'ej: DG-2024-001',
       },
     },
     {
@@ -95,6 +121,11 @@ export const Releases: CollectionConfig = {
           label: 'Spotify URL',
         },
         {
+          name: 'spotifyEmbedUrl',
+          type: 'text',
+          label: 'Spotify Embed URL / URI (Opcional)',
+        },
+        {
           name: 'appleMusic',
           type: 'text',
           label: 'Apple Music URL',
@@ -105,12 +136,18 @@ export const Releases: CollectionConfig = {
           label: 'YouTube Music / Video URL',
         },
         {
+          name: 'amazonMusic',
+          type: 'text',
+          label: 'Amazon Music URL',
+        },
+        {
           name: 'tidal',
           type: 'text',
           label: 'Tidal URL',
         },
       ],
     },
+    verificationField,
     {
       name: 'seo',
       type: 'group',

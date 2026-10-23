@@ -1,5 +1,6 @@
 import type { GlobalConfig } from 'payload';
 import { anyone, authenticated } from '@/access';
+import { verificationField } from '@/fields/verification';
 
 export const SiteSettings: GlobalConfig = {
   slug: 'site-settings',
@@ -32,18 +33,54 @@ export const SiteSettings: GlobalConfig = {
       type: 'group',
       label: 'Perfiles Oficiales en Redes y Streaming',
       fields: [
-        { name: 'instagram', type: 'text', label: 'Instagram URL' },
-        { name: 'spotify', type: 'text', label: 'Spotify Artist URL' },
-        { name: 'youtube', type: 'text', label: 'Canal de YouTube Oficial' },
-        { name: 'appleMusic', type: 'text', label: 'Apple Music Artist URL' },
-        { name: 'tiktok', type: 'text', label: 'TikTok URL' },
-        { name: 'twitter', type: 'text', label: 'X / Twitter URL' },
+        {
+          name: 'instagram',
+          type: 'text',
+          label: 'Instagram URL',
+          defaultValue: 'https://www.instagram.com/danyglock_/',
+        },
+        {
+          name: 'youtube',
+          type: 'text',
+          label: 'Canal de YouTube Oficial',
+          defaultValue: 'https://www.youtube.com/@danyglock',
+        },
+        {
+          name: 'youtubeChannelId',
+          type: 'text',
+          label: 'ID del Canal de YouTube Oficial',
+          defaultValue: 'UCf-4AJMV8QZz1jj4OVBzaxg',
+        },
+        {
+          name: 'appleMusic',
+          type: 'text',
+          label: 'Apple Music Artist URL',
+          defaultValue: 'https://music.apple.com/us/artist/dany-glock/1739565666',
+        },
+        {
+          name: 'spotify',
+          type: 'text',
+          label: 'Spotify Artist URL (Opcional - Pendiente de verificación)',
+        },
+        {
+          name: 'tiktok',
+          type: 'text',
+          label: 'TikTok URL (Opcional)',
+        },
+        {
+          name: 'twitter',
+          type: 'text',
+          label: 'X / Twitter URL (Opcional)',
+        },
       ],
     },
     {
       name: 'contactEmails',
       type: 'group',
       label: 'Correos Electrónicos Profesionales',
+      admin: {
+        description: 'Correos oficiales de contacto. Solo publicar cuando hayan sido confirmados por el management.',
+      },
       fields: [
         { name: 'booking', type: 'email', label: 'Correo de Booking / Contrataciones' },
         { name: 'press', type: 'email', label: 'Correo de Prensa & Media' },
@@ -62,5 +99,6 @@ export const SiteSettings: GlobalConfig = {
       label: 'Activar Modo Mantenimiento en la Web Pública',
       defaultValue: false,
     },
+    verificationField,
   ],
 };

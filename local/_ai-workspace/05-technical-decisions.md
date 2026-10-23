@@ -246,6 +246,42 @@ Este documento registra las decisiones arquitectónicas fundamentales tomadas pa
 - **Consecuencias:**  
   - *Positivas:* 0 kB añadidos por bibliotecas de modales o animaciones pesadas; accesibilidad nativa y robusta; bundle de primer carga ultraligero (106 kB First Load JS); aislamiento garantizado para `/admin`; 23/23 pruebas automatizadas pasando.
 
+---
+
+## ADR-013: Modelo de Trazabilidad de Fuentes, Idempotencia de Datos del Artista y Sincronización en Payload CMS
+
+- **Estado:** Aceptado (Implementado en Misión 006-A.1)
+- **Fecha:** Octubre 2026
+- **Contexto:**
+  1. Durante la evolución del proyecto, los scaffolds iniciales contenían placeholders inventados (Quetzaltenango/Guatemala, correos falsos `@danyglock.com`, datos de booking no confirmados).
+  2. La investigación real (documentada en `local/_ai-workspace/13-research-inventory.md`) demostró que Dany Glock es un artista de música urbana y trap originario de Pasto, Nariño, Colombia, con discografía en Apple Music (`1739565666`), canal oficial en YouTube (`@danyglock` / `UCf-4AJMV8QZz1jj4OVBzaxg`) e Instagram (`@danyglock_`).
+  3. No se debe publicar información no corroborada como un hecho en la web pública. Se requerían estados estrictos de trazabilidad (`verified`, `to_confirm`, `editorial_proposal`).
+  4. Los lanzamientos o eventos no confirmados formalmente (p. ej., `SIG Sauer (Remix)` y el evento `Pasto Vive Flow 2026`) deben persistir en PostgreSQL como borradores (`_status: 'draft'`) protegidos de consultas públicas anónimas.
+  5. La siembra de datos debe ser estrictamente idempotente: ejecutarla múltiples veces no debe generar filas duplicadas en PostgreSQL ni sobreescribir datos existentes.
+- **Decisión:**
+  1. **Grupo de Campo Reutilizable `verificationField`:**
+     - Implementado en `src/fields/verification.ts` e integrado en `Releases`, `Tracks`, `Videos`, `Events`, `Articles`, `ArtistProfile` y `SiteSettings`.
+     - Incluye `status` (`verified`, `to_confirm`, `editorial_proposal`), `sourceUrl`, `consultedAt` y `notes` (campo privado con control RBAC visible únicamente para usuarios autenticados).
+  2. **Ampliación de Colecciones y Esquema:**
+     - `Releases`: añadidos `artistRole` (`main`, `featured`, `collaborator`), `coverStatus`, enlaces streaming extendidos (`spotifyEmbedUrl`, `amazonMusic`).
+     - `Tracks`: añadidos `artistRole`, `appleMusicUrl`.
+     - `Videos`: añadido tipo `trailer`, `youtubeId` (11 caracteres), `duration`.
+     - `Events`: migrado a control de versiones con borradores (`versions: { drafts: true }`), control de acceso público condicional (`authenticatedOrPublished`), campo `slug` único, galería multimedia (`gallery`), enlaces sociales y videos relacionados.
+     - `ArtistProfile`: eliminación total de placeholders de Guatemala; origen establecido en Pasto, Nariño, Colombia; `bioStatus` (`editorial_draft`), grupo de traducciones `translations.en`.
+     - `SiteSettings`: enlaces verificados de Instagram, YouTube, ID de canal oficial, Apple Music; campos Spotify y booking mantenidos vacíos/nulos sin inventar.
+  3. **Migraciones Seguras e Idempotentes:**
+     - Creación de migración versionada `20261023_150557_add_artist_data_and_verification.ts` con sentencias protegidas contra tipos/tablas existentes (`DO $$ BEGIN ... EXCEPTION WHEN duplicate_object THEN null; END $$;`, `IF NOT EXISTS`).
+     - Inclusión de `prodMigrations` en `payload.config.ts` y saneamiento de registros `batch: -1` residuales del modo dev.
+  4. **Script de Siembra Idempotente (`src/scripts/seed-artist-data.ts`):**
+     - Población de los 4 lanzamientos verificados (`sig-sauer`, `so-fresh-so-clean`, `cicatrices`, `exceso`), 1 lanzamiento en borrador (`sig-sauer-remix`), 5 canciones vinculadas, 6 videos oficiales de YouTube, globals `ArtistProfile` y `SiteSettings`, y 1 evento en borrador (`pasto-vive-flow-2026`).
+     - Búsqueda previa por `slug` o combinación `(title, release)` antes de inserción. Ejecución repetida produce 0 duplicados.
+  5. **Validación de Utilidades y Seguridad:**
+     - Refuerzo de `src/lib/content-utils.ts` con validación estricta de dominios YouTube (whitelist de hosts, regex de 11 caracteres, protocolo HTTPS).
+     - Creación de suite `src/tests/artist-data-seed.test.ts` con 7 pruebas que validan aislamiento de borradores y consistencia de relaciones en PostgreSQL.
+- **Consecuencias:**
+  - *Positivas:* PostgreSQL es ahora la fuente de verdad inmutable y estructurada con datos reales; cero contenido inventado en producción; pruebas pasando al 100% (39/39); build de producción pasando con cero errores de tipo o lint.
+
+
 
 
 

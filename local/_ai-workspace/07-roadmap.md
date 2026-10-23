@@ -76,7 +76,7 @@ flowchart TD
 
 ---
 
-### ✅ Misión 005 — Cinematic Layout & Kinetic Navigation *(Completada — En espera de revisión humana)*
+### ✅ Misión 005 — Cinematic Layout & Kinetic Navigation *(Completada)*
 - **Objetivo:** Transformar el scaffold técnico en una experiencia pública cinematográfica con navegación editorial, header adaptable al scroll, menú modal nativo accesible y footer conectado al CMS.
 - **Entregables:**
   - `SiteHeader`: barra de navegación con wordmark tipográfico póster, desktop links con tracking editorial, scrim/glassmorphism dinámico adaptable al scroll y activación accesible del menú editorial.
@@ -89,8 +89,30 @@ flowchart TD
 
 ---
 
-### ⏳ Misión 006 — Discografía, reproductor y lanzamientos
-- **Objetivo:** Construir la experiencia musical central para los fans.
+### ✅ Misión 006-A.1 — Retomar Trabajo Interrumpido y Sembrar Contenido Real en Payload CMS *(Completada)*
+- **Objetivo:** Auditar el estado tras interrupción de cuota, extender esquemas CMS con trazabilidad de fuentes (`verificationField`), generar migraciones versionadas y sembrar PostgreSQL con contenido real verificado (discografía, videos, perfiles, biografía editorial) e idempotente.
+- **Entregables:**
+  - Grupo `verificationField` (`src/fields/verification.ts`) integrado en todas las colecciones y globals.
+  - Campos `artistRole`, `coverStatus`, `youtubeId`, `duration`, `slug`, `gallery` y versionado con borradores en `Events`.
+  - Migración versionada `20261023_150557_add_artist_data_and_verification.ts` aplicada sin pérdida de datos ni operaciones destructivas.
+  - Script idempotente de siembra `src/scripts/seed-artist-data.ts` que puebla 4 lanzamientos verificados publicados, 1 lanzamiento en borrador, 5 canciones, 6 videos oficiales de YouTube, globals corregidos a Pasto/Colombia y 1 evento en borrador (`pasto-vive-flow-2026`).
+  - Utilidades robustas de YouTube y slugs en `src/lib/content-utils.ts` con pruebas unitarias (9/9 tests).
+  - Suite de regresión y seguridad `src/tests/artist-data-seed.test.ts` (7/7 tests).
+  - Verificación de calidad: 39/39 pruebas pasando, `pnpm typecheck` en 0 errores, `pnpm lint` en 0 errores, `pnpm build` exitoso.
+
+---
+
+### ⏳ Misión 006-A.2 — Conexión de Vistas Públicas con Datos Reales del CMS
+- **Objetivo:** Conectar el layout público existente, Hero y secciones a los registros reales sembrados en Payload CMS vía Local API (`getPayload({ config })`), reemplazando scaffolds estáticos.
+- **Alcance:**
+  - Mostrar en Home el último lanzamiento verificado (`Cicatrices` / `SO FRESH, SO CLEAN` / `SIG Sauer`).
+  - Mostrar perfiles oficiales y enlaces a YouTube / Apple Music / Instagram desde `SiteSettings`.
+  - Asegurar que los borradores no confirmados no se rendericen para usuarios no autenticados.
+
+---
+
+### ⏳ Misión 006-B — Discografía, reproductor y lanzamientos
+- **Objetivo:** Construir la experiencia musical interactiva para los fans.
 - **Alcance:**
   - Hero Showcase del último lanzamiento con preview audiovisual y CTAs de streaming.
   - Catálogo de discografía con filtros por tipo (Álbum, EP, Single).

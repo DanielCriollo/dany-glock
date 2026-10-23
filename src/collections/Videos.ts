@@ -1,12 +1,13 @@
 import type { CollectionConfig } from 'payload';
 import { authenticated, authenticatedOrPublished } from '@/access';
+import { verificationField } from '@/fields/verification';
 
 export const Videos: CollectionConfig = {
   slug: 'videos',
   admin: {
     useAsTitle: 'title',
     group: 'Audiovisual',
-    defaultColumns: ['title', 'type', 'releaseDate', 'featured', '_status'],
+    defaultColumns: ['title', 'type', 'youtubeId', 'releaseDate', 'featured', '_status'],
     description: 'Videoclips oficiales, directos, visualizers y contenido audiovisual.',
   },
   versions: {
@@ -40,6 +41,7 @@ export const Videos: CollectionConfig = {
       defaultValue: 'official_music_video',
       options: [
         { label: 'Videoclip Oficial (Official Music Video)', value: 'official_music_video' },
+        { label: 'Trailer / Teaser Oficial', value: 'trailer' },
         { label: 'Sesión en Vivo (Live Session)', value: 'live_session' },
         { label: 'Visualizer Oficial', value: 'visualizer' },
         { label: 'Detrás de Escenas (Behind The Scenes)', value: 'behind_the_scenes' },
@@ -52,6 +54,23 @@ export const Videos: CollectionConfig = {
       required: true,
       admin: {
         placeholder: 'https://www.youtube.com/watch?v=...',
+      },
+    },
+    {
+      name: 'youtubeId',
+      type: 'text',
+      label: 'ID de YouTube (11 caracteres)',
+      admin: {
+        placeholder: 'ej: kcac_CIFJ7k',
+        description: 'Identificador único de 11 caracteres del video en YouTube para embeds y miniaturas.',
+      },
+    },
+    {
+      name: 'duration',
+      type: 'text',
+      label: 'Duración (mm:ss)',
+      admin: {
+        placeholder: 'ej: 3:20',
       },
     },
     {
@@ -100,5 +119,6 @@ export const Videos: CollectionConfig = {
       label: 'Destacar como video principal en sección Audiovisual',
       defaultValue: false,
     },
+    verificationField,
   ],
 };
