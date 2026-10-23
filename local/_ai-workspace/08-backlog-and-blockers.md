@@ -56,6 +56,16 @@
 
 ---
 
+## 5-B. Registro de Tareas de Misión 004-B (Security Hardening & CMS Regression Tests)
+
+- [x] **SEC-01:** Invalidación y rotación criptográfica de contraseña administrativa; eliminación de credenciales en texto plano en `seed-admin.ts`. *(Evidencia: `src/scripts/seed-admin.ts`, `src/scripts/rotate-admin-password.ts`)*
+- [x] **SEC-02:** Protección integral del formulario de contacto: honeypot `websiteHoneypot`, rate limiting en memoria (`src/lib/rate-limiter.ts`), restricción de inyección de `status` y límites de longitud en servidor. *(Evidencia: `src/collections/Contacts.ts`, migración SQL)*
+- [x] **SEC-03:** Creación y ejecución de suite automatizada de pruebas de regresión con Vitest (`src/tests/cms-security.test.ts`) certificando 14 casos críticos de seguridad (100% pasando).
+- [x] **SEC-04:** Verificación y paridad de seguridad en GraphQL (`/api/graphql` rechaza consultas de contactos anónimos con GraphQLError 403 y oculta borradores).
+- [x] **SEC-05:** Cero fallos en compilación estricta: `typecheck`, `lint`, `test` y `build` pasando en verde. *(Evidencia: build exitoso en 20s)*
+
+---
+
 ## 6. Backlog Preparado para Misión 005 (Core Layout, Smooth Scroll & Kinetic Navigation)
 
 - [ ] **LAY-01:** Implementar Shell estructural público (Root Layout) conectando tipografías, metadatos dinámicos y tokens visuales.

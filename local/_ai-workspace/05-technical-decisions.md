@@ -186,5 +186,32 @@ Este documento registra las decisiones arquitectónicas fundamentales tomadas pa
 - **Consecuencias:**  
   - *Positivas:* Seguridad verificada mediante tests HTTP (403 en contactos y usuarios anónimos, 404 en borradores sin autenticación). Cero exposición de datos sensibles. Integridad referencial garantizada.
 
+---
+
+## ADR-011: Blindaje de Seguridad, Mitigación Anti-Spam y Pruebas de Regresión para Payload CMS
+
+- **Estado:** Aceptado (Implementado en Misión 004-B)
+- **Fecha:** Octubre 2026
+- **Contexto:**  
+  La auditoría de seguridad post-Misión 004 identificó áreas críticas de endurecimiento:
+  1. Necesidad de eliminar credenciales por defecto de los scripts de inicialización (`seed-admin.ts`) e implementar rotación criptográfica.
+  2. Blindaje de formularios de contacto públicos contra bots automatizados y ataques de denegación de servicio (DoS) sin requerir servicios externos de terceros (como reCAPTCHA o Cloudflare Turnstile).
+  3. Protección a nivel de campo: impedir que solicitudes anónimas inyecten valores en campos de gestión interna como `status` en la colección `contacts`.
+  4. Garantizar paridad de seguridad en la capa GraphQL frente a REST y Local API.
+- **Decisión:**  
+  1. **Higiene Criptográfica y Credenciales Dinámicas:**
+     - `src/scripts/seed-admin.ts` refactorizado para leer credenciales estrictamente desde variables de entorno (`SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`).
+     - Creación de script `src/scripts/rotate-admin-password.ts` que permite rotar contraseñas administrativas sin registrar texto plano en terminales ni logs.
+     - `payload.config.ts`: Obligatoriedad de `PAYLOAD_SECRET` en producción con fallo inmediato si no está definida.
+  2. **Protección Multi-Capa en Formulario de Contacto:**
+     - **Honeypot:** Campo oculto `websiteHoneypot` en `Contacts` con rechazo inmediato si contiene datos.
+     - **Rate Limiting:** Implementación en memoria (`src/lib/rate-limiter.ts`) de ventana deslizante (máximo 5 envíos por ventana de 10 min por IP/correo).
+     - **Control de Creación de Campo:** `status.access.create` restringido a usuarios autenticados.
+     - **Validación Estricta:** Longitudes mínimas y máximas en nombre (2-100), mensaje (10-3000) y teléfono (30).
+  3. **Suite Automatizada de Pruebas de Regresión:**
+     - Creación de `src/tests/cms-security.test.ts` con 14 casos de prueba automatizados en Vitest que evalúan aislamiento de borradores, permisos RBAC de usuarios/editores, protección de Globals y rechazo de spam.
+- **Consecuencias:**  
+  - *Positivas:* Eliminación de cualquier vector de inyección en formularios públicos, 17 pruebas unitarias y de regresión pasando en verde, paridad total de seguridad en REST y GraphQL.
+
 
 

@@ -3,8 +3,8 @@
 ## 1. Ficha del Proyecto
 
 - **Nombre del Proyecto:** Dany Glock — Artist Digital Experience
-- **Fase Actual:** Misión 004 — Payload CMS & Content Architecture (Completada)
-- **Última Misión Completada:** **Misión 004 — Payload CMS & Content Architecture**
+- **Fase Actual:** Misión 004-B — Security Hardening & CMS Regression Tests (Completada)
+- **Última Misión Completada:** **Misión 004-B — Security Hardening & CMS Regression Tests**
 - **Misión en Curso:** Preparación para **Misión 005 — Core Layout, Smooth Scroll & Kinetic Navigation**
 - **Bloqueos Activos:** Ninguno.
 
@@ -25,6 +25,30 @@
 | **Docker** | `docker 27.x` | Contenedor `my_postgres` ejecutando Postgres 17.6 |
 
 ---
+
+### [2026-10-23] — Misión 004-B: Security Hardening & CMS Regression Tests
+- **Misión:** Misión 004-B
+- **Implementaciones realizadas:**
+  - **Rotación Criptográfica y Mitigación P0:** Se invalidó la contraseña inicial anterior y se rotó la clave del administrador en PostgreSQL sin registrar credenciales en texto plano.
+  - **Limpieza de Código:** Se refactorizó `src/scripts/seed-admin.ts` para eliminar cualquier credencial incrustada, condicionando la creación a variables de entorno (`SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`).
+  - **Script de Rotación Segura:** Se creó `src/scripts/rotate-admin-password.ts` para permitir rotaciones continuas de contraseñas con validación de complejidad (mínimo 14 caracteres) sin fugas de secretos.
+  - **Hardening de Configuración:** `src/payload.config.ts` valida obligatoriamente `PAYLOAD_SECRET` en producción, rechazando arranques inseguros.
+  - **Blindaje del Formulario de Contacto:**
+    - Campo Honeypot anti-spam (`websiteHoneypot`).
+    - Limitador de tasa en memoria por IP/email con ventana deslizante (`src/lib/rate-limiter.ts`, máximo 5 envíos en 10 min).
+    - Restricción de campo `status.access.create` para impedir inyección anónima de estados internos.
+    - Validaciones de longitud mínima y máxima en servidor.
+  - **Migración de Base de Datos:** Generada y aplicada migración `20261023_060207_add_contact_honeypot.ts`.
+  - **Suite Automatizada de Regresión:** Creado `src/tests/cms-security.test.ts` con 14 casos de prueba automatizados con Vitest (aislamiento de borradores, privacidad de contactos, honeypot, rate limiting, RBAC, globals y protección de usuarios).
+  - **Auditoría de GraphQL:** Verificado que `/api/graphql` aplica exactamente los mismos filtros de seguridad que la REST API (403 en contactos, borradores ocultos).
+- **Arquitectura y decisiones:** Registrado ADR-011 en `05-technical-decisions.md`.
+- **Pruebas ejecutadas:**
+  - `pnpm test` (`vitest run`): 17/17 tests pasados (100% verde).
+  - `pnpm typecheck` (`tsc --noEmit`): 0 errores.
+  - `pnpm lint` (`next lint`): 0 errores, 0 advertencias.
+  - `pnpm build` (`next build`): compilación limpia en 20s.
+- **Pendientes y bloqueos:** Ninguno.
+- **Próximos pasos:** Misión 005 — Core Layout, Smooth Scroll & Kinetic Navigation.
 
 ### [2026-10-23] — Misión 004: Payload CMS & Content Architecture
 - **Misión:** Misión 004

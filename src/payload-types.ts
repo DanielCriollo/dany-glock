@@ -389,7 +389,11 @@ export interface Contact {
   phone?: string | null;
   subjectType: 'booking_event' | 'press_media' | 'brand_partnership' | 'other';
   message: string;
-  status: 'new' | 'contacted' | 'archived';
+  status?: ('new' | 'contacted' | 'archived') | null;
+  /**
+   * Campo oculto para detección de bots automatizados.
+   */
+  websiteHoneypot?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -708,6 +712,7 @@ export interface ContactsSelect<T extends boolean = true> {
   subjectType?: T;
   message?: T;
   status?: T;
+  websiteHoneypot?: T;
   updatedAt?: T;
   createdAt?: T;
 }

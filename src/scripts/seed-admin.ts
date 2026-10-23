@@ -6,20 +6,51 @@ import fs from 'fs';
 async function seedData() {
   const payload = await getPayload({ config });
 
-  // 1. Ensure test media directory and dummy image exists
+  // 1. Optional admin user creation via environment variables only
+  const seedEmail = process.env.SEED_ADMIN_EMAIL;
+  const seedPassword = process.env.SEED_ADMIN_PASSWORD;
+  const seedName = process.env.SEED_ADMIN_NAME || 'Admin Local';
+
+  if (seedEmail && seedPassword) {
+    const existingUsers = await payload.find({
+      collection: 'users',
+      where: {
+        email: {
+          equals: seedEmail,
+        },
+      },
+    });
+
+    if (existingUsers.totalDocs === 0) {
+      const user = await payload.create({
+        collection: 'users',
+        data: {
+          name: seedName,
+          email: seedEmail,
+          password: seedPassword,
+          role: 'admin',
+        },
+      });
+      console.log('Admin user initialized from environment variables (ID):', user.id);
+    } else {
+      console.log('User already exists for configured email.');
+    }
+  }
+
+  // 2. Ensure test media directory and dummy image exists for local testing
   const mediaDir = path.resolve(process.cwd(), 'media');
   if (!fs.existsSync(mediaDir)) {
     fs.mkdirSync(mediaDir, { recursive: true });
   }
 
-  // Create a minimal 1x1 dummy PNG if needed
   const dummyImagePath = path.join(mediaDir, 'test-cover.png');
-  // 1x1 transparent PNG buffer
   const png1x1 = Buffer.from(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
     'base64'
   );
-  fs.writeFileSync(dummyImagePath, png1x1);
+  if (!fs.existsSync(dummyImagePath)) {
+    fs.writeFileSync(dummyImagePath, png1x1);
+  }
 
   // Check if media already exists
   let mediaDoc;
@@ -44,13 +75,13 @@ async function seedData() {
         size: png1x1.length,
       },
     });
-    console.log('Created test media:', mediaDoc.id, mediaDoc.alt);
+    console.log('Created test media (ID):', mediaDoc.id);
   } else {
     mediaDoc = existingMedia.docs[0];
-    console.log('Existing media found:', mediaDoc.id);
+    console.log('Existing media found (ID):', mediaDoc.id);
   }
 
-  // 2. Check if test release already exists
+  // 3. Check if test release already exists
   const existingReleases = await payload.find({
     collection: 'releases',
     where: {
@@ -71,7 +102,7 @@ async function seedData() {
         type: 'single',
         coverImage: mediaDoc.id,
         releaseDate: new Date().toISOString(),
-        description: 'Lanzamiento ficticio de prueba exclusivamente local para validación técnica de Misión 004.',
+        description: 'Lanzamiento ficticio de prueba exclusivamente local para validación técnica.',
         _status: 'published',
         streamingLinks: {
           spotify: 'https://open.spotify.com/artist/dummy',
@@ -79,13 +110,13 @@ async function seedData() {
         },
       },
     });
-    console.log('Created test release:', releaseDoc.id, releaseDoc.title);
+    console.log('Created test release (ID):', releaseDoc.id);
   } else {
     releaseDoc = existingReleases.docs[0];
-    console.log('Existing release found:', releaseDoc.id);
+    console.log('Existing release found (ID):', releaseDoc.id);
   }
 
-  // 3. Create a draft release to test draft access restrictions!
+  // 4. Create a draft release to test draft access restrictions
   const draftReleases = await payload.find({
     collection: 'releases',
     where: {
@@ -110,10 +141,10 @@ async function seedData() {
         _status: 'draft',
       },
     });
-    console.log('Created draft release:', draftRelease.id, draftRelease.title);
+    console.log('Created draft release (ID):', draftRelease.id);
   }
 
-  // 4. Create related track
+  // 5. Create related track
   const existingTracks = await payload.find({
     collection: 'tracks',
     where: {
@@ -138,14 +169,14 @@ async function seedData() {
         },
       },
     });
-    console.log('Created test track related to release:', track.id, track.title);
+    console.log('Created test track related to release (ID):', track.id);
   }
 
-  console.log('All local test data seeded successfully.');
+  console.log('Test data verified successfully without hardcoded credentials.');
   process.exit(0);
 }
 
 seedData().catch((err) => {
-  console.error('Seed error:', err);
+  console.error('Seed error:', err.message);
   process.exit(1);
 });

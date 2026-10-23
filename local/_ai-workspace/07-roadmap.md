@@ -65,6 +65,17 @@ flowchart TD
 
 ---
 
+### ✅ Misión 004-B — Security Hardening & CMS Regression Tests *(Completada)*
+- **Objetivo:** Auditar, fortalecer la capa de seguridad, rotar credenciales comprometidas y establecer una suite de pruebas automatizadas de regresión en Vitest.
+- **Entregables:**
+  - Rotación criptográfica de contraseñas y eliminación de credenciales en texto plano en scripts (`seed-admin.ts`, `rotate-admin-password.ts`).
+  - Blindaje anti-spam y rate limiting en memoria para el formulario de contacto público.
+  - Protección de campo `status` en `contacts` para prevenir inyección anónima.
+  - Suite de 14 pruebas automatizadas de regresión en `src/tests/cms-security.test.ts` (17/17 tests totales pasando).
+  - Paridad de seguridad certificada en GraphQL y REST.
+
+---
+
 ### ⏳ Misión 005 — Core Layout, Smooth Scroll & Kinetic Navigation *(Siguiente fase activa)*
 - **Objetivo:** Desarrollar el marco estructural envolvente de la experiencia pública.
 - **Alcance:**

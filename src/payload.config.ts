@@ -45,7 +45,13 @@ export default buildConfig({
   ],
   editor: lexicalEditor(),
   sharp: sharp as unknown as Parameters<typeof buildConfig>[0]['sharp'],
-  secret: process.env.PAYLOAD_SECRET || 'dany_glock_super_secret_payload_cms_key_32_chars_min_2026',
+  secret: (() => {
+    const s = process.env.PAYLOAD_SECRET;
+    if (!s && process.env.NODE_ENV === 'production') {
+      throw new Error('FATAL SECURITY ERROR: PAYLOAD_SECRET must be defined in production.');
+    }
+    return s || 'dev_secret_fallback_key_32_chars_minimum_local_only';
+  })(),
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
