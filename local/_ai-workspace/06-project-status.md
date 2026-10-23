@@ -7,7 +7,7 @@
 - **Última Misión Completada:** **Misión 006-B — Integración final y preparación para despliegue** (integra M006-B.2 Multimedia de Antigravity y M006-B.2 Brochure de Claude Code)
 - **Siguiente Misión:** Desplegar M006-B.3 (revalidación, ver `16-cache-revalidation.md` §5), aprobaciones editoriales BRO-01…BRO-09 y **Misión 007**.
 - **Bloqueos Activos:** Ninguno.
-- **Producción:** `https://dany.forcefilters.com` — rama `wip/mision-006a` @ `45b84d2` (M006-B integrado: Multimedia + Brochure), actualizado 2026-10-23 20:30 UTC (anterior: `e12f397`). Guía: `14-vps-deployment.md`.
+- **Producción:** `https://dany.forcefilters.com` — rama `wip/mision-006a` @ `329157f` (M006-B.3 ISR + M006-B.4 material oficial), desplegado 2026-10-23 21:43 UTC (anterior: `45b84d2`). Guía: `14-vps-deployment.md`.
 
 ---
 
@@ -24,6 +24,16 @@
 | **Docker** | `docker 27.x` | Contenedor `my_postgres` ejecutando Postgres 17.6 |
 
 ---
+
+### [2026-10-23] — Cierre y despliegue de M006-B.3 + M006-B.4 (`45b84d2` → `329157f`)
+- **Commits (push a `origin/wip/mision-006a`, local = remoto):** `d6bd589` feat(cms) ISR + revalidación (M006-B.3); `329157f` feat(media) material oficial (M006-B.4).
+- **Validación previa (local):** tests 96/96, typecheck 0, lint 0, build OK; E2E de revalidación 13/13 contra `next start` local; QA headless desktop/móvil sin errores. Escaneo de secretos/contactos/assets en lo commiteado: limpio.
+- **Discrepancia «4 portadas / 5 lanzamientos» aclarada:** el catálogo tiene 4 lanzamientos oficiales publicados (SIG Sauer; SO FRESH, SO CLEAN — un solo lanzamiento —; Cicatrices; EXCESO) más `sig-sauer-remix` en borrador sin portada oficial (conserva placeholder y `pending`). Catálogo sin cambios.
+- **VPS:** backups `pre-deploy-b34-*.dump` (32 tablas con datos), `media-b34-*.tgz`, `env-b34-*` (600, en `/var/backups/dany-glock` 750); `git pull --ff-only`; `pnpm install --frozen-lockfile` (sin cambios); migraciones comparadas por SQL (5 = 5, ninguna pendiente, sin invocar comandos `payload`); copia `.next` en `/home/danyglock/next-prev-45b84d2`; build OK, corte 54 s; servicio activo, 0 errores en logs.
+- **Imágenes en producción:** 5 archivos autorizados transferidos por SCP con verificación SHA-256 a `local/official-assets/web/` (ignorado por Git) e importados con `import-official-assets.ts` (Local API, idempotente: 2.ª ejecución sin cambios). 4 portadas (`coverStatus = confirmed`), `portraitImage` = avatar oficial, Hero vacío, sin duplicados, galería sin cambios. Banner y brochure no subidos.
+- **ISR en producción (comprobado):** 4 rutas con `initialRevalidateSeconds = 3600` y caché `HIT`; hooks y endpoint en el bundle; `POST /api/revalidate` anónimo y con JWT falso → 403; API anónima sin borradores; booking sin datos de management; EPK oculto (404). 14/14 dominios del VPS idénticos a la línea base.
+- **Incidencia:** la importación por CLI no invalida la caché del servidor (limitación REV-02): la API devolvía las portadas pero el HTML seguía en caché. **Resuelta** a las 22:03:36 UTC: el usuario ejecutó `POST /api/revalidate` con su sesión de admin → `200 {"revalidated":true}` (registrado en `journalctl`).
+- **Verificación final desde internet:** `/` muestra las 4 portadas oficiales y el retrato; `/biografia` el retrato; todas las variantes `/_next/image` y `/api/media/file/*` responden 200 `image/jpeg`; Hero con fallback editorial; caché `HIT` en las 4 rutas; `/admin` 200; `/epk` 404; `POST /api/revalidate` anónimo 403; sin borradores ni contactos de management expuestos. Servicio activo sin reinicios ni errores; 14/14 dominios idénticos a la línea base. **M006-B.3 y M006-B.4 cerradas.**
 
 ### [2026-10-23] — Misión 006-B.4: Imágenes oficiales y contenido multimedia real (local, sin desplegar)
 - **Material recuperado** (fuentes públicas oficiales, autenticidad verificada; `local/official-assets/`, excluido de Git): 4 portadas de Apple Music vía iTunes Lookup (3000² salvo Cicatrices 1400², máximo disponible), avatar y banner del canal oficial de YouTube (identidad verificada por `channelId` del video oficial), 6 miniaturas maxres de videoclips. Sin ampliaciones artificiales. Instagram/TikTok/Spotify sin material accesible sin login: no se eludió.

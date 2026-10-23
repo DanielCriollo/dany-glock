@@ -71,3 +71,23 @@ Script idempotente `src/scripts/import-official-assets.ts` (solo reemplaza marca
 
 ## 6. Verificación visual
 Capturas en `local/official-assets/verification/` (excluido de Git): Home, Biografía y Booking en desktop 1440×900 y móvil 375×812 (vista superior, página completa y secciones Lanzamiento / Música / El Artista). Sin imágenes rotas, sin desbordamiento horizontal, sin errores de consola, jerarquía de encabezados sin saltos. Imágenes servidas por `/_next/image` a tamaño de caja (p. ej. portadas 359² para tarjetas de 274² en desktop).
+
+---
+
+## 7. Producción (2026-10-23 21:45 UTC)
+
+Importados en `danyglock_db` con `import-official-assets.ts` (archivos transferidos por SCP, SHA-256 verificado):
+
+| Medio | Asignación | Estado |
+| :--- | :--- | :--- |
+| `cover-sig-sauer.jpg` 2048² | `releases/sig-sauer` | `confirmed` |
+| `cover-so-fresh-so-clean.jpg` 2048² | `releases/so-fresh-so-clean` | `confirmed` |
+| `cover-cicatrices.jpg` 1400² | `releases/cicatrices` | `confirmed` |
+| `cover-exceso.jpg` 2048² | `releases/exceso` | `confirmed` |
+| `artist-avatar-youtube.jpg` 829² | `artist-profile.portraitImage` | — |
+| — | `releases/sig-sauer-remix` (borrador) | Sin portada oficial: placeholder + `pending` |
+| — | Hero desktop/móvil | Vacío (fallback editorial) |
+
+Sin duplicados; el placeholder previo se conserva; ningún flyer ni foto del brochure en producción.
+
+**Visibilidad pública verificada (2026-10-23 22:05 UTC):** 4 portadas en la discografía de `/` y retrato en `/` y `/biografia`, servidos por `/_next/image` (200, `image/jpeg`).

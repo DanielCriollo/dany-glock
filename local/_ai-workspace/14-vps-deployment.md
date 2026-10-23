@@ -24,7 +24,7 @@ Despliegue inicial realizado el **2026-10-23**. Sin CI/CD ni automatización: la
 | Base de datos | PostgreSQL 16 existente — BD `danyglock_db`, rol `danyglock_app` (sin superusuario) |
 | Runtime | Node `v24.22.1`, pnpm `10.34.4` (fijado vía Corepack solo para `danyglock`) |
 | Repositorio | `https://github.com/DanielCriollo/dany-glock.git` (público, clonado por HTTPS) |
-| Rama / commit desplegado | `wip/mision-006a` @ `45b84d2d0d2a432287ea2c2fba8f91af0b91154b` (M006-B integrado, 2026-10-23 20:30 UTC). Anteriores: `e12f397` (M006-B.1), `8ea781f` (M006-A.2) |
+| Rama / commit desplegado | `wip/mision-006a` @ `329157f412a06c732efb663da5f1dc5770e10b7c` (M006-B.3 + M006-B.4, 2026-10-23 21:43 UTC). Anteriores: `45b84d2`, `e12f397`, `8ea781f` |
 
 ### Por qué el enlace se llama `zz-…`
 Nginx carga `sites-enabled/*` en orden alfabético y el primer `server` de cada `listen` es el *default server*. Con el nombre `dany.forcefilters.com` el vhost quedaba primero y capturaba peticiones de dominios sin bloque propio en :80 / :443. El prefijo `zz-` lo carga al final y preserva el default original (`game-app.conf`). **No renombrar.**
@@ -205,3 +205,24 @@ Verificar: `/`, `/biografia` (módulo «Trayectoria y Colaboraciones» con 5 hit
 ## 9. Próximo despliegue: M006-B.3 (revalidación del CMS)
 
 Sin migraciones ni cambios de dependencias. Procedimiento y verificación en `16-cache-revalidation.md` §5. Tras desplegarlo, **los cambios editoriales ya no requieren build ni reinicio**.
+
+---
+
+## 10. Despliegue M006-B.3 + M006-B.4 (2026-10-23 21:43 UTC)
+
+Realizado: `329157f`, corte 54 s, sin migraciones. Rollback rápido: `/home/danyglock/next-prev-45b84d2` + `pre-deploy-b34-*.dump`.
+
+**Importar imágenes oficiales (procedimiento usado):**
+
+```bash
+# Windows: transferir solo archivos autorizados, con verificación
+ssh dany-vps 'mkdir -m 700 /tmp/dany-b4-import'
+scp <archivos.jpg> SHA256SUMS dany-vps:/tmp/dany-b4-import/
+ssh dany-vps 'cd /tmp/dany-b4-import && sha256sum -c SHA256SUMS && sudo install -d -o danyglock -g danyglock -m 750 /var/www/dany-glock/local/official-assets/web && sudo install -o danyglock -g danyglock -m 640 *.jpg /var/www/dany-glock/local/official-assets/web/ && rm -rf /tmp/dany-b4-import'
+# VPS (usuario danyglock), tras el backup:
+node node_modules/.pnpm/tsx@*/node_modules/tsx/dist/cli.mjs src/scripts/import-official-assets.ts
+```
+
+Después hay que **regenerar la caché** (los scripts CLI no la invalidan): con sesión de admin en `/admin`, en la consola del navegador `fetch('/api/revalidate',{method:'POST'}).then(r=>r.status)` → `200`, o esperar ≤ 1 h.
+
+**Desde M006-B.3, los cambios de contenido hechos en `/admin` no requieren build ni reinicio.**

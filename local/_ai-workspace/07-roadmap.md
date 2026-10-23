@@ -186,3 +186,12 @@ flowchart TD
   - Configuración de script de migraciones de PostgreSQL para entorno de producción.
   - Archivo de configuración modelo para Nginx (Reverse Proxy + SSL Let's Encrypt).
   - Manual operativo de despliegue, copias de seguridad de base de datos y restauración.
+
+### ✅ Misión 006-B.3 — Revalidación del CMS sin rebuild *(Completada y desplegada, `d6bd589`)*
+- ISR con revalidación bajo demanda desde hooks de Payload; endpoint `POST /api/revalidate` solo admin. Ver `16-cache-revalidation.md`.
+
+### ✅ Misión 006-B.4 — Imágenes oficiales *(Completada y desplegada, `329157f`)*
+- 4 portadas oficiales y retrato del canal oficial en producción; medios reales sin superposiciones. Ver `17-media-inventory.md`.
+
+### ⏳ Siguiente
+- Fotos de prensa en alta resolución (MED-05/06), aprobaciones editoriales del brochure (BRO-01…09) y Misión 007.

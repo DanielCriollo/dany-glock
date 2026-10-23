@@ -211,3 +211,10 @@ Detalle y evidencias en `15-brochure-audit.md`.
 - [ ] **MED-06 (Media):** Portada de Cicatrices en ≥ 3000² (Apple solo publica 1400²).
 - [ ] **MED-07 (Media):** Producción: las imágenes no viajan por Git. Tras desplegar código, subir desde `/admin` las 4 portadas y el retrato (archivos en `local/official-assets/web/`) o ejecutar `import-official-assets.ts` copiando antes esa carpeta al VPS. La revalidación (M006-B.3) las publica sin rebuild.
 - [ ] **MED-08 (Baja):** Conservar por escrito la conformidad de los sellos (Beatmen Generations, Prix Music Group) para el uso de portadas.
+
+### Actualización 2026-10-23 21:45 UTC — M006-B.3 + M006-B.4 desplegados (`329157f`)
+- [x] **REV-01:** M006-B.3 desplegado.
+- [x] **MED-07:** Portadas y retrato importados en producción (`17-media-inventory.md` §7).
+- [x] **REV-04:** Caché regenerada con `POST /api/revalidate` (sesión admin, 200) y portadas/retrato verificados en el HTML público.
+- [ ] **REV-05 (Baja):** Validar en producción la revalidación desde `/admin` con un cambio editorial real autorizado (p. ej. al aprobar el primer contenido pendiente).
+- Siguen abiertos: MED-05, MED-06, MED-08, BRO-01…BRO-09, BRO-11, INT-04, INT-06, REV-02, REV-03.

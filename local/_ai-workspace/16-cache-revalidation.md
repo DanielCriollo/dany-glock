@@ -91,3 +91,20 @@ sudo systemctl start dany-glock
 Verificación posterior: `curl -sI https://dany.forcefilters.com/ | grep -i x-nextjs-cache` (esperado `HIT` en la segunda visita); `curl -s -o /dev/null -w "%{http_code}" -X POST https://dany.forcefilters.com/api/revalidate` → `403`. Prueba funcional sin alterar contenido real: en `/admin` guardar `Shows & Booking` sin cambios y comprobar en `journalctl -u dany-glock` la línea `Revalidación (booking)`.
 
 **No ejecutar `verify-revalidation.ts` en producción** (crea un admin temporal y modifica contenido; el script lo bloquea para dominios `forcefilters.com`).
+
+---
+
+## 6. Estado en producción (2026-10-23, `329157f`)
+
+| Verificación | Resultado | Tipo |
+| :--- | :--- | :--- |
+| Rutas ISR con revalidación 3600 s (`prerender-manifest.json`) | ✅ `/`, `/biografia`, `/booking`, `/epk` | Comprobado en VPS |
+| Páginas servidas desde caché | ✅ `x-nextjs-cache: HIT` | Comprobado desde internet |
+| Hooks y endpoint incluidos en el bundle | ✅ | Comprobado en VPS |
+| `POST /api/revalidate` anónimo / con JWT falso | ✅ 403 / 403 | Comprobado desde internet |
+| Borradores invisibles (API anónima con `draft=true`) | ✅ | Comprobado desde internet |
+| Contacto de management privado | ✅ | Comprobado desde internet |
+| EPK oculto | ✅ 404 | Comprobado desde internet |
+| Script CLI no invalida la caché | ✅ confirmado (HTML en `HIT` sin portadas tras importar) | Comprobado (limitación REV-02) |
+| Publicar/retirar desde `/admin` actualiza la web | No probado en producción para no modificar contenido real; respaldado por E2E local 13/13 | Inferido |
+| `POST /api/revalidate` con sesión admin regenera las páginas | ✅ 200 `{"revalidated":true}` (22:03:36 UTC); tras ello el HTML público pasó de 0/4 a 4/4 portadas y mostró el retrato, y volvió a servirse en `HIT` | **Comprobado en producción** |
