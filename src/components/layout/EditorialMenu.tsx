@@ -18,12 +18,12 @@ export interface EditorialMenuProps {
 }
 
 const MENU_ITEMS = [
-  { index: '01', label: 'Música', href: '#musica', description: 'Discografía oficial, singles y álbumes' },
-  { index: '02', label: 'Videografía', href: '#videos', description: 'Videoclips oficiales y directos' },
-  { index: '03', label: 'Tour & Shows', href: '#tour', description: 'Fechas de conciertos y festivales' },
-  { index: '04', label: 'Journal', href: '#journal', description: 'Noticias, comunicados y prensa' },
-  { index: '05', label: 'Press Kit (EPK)', href: '#press-kit', description: 'Recursos para medios y promotores' },
-  { index: '06', label: 'Booking & Contacto', href: '#contacto', description: 'Contrataciones y alianzas' },
+  { index: '01', label: 'Música', href: '/#musica', description: 'Discografía oficial, singles y álbumes' },
+  { index: '02', label: 'Videografía', href: '/#videos', description: 'Videoclips oficiales y directos' },
+  { index: '03', label: 'Tour & Shows', href: '/#tour', description: 'Fechas de conciertos y festivales' },
+  { index: '04', label: 'Journal', href: '/#journal', description: 'Noticias, comunicados y prensa' },
+  { index: '05', label: 'Press Kit (EPK)', href: '/#press-kit', description: 'Recursos para medios y promotores' },
+  { index: '06', label: 'Booking & Contacto', href: '/booking', description: 'Contrataciones y alianzas' },
 ];
 
 export const EditorialMenu: React.FC<EditorialMenuProps> = ({
@@ -179,7 +179,7 @@ export const EditorialMenu: React.FC<EditorialMenuProps> = ({
               {bookingEmail}
             </a>
           ) : (
-            <Link href="#contacto" onClick={handleLinkClick} className="text-ash hover:text-bone transition-colors">
+            <Link href="/#contacto" onClick={handleLinkClick} className="text-ash hover:text-bone transition-colors">
               Canal de Contacto Oficial ↗
             </Link>
           )}

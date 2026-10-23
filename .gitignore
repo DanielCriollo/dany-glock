@@ -46,3 +46,7 @@ desktop.ini
 
 # NOTA: local/_ai-workspace/ DEBE ser rastreado en Git para mantener persistencia del Project Brain
 !local/_ai-workspace/
+
+# Material fuente del brochure (contiene datos de contacto y piezas de terceros; no publicar en el repositorio)
+local/*.pdf
+local/brochure-assets/

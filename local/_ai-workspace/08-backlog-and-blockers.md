@@ -121,18 +121,18 @@
 
 ---
 
-## 9. Backlog Preparado para Misión 006-B.2 (Assets Oficiales, Optimización de Medios y EPK Expandido)
+## 9. Registro de Tareas de Misión 006-B.2 (Official Artist Visual Identity & Media Experience)
 
-- [ ] **MED-01:** Subir fotografías oficiales en alta resolución (1920x1080 desktop, 1080x1920 mobile, 1600x2000 retrato 4:5) a la colección `Media` y asociarlas a `ArtistProfile`.
-- [ ] **MED-02:** Cargar carátulas de alta resolución (1:1 3000x3000px) para *SIG Sauer*, *SO FRESH, SO CLEAN*, *Cicatrices* y *EXCESO* asociadas a `Releases`.
-- [ ] **MED-03:** Sincronizar loops de video de fondo opcionales en el Hero con soporte accesible para `prefers-reduced-motion` y pausa.
-- [ ] **MED-04:** Desarrollar el paquete descargable de Electronic Press Kit (EPK) para medios y promotores.
-
-
-
-
+- [x] **MED-01:** Implementar renderizado responsivo y accesible para el Hero (`HeroMedia.tsx`): soporte para video en bucle silenciado, detección activa de `prefers-reduced-motion`, botón accesible de reproducción/pausa, selección responsiva desktop/móvil y fallback Dark Cinematic Editorial. *(Evidencia: `src/components/hero/HeroMedia.tsx`)*
+- [x] **MED-02:** Estandarizar carátulas oficiales 1:1 en toda la discografía (`ReleaseCover.tsx`) con soporte para relaciones pobladas de `Media`, carga prioritaria para spotlight (LCP), lazy loading para catálogo y fallback de vinilo concéntrico con código de catálogo. *(Evidencia: `src/components/music/ReleaseCover.tsx`)*
+- [x] **MED-03:** Integrar retrato vertical 4:5 del artista (`ArtistPortrait.tsx`) en Home ("El Artista") y `/biografia` con fallback editorial y tipografía monumental sin deformaciones. *(Evidencia: `src/components/artist/ArtistPortrait.tsx`)*
+- [x] **MED-04:** Optimizar la experiencia audiovisual (`VideoGallery.tsx`): priorización de `customThumbnail` sobre YouTube con Next.js `<Image>`, cero iframes en carga inicial, y modal `<dialog>` accesible con foco atrapado y tecla Escape. *(Evidencia: `src/components/video/VideoGallery.tsx`)*
+- [x] **MED-05:** Habilitar optimización moderna de imágenes en `next.config.ts` (`formats: ['image/avif', 'image/webp']` y dominios remotos `i.ytimg.com` / `img.youtube.com`). *(Evidencia: `next.config.ts`)*
+- [x] **MED-06:** Configurar `depth: 2` en consultas públicas del CMS (`src/lib/cms-queries.ts`) para poblar exhaustivamente los objetos `Media` en Server Components. *(Evidencia: `src/lib/cms-queries.ts`)*
+- [x] **MED-07:** Certificación completa de calidad: 63/63 tests pasando en Vitest, `typecheck` 0 errores, `lint` 0 errores/warnings, `build` exitoso en Next.js 15, y verificación visual con browser subagent en desktop y móvil. *(Evidencia: ADR-017, logs de build y test)*
 
 ---
+
 
 ## 10. Despliegue VPS — Misión DevOps (2026-10-23)
 
@@ -146,10 +146,50 @@ Guía completa: `14-vps-deployment.md`.
 
 ### Pendientes derivados del despliegue
 - [ ] **DEPLOY-01 (Alta):** La Home `/` (y `/biografia` en el código local) se prerenderiza estáticamente y no existe revalidación (`revalidate`, `revalidatePath` en hooks `afterChange`). Los cambios del CMS **no aparecen en producción hasta un nuevo build**. Resolver en código (p. ej. `export const revalidate = 60` o hooks de revalidación) mediante el flujo Git.
-- [ ] **DEPLOY-02 (Media):** Test preexistente roto en el commit desplegado `8ea781f`: `public-views.test.tsx` espera el badge `Video Oficial` y `VideoGallery` renderiza `Videoclip Oficial` (54/55). Los cambios locales sin commit de M006-B.1 reescriben ambos; confirmar al commitear.
+- [x] **DEPLOY-02:** Test roto en `8ea781f` (badge `Video Oficial`). *(Resuelto en `e12f397`: 57/57 en BD temporal del VPS.)*
 - [ ] **DEPLOY-03 (Media):** Sin backups automáticos ni externos de `danyglock_db` y `media/`. Definir copia periódica fuera del VPS.
 - [ ] **DEPLOY-04 (Media):** `seed-artist-data.ts` no se ejecuta vía `pnpm payload run` (guarda `argv[1]`). Añadir script `package.json` explícito (`seed:artist`).
 - [ ] **DEPLOY-05 (Baja):** Sin adaptador de email en Payload (los correos se escriben en consola): recuperación de contraseña del admin no funcional por email.
+- [ ] **DEPLOY-07 (Media):** Cualquier comando CLI de Payload (`migrate:status`, `payload run`, seed) ejecutado con el `.env` de producción aplica migraciones pendientes vía `prodMigrations`. Respaldar siempre antes de la primera invocación tras un `pull`.
 - [ ] **DEPLOY-06 (Baja):** Añadir `packageManager: "pnpm@10.34.4"` a `package.json` para fijar pnpm en todos los entornos.
 - [ ] **INFRA-01 (Alta, ajeno al proyecto):** PostgreSQL del VPS escucha en `0.0.0.0:5432` con `host all all 0.0.0.0/0 md5` y UFW inactivo: las BD de otros proyectos (`smart`, `qwikymenu`, `swiftfield`) son accesibles desde internet. Varios certificados de otros dominios están expirados. No se modificó (fuera de alcance).
 - [ ] **INFRA-02 (Media):** RAM ajustada (1.9 GB). El build requiere detener el servicio; considerar ampliar RAM si crecen los proyectos.
+
+---
+
+## 11. Misión 006-B.2 (Brochure) — Contenido pendiente de aprobación y tareas
+
+Detalle y evidencias en `15-brochure-audit.md`.
+
+### Requiere aprobación del equipo del artista / management
+- [ ] **BRO-01:** «Artista del Año» — confirmar años (p.1 dice 2024; p.2/p.5 dicen 2024 y 2025), entidad (Premios Kiwid Line) y evidencia. Hito `artista-del-ano-premios-kiwid-line` en borrador.
+- [ ] **BRO-02:** *Pistolón* — enlace oficial, artista principal y fecha. Hito `colaboracion-pistolon` en borrador.
+- [ ] **BRO-03:** Escenarios compartidos — evento y fecha por artista (solo Mishell Master Boys y Carlos Cortez/Milo Mae tienen flyer). Hito `escenarios-compartidos` en borrador.
+- [ ] **BRO-04:** Show en el INPEC — año, permiso de difusión y enlace del mini documental. Hito `show-inpec-pasto` en borrador.
+- [ ] **BRO-05:** Management — vigencia de la persona, correo y WhatsApp de contrataciones (brochure p.6) y autorización expresa; cargar en el global `booking` y activar `publishContact`.
+- [ ] **BRO-06:** URLs oficiales de TikTok y Facebook.
+- [ ] **BRO-07:** Confirmar especificaciones del show (duración, formato, bailarines) → `specsStatus = confirmed`.
+- [ ] **BRO-08:** Derechos de uso de los 12 flyers y 2 fotos en vivo + créditos; la foto de entrevista con presentadora requiere consentimiento (no importada).
+- [ ] **BRO-09:** Fotografías de prensa originales en alta resolución (≥ 3000 px) para hero, retrato y EPK; decidir publicación del EPK (`isPublic`).
+
+### Técnicas
+- [ ] **BRO-10:** Despliegue (cuando se autorice): commit → pull en VPS → backup → `payload migrate` → `seed-brochure-content.ts` → build. Los assets del brochure no viajan por Git: subirlos desde el admin. Recordar DEPLOY-01 (rebuild tras aprobar contenido).
+- [ ] **BRO-11:** `seed-artist-data.ts` actualiza `ArtistProfile`/`SiteSettings` sin comprobar ediciones previas: convertirlo en solo-creación antes de volver a ejecutarlo en producción.
+
+---
+
+## 12. Integración M006-B — estado consolidado (2026-10-23)
+
+### Resueltos en la integración
+- [x] **INT-01:** Doble sharp (0.34.5/0.35.5) rompía `pnpm dev` en Windows → alineado a 0.34.5 (ADR-019).
+- [x] **INT-02:** `down` de `20261023_194032` fallaba → `IF EXISTS`; up/down/up verificado sobre estado de producción.
+- [x] **INT-03:** Ayuda de `heroVideoUrl` corregida (solo MP4/WebM).
+
+### Pendientes reales
+- [ ] **DEPLOY-01 (Alta):** sin revalidación: `/`, `/biografia`, `/booking` y `/epk` son estáticas. Aprobar contenido en el CMS (hitos, flyers, EPK, contacto) exige rebuild + restart.
+- [ ] **INT-04 (Media):** Ítem «Journal» del menú apunta a `/#journal`, sección inexistente (desde M005). Decidir: ocultarlo o construir la sección con `articles`.
+- [ ] **INT-05 (Media):** `ReleaseCover` solo muestra la portada si `coverStatus = confirmed`; al subir carátulas, management debe cambiar también ese estado (todas están en `pending`).
+- [ ] **INT-06 (Baja):** `HeroMedia` marca `priority` en la imagen móvil y en la de escritorio → ambas se precargan en cualquier dispositivo cuando existan las dos. Optimizar con `<picture>`/`getImageProps` cuando se carguen fotos reales.
+- [ ] **INT-07 (Baja):** Commit único con trabajo de dos agentes: revisar el diff antes del commit; considerar dos commits (Multimedia / Brochure) para trazabilidad.
+- [ ] **BRO-01…BRO-09:** aprobaciones editoriales del brochure (§11).
+- [ ] **BRO-11:** `seed-artist-data.ts` sobrescribe `ArtistProfile`/`SiteSettings` → **no ejecutarlo en producción** hasta convertirlo en solo-creación.

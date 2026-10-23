@@ -1,8 +1,15 @@
 import React from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { getArtistProfileData, getPublishedReleasesData } from '@/lib/cms-queries';
+import {
+  getArtistProfileData,
+  getBookingData,
+  getPublishedCareerHighlightsData,
+  getPublishedReleasesData,
+} from '@/lib/cms-queries';
 import { Button } from '@/components/ui/Button';
+import { ArtistPortrait } from '@/components/artist/ArtistPortrait';
+import { CareerHighlights } from '@/components/career/CareerHighlights';
 
 export const metadata: Metadata = {
   title: 'Dany Glock — Biografía y Perfil Artístico Oficial',
@@ -11,9 +18,11 @@ export const metadata: Metadata = {
 };
 
 export default async function BiografiaPage() {
-  const [artistProfile, releases] = await Promise.all([
+  const [artistProfile, releases, highlights, booking] = await Promise.all([
     getArtistProfileData(),
     getPublishedReleasesData(),
+    getPublishedCareerHighlightsData(),
+    getBookingData(),
   ]);
 
   const stageName = artistProfile?.stageName || 'Dany Glock';
@@ -68,33 +77,15 @@ export default async function BiografiaPage() {
 
       {/* Cuerpo de la Biografía */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-start mb-20">
-        {/* Columna Izquierda: Retrato Placeholder Editorial */}
+        {/* Columna Izquierda: Retrato Oficial (ArtistPortrait) */}
         <div className="md:col-span-5 space-y-6">
-          <div className="relative aspect-[4/5] w-full bg-gradient-to-b from-carbon via-ink to-graphite border border-white/10 flex flex-col justify-between p-8 overflow-hidden group">
-            {/* Detalles cinemáticos */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-crimson-deep/20 via-transparent to-transparent pointer-events-none" />
-            <div className="relative z-10 flex items-start justify-between font-mono text-[10px] text-smoke">
-              <span>RETRATO EDITORIAL</span>
-              <span>4:5 FORMAT</span>
-            </div>
-
-            <div className="relative z-10 my-auto text-center space-y-2">
-              <span className="font-sans font-black text-6xl tracking-tighter text-bone/20 select-none block">
-                DG
-              </span>
-              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-ash block">
-                Dany Glock
-              </span>
-              <span className="font-mono text-[9px] uppercase tracking-widest text-smoke block">
-                Archivo Fotográfico en Preparación
-              </span>
-            </div>
-
-            <div className="relative z-10 border-t border-white/5 pt-3 flex items-center justify-between font-mono text-[10px] text-smoke">
-              <span>{city}, {country}</span>
-              <span>2024–2026</span>
-            </div>
-          </div>
+          <ArtistPortrait
+            portraitImage={artistProfile?.portraitImage}
+            stageName={stageName}
+            city={city}
+            country={country}
+            priority={true}
+          />
 
           <div className="p-6 bg-carbon/40 border border-white/10 space-y-3 font-mono text-xs">
             <span className="uppercase text-smoke tracking-wider block text-[10px]">
@@ -161,13 +152,30 @@ export default async function BiografiaPage() {
             </div>
           </section>
 
+          <CareerHighlights highlights={highlights} index="04" />
+
+          {booking?.showDescription && (
+            <section aria-labelledby="en-vivo-title" className="space-y-4">
+              <h2
+                id="en-vivo-title"
+                className="font-sans font-bold text-xl uppercase tracking-wider text-crimson-text"
+              >
+                05 / En Vivo
+              </h2>
+              <p className="font-sans text-base text-bone/90 leading-relaxed">{booking.showDescription}</p>
+              <Link href="/booking" className="inline-block font-mono text-xs text-crimson-text hover:underline">
+                Formato del show y contrataciones →
+              </Link>
+            </section>
+          )}
+
           {/* Enlaces y Acciones */}
           <div className="pt-6 border-t border-white/10 flex flex-wrap gap-4">
             <Button variant="primary" href="/#musica">
               Escuchar Catálogo Musical →
             </Button>
-            <Button variant="secondary" href="/#contacto">
-              Contacto para Prensa & Booking
+            <Button variant="secondary" href="/booking">
+              Shows & Booking
             </Button>
           </div>
         </div>

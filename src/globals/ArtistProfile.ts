@@ -50,7 +50,7 @@ export const ArtistProfile: GlobalConfig = {
       type: 'text',
       label: 'Video o Loop de Fondo del Hero (Opcional)',
       admin: {
-        description: 'URL de video MP4/WebM o YouTube para ambientación cinematográfica.',
+        description: 'URL directa a un archivo de video MP4 o WebM (silenciado, en bucle). Los enlaces de YouTube no se reproducen como fondo.',
       },
     },
     {

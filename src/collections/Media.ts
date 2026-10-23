@@ -79,6 +79,8 @@ export const Media: CollectionConfig = {
         { label: 'Fotografía de Prensa (Press Photo)', value: 'press_photo' },
         { label: 'Audio Preview (Muestra de audio)', value: 'audio_preview' },
         { label: 'Documento / Press Kit PDF', value: 'document' },
+        { label: 'Flyer de Evento (Archivo histórico)', value: 'event_flyer' },
+        { label: 'Fotografía en Vivo (Show)', value: 'live_photo' },
       ],
     },
     {
@@ -86,6 +88,48 @@ export const Media: CollectionConfig = {
       type: 'checkbox',
       label: 'Disponible para descarga en el Electronic Press Kit (EPK)',
       defaultValue: false,
+    },
+    {
+      name: 'credit',
+      type: 'text',
+      label: 'Crédito (fotógrafo / diseñador / promotor)',
+    },
+    {
+      name: 'gallery',
+      type: 'group',
+      label: 'Archivo visual de shows',
+      admin: {
+        description:
+          'Solo se muestra en la galería pública si "Visible en galería" está activo y los derechos de uso están aprobados. Transcribir únicamente datos legibles; no inferir años ni lugares.',
+      },
+      fields: [
+        {
+          name: 'visible',
+          type: 'checkbox',
+          label: 'Visible en galería pública',
+          defaultValue: false,
+        },
+        {
+          name: 'rightsStatus',
+          type: 'select',
+          label: 'Derechos de uso',
+          defaultValue: 'pending',
+          options: [
+            { label: 'Pendiente de aprobación', value: 'pending' },
+            { label: 'Aprobado por management', value: 'approved' },
+            { label: 'Requiere consentimiento de terceros', value: 'third_party_consent' },
+          ],
+        },
+        { name: 'eventLabel', type: 'text', label: 'Evento (texto legible)' },
+        { name: 'dateLabel', type: 'text', label: 'Fecha (tal como aparece)' },
+        { name: 'venueLabel', type: 'text', label: 'Lugar (tal como aparece)' },
+        {
+          name: 'sortOrder',
+          type: 'number',
+          label: 'Orden en galería',
+          defaultValue: 100,
+        },
+      ],
     },
   ],
 };

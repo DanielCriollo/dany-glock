@@ -48,19 +48,19 @@ export async function SiteFooter() {
 
           {/* Navegación Esencial */}
           <nav aria-label="Navegación pie de página" className="flex flex-wrap items-center gap-6 font-mono text-xs uppercase tracking-wider text-ash">
-            <Link href="#musica" className="hover:text-bone transition-colors py-1">
+            <Link href="/#musica" className="hover:text-bone transition-colors py-1">
               Música
             </Link>
-            <Link href="#videos" className="hover:text-bone transition-colors py-1">
+            <Link href="/#videos" className="hover:text-bone transition-colors py-1">
               Videos
             </Link>
             <Link href="/biografia" className="hover:text-bone transition-colors py-1">
               Biografía
             </Link>
-            <Link href="#tour" className="hover:text-bone transition-colors py-1">
+            <Link href="/#tour" className="hover:text-bone transition-colors py-1">
               Shows
             </Link>
-            <Link href="#contacto" className="hover:text-bone transition-colors py-1">
+            <Link href="/#contacto" className="hover:text-bone transition-colors py-1">
               Contacto
             </Link>
           </nav>

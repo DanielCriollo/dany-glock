@@ -3,11 +3,11 @@
 ## 1. Ficha del Proyecto
 
 - **Nombre del Proyecto:** Dany Glock — Official Artist Website
-- **Fase Actual:** Misión 006-B.1 — Cinematic Artist Experience & Home Redesign (Completada)
-- **Última Misión Completada:** **Misión 006-B.1 — Cinematic Artist Experience & Home Redesign**
-- **Siguiente Misión:** **Misión 006-B.2 — Assets Oficiales, Optimización de Medios y EPK Expandido** (o según defina el roadmap)
+- **Fase Actual:** Misión 006-B — Integración final (Multimedia + Brochure) **lista para commit y despliegue manual** (local, sin commit)
+- **Última Misión Completada:** **Misión 006-B — Integración final y preparación para despliegue** (integra M006-B.2 Multimedia de Antigravity y M006-B.2 Brochure de Claude Code)
+- **Siguiente Misión:** Commit + despliegue manual de M006-B (ver `14-vps-deployment.md` §8); después **Misión 007** y aprobaciones BRO-01…BRO-09.
 - **Bloqueos Activos:** Ninguno.
-- **Producción:** `https://dany.forcefilters.com` — rama `wip/mision-006a` @ `8ea781f` (M006-A.2), desplegado 2026-10-23. Guía: `14-vps-deployment.md`. Los cambios de M006-B.1 aún no están commiteados ni desplegados.
+- **Producción:** `https://dany.forcefilters.com` — rama `wip/mision-006a` @ `e12f397` (M006-B.1), actualizado 2026-10-23 18:47 UTC. Guía: `14-vps-deployment.md`.
 
 ---
 
@@ -24,6 +24,74 @@
 | **Docker** | `docker 27.x` | Contenedor `my_postgres` ejecutando Postgres 17.6 |
 
 ---
+
+### [2026-10-23] — Misión 006-B: Integración final y preparación para despliegue
+- **Alcance:** revisión conjunta de M006-B.2 Multimedia (Antigravity: `HeroMedia`, `ReleaseCover`, `ArtistPortrait`, `VideoGallery`, `next.config.ts`, `depth: 2`) y M006-B.2 Brochure (Claude Code: `career-highlights`, `booking`, `press-kit`, galería en `media`, `/booking`, `/epk`, migración `20261023_194032`).
+- **Conflictos encontrados:** ninguno de código entre agentes (archivos compartidos — `page.tsx`, `biografia/page.tsx`, `cms-queries.ts`, `LatestReleaseSpotlight.tsx` — combinan ambos cambios sin pérdidas). Todas las secciones M006-B.1 (`lanzamiento`, `musica`, `biografia`, `videos`, `tour`, `contacto`, `press-kit`) siguen presentes.
+- **Problemas comprobados y corregidos:**
+  1. **Dos versiones de sharp en el mismo proceso** (Next 15.4 → 0.34.5, proyecto → 0.35.5). Ambas incluyen `libvips-42.dll`; en Windows, si el optimizador `next/image` (nuevo en M006-B) cargaba primero, Payload fallaba con `ERR_DLOPEN_FAILED` y la página daba error. Reproducido en `pnpm dev`. En Linux (Docker `node:24-bookworm-slim`) ambos órdenes funcionan → producción no afectada. **Corrección:** `sharp` del proyecto fijado a `^0.34.5` (una sola versión en el lockfile). Verificado: subida con generación de tamaños en Payload, orden `next/image` → `/admin` OK, build y tests OK. (ADR-019)
+  2. **`down` de la migración `20261023_194032` fallaba** (DROP CONSTRAINT tras DROP TABLE … CASCADE). Corregido con `IF EXISTS`. Verificado en BD restaurada con el estado de producción: up → down (esquema idéntico al original) → up, sin deriva.
+  3. Texto de ayuda de `heroVideoUrl` prometía YouTube; `HeroMedia` solo reproduce MP4/WebM directos. Corregido el texto (sin cambio de esquema).
+- **Verificaciones:** tipos generados sincronizados con la configuración; migraciones encadenadas desde cero (5) y sobre estado de producción (4 → 5); seeds: `seed-brochure-content.ts` solo-creación; ningún contacto/secreto en archivos versionables; PDF, assets del brochure, `media/` y `.env` ignorados.
+- **Calidad:** typecheck 0, lint 0, tests 78/78 (7 suites), build OK (8 rutas). Navegador: desktop 1440×900 y móvil 375×812 en `/`, `/biografia`, `/booking` sin scroll horizontal, sin imágenes rotas, menú móvil con cierre por Escape; `/epk` 404 mientras no sea público.
+- **Pendientes reales:** ver `08-backlog-and-blockers.md` §12.
+
+### [2026-10-23] — Misión 006-B.2 (Brochure): Migración del brochure oficial a la experiencia web
+- **Misión:** Misión 006-B.2 — Migración del Brochure Oficial (local; sin commit ni despliegue).
+- **Implementaciones realizadas:**
+  - Auditoría completa de las 6 páginas y matriz de verificación: `15-brochure-audit.md` (23 afirmaciones clasificadas, 14 imágenes evaluadas, 13 flyers transcritos).
+  - Payload: colección `career-highlights`, globals `booking` y `press-kit`, ampliación de `media` (galería de shows). Migración `20261023_194032_add_brochure_content_structure` (lote 5 local; verificada desde cero, sin deriva).
+  - Seeds solo-creación `seed-brochure-content.ts` (5 hitos verificados publicados, 4 afirmaciones en borrador, booking y EPK inicializados) e `import-brochure-assets.ts` (14 piezas ocultas, derechos pendientes).
+  - Vistas: `/biografia` (trayectoria y colaboraciones, en vivo), `/booking` (nueva), `/epk` (nueva, 404 hasta `isPublic`), home enlazada; navegación `/#ancla` válida desde subpáginas.
+  - Correcciones responsive preexistentes: desbordamiento horizontal en móvil de la home (brillo de `LatestReleaseSpotlight` y título «SHOWS & PRESENTACIONES»).
+  - Privacidad: datos de contacto fuera del repositorio público; `local/*.pdf` y `local/brochure-assets/` en `.gitignore`.
+- **Calidad:** tests 78/78 (nueva suite `brochure-content.test.tsx`, 15 pruebas), typecheck 0, lint 0, build OK (`/booking` 122 kB First Load JS). Revisión en navegador desktop 1440×900 y móvil 375×812 sin scroll horizontal; 1 h1 por página, sin saltos de encabezado, sin imágenes sin `alt` ni enlaces sin nombre.
+- **Arquitectura y decisiones:** ADR-018.
+- **Pendientes:** BRO-01…BRO-10 en `08-backlog-and-blockers.md`.
+
+### [2026-10-23] — Misión 006-B.2: Official Artist Visual Identity & Media Experience
+- **Misión:** Misión 006-B.2
+- **Implementaciones realizadas:**
+  - **Optimización de Imágenes & Formatos Modernos (`next.config.ts`):**
+    - Habilitados formatos `image/avif` e `image/webp`.
+    - Añadidos `images.remotePatterns` para `i.ytimg.com` e `img.youtube.com`.
+  - **Población Profunda en Consultas CMS (`src/lib/cms-queries.ts`):**
+    - Añadido `depth: 2` a `getArtistProfileData()`, `getPublishedReleasesData()`, `getPublishedVideosData()` y `getHomePageCmsData()`, garantizando la resolución completa de los objetos `Media` vinculados (`heroDesktopMedia`, `heroMobileMedia`, `portraitImage`, `coverImage`, `customThumbnail`).
+  - **Hero Multimedia Cinemático & Accesible (`src/components/hero/HeroMedia.tsx`):**
+    - Soporte responsivo dual: imágenes desktop (`16:10` / `16:9`) y móvil (`9:16` / `4:5`) con `priority={true}` anti-CLS.
+    - Soporte para video en bucle (`heroVideoUrl`) silenciado con fallback a imagen poster.
+    - Control accesible de reproducción/pausa con atributos ARIA (`aria-label`, `aria-pressed`).
+    - Detección activa de `prefers-reduced-motion` que pausa automáticamente el video de fondo respetando preferencias del sistema.
+    - Canvas editorial Dark Cinematic Editorial para estado vacío sin medios cargados.
+  - **Carátulas Oficiales Cuadradas 1:1 (`src/components/music/ReleaseCover.tsx`):**
+    - Proporción 1:1 rigurosa con `<Image>` de Next.js.
+    - Soporte prioritario para el Single Spotlight (`priority={true}`) y lazy loading para el catálogo.
+    - Fallback de vinilo concéntrico con rotulado de catálogo (`DG-REC-001`, etc.) para estados sin arte cargado o en sincronización.
+  - **Retratos Verticales 4:5 (`src/components/artist/ArtistPortrait.tsx`):**
+    - Integración en Home ("El Artista") y en `/biografia`.
+    - Proporción 4:5 vertical con fallback de textura tonal oscura y monograma DG.
+  - **Videoteca Optimizada (`src/components/video/VideoGallery.tsx`):**
+    - Cero iframes en carga inicial.
+    - Priorización de `customThumbnail` sobre la miniatura automática de YouTube con `<Image>` optimizado.
+    - Modal accesible `<dialog>` con foco atrapado y soporte de Escape.
+  - **Quality Gates & Pruebas:**
+    - 63 de 63 pruebas unitarias y de integración pasando en Vitest (6 suites).
+    - `pnpm typecheck`: 0 errores.
+    - `pnpm lint`: 0 errores, 0 warnings.
+    - `pnpm build`: 100% exitoso (Next.js 15 App Router estático `/` y `/biografia`).
+    - Verificación visual con browser subagent en desktop (1440x900) y mobile (390x844).
+- **Arquitectura y decisiones:** Registrado ADR-017 en `05-technical-decisions.md`.
+
+---
+
+
+### [2026-10-23] — Actualización de producción a M006-B.1 (`8ea781f` → `e12f397`)
+- **Procedimiento:** `git pull --ff-only` como `danyglock` (fast-forward, árbol limpio) → `pnpm install --frozen-lockfile` (lockfile sin cambios, nada instalado) → backup verificado `pre-deploy-e12f397-20261023-184623.dump` (46 tablas en `pg_restore --list`) + `media-20261023.tgz` → migración → seed → copia `.next` previo en `/home/danyglock/next-prev-8ea781f` → stop → build → start.
+- **Migración `20261023_180000_add_hero_and_portrait_media`:** aditiva (8 columnas nulables + 3 FK `ON DELETE SET NULL`), aplicada una vez como lote 2. **Incidencia:** la aplicó `prodMigrations` al inicializar Payload durante `pnpm payload migrate:status` (con `.env` cargado, `NODE_ENV=production`), no `payload migrate`. Fue después del backup y sin efectos adversos; documentado en `14-vps-deployment.md`.
+- **Seed:** re-ejecutado (idempotente, 0 creaciones) para actualizar `tagline` y textos del hero; se verificó antes que ningún registro había sido editado desde el CMS (solo `users`, que el seed no toca).
+- **Build:** OK (`/` y `/biografia` estáticas). Interrupción del servicio: 49 s.
+- **Verificación pública:** `/`, `/biografia`, `/admin`, `/admin/login`, API REST/globals 200; 15/15 recursos `/_next/static` 200; miniaturas YouTube y media 200; 404 correcto; `first-register` 403; sin textos de desarrollo en la Home. Logs sin errores. 14/14 dominios del VPS idénticos a la línea base.
+- **Calidad (BD temporal, eliminada después):** tests 57/57, typecheck 0, lint 0 → DEPLOY-02 resuelto.
 
 ### [2026-10-23] — Misión DevOps: Despliegue inicial en VPS Ubuntu compartido
 - **Misión:** Despliegue de Dany Glock en `https://dany.forcefilters.com` sin afectar proyectos existentes.

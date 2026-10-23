@@ -60,31 +60,31 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({ socialLinks, bookingEmai
           {/* Navegación Central (Desktop ≥ md) */}
           <nav aria-label="Navegación principal" className="hidden md:flex items-center gap-8">
             <Link
-              href="#musica"
+              href="/#musica"
               className="font-sans text-xs uppercase tracking-[0.14em] text-ash hover:text-bone transition-colors duration-200 py-1 border-b border-transparent hover:border-crimson"
             >
               Música
             </Link>
             <Link
-              href="#videos"
+              href="/#videos"
               className="font-sans text-xs uppercase tracking-[0.14em] text-ash hover:text-bone transition-colors duration-200 py-1 border-b border-transparent hover:border-crimson"
             >
               Videos
             </Link>
             <Link
-              href="#biografia"
+              href="/#biografia"
               className="font-sans text-xs uppercase tracking-[0.14em] text-ash hover:text-bone transition-colors duration-200 py-1 border-b border-transparent hover:border-crimson"
             >
               El Artista
             </Link>
             <Link
-              href="#tour"
+              href="/#tour"
               className="font-sans text-xs uppercase tracking-[0.14em] text-ash hover:text-bone transition-colors duration-200 py-1 border-b border-transparent hover:border-crimson"
             >
               Shows
             </Link>
             <Link
-              href="#contacto"
+              href="/#contacto"
               className="font-sans text-xs uppercase tracking-[0.14em] text-ash hover:text-bone transition-colors duration-200 py-1 border-b border-transparent hover:border-crimson"
             >
               Contacto
@@ -94,7 +94,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({ socialLinks, bookingEmai
           {/* Acciones Derecha: CTA Booking + Toggle Menú */}
           <div className="flex items-center gap-4 sm:gap-6">
             <Link
-              href="#contacto"
+              href="/booking"
               className="hidden sm:inline-flex items-center font-mono text-xs uppercase tracking-[0.16em] text-crimson-text hover:text-bone transition-colors duration-200 min-h-[44px] px-2"
             >
               Booking ↗

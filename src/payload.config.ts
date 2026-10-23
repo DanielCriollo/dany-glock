@@ -13,8 +13,11 @@ import { Videos } from './collections/Videos';
 import { Events } from './collections/Events';
 import { Articles } from './collections/Articles';
 import { Contacts } from './collections/Contacts';
+import { CareerHighlights } from './collections/CareerHighlights';
 import { ArtistProfile } from './globals/ArtistProfile';
 import { SiteSettings } from './globals/SiteSettings';
+import { Booking } from './globals/Booking';
+import { PressKit } from './globals/PressKit';
 import { migrations } from './migrations';
 
 const filename = fileURLToPath(import.meta.url);
@@ -39,10 +42,13 @@ export default buildConfig({
     Events,
     Articles,
     Contacts,
+    CareerHighlights,
   ],
   globals: [
     ArtistProfile,
     SiteSettings,
+    Booking,
+    PressKit,
   ],
   editor: lexicalEditor(),
   sharp: sharp as unknown as Parameters<typeof buildConfig>[0]['sharp'],

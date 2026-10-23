@@ -393,3 +393,66 @@ Este documento registra las decisiones arquitectónicas fundamentales tomadas pa
 - **Consecuencias:**
   - *Positivas:* Aislamiento total respecto a otros proyectos (línea base HTTP idéntica), cero servicios nuevos expuestos, reversible deshabilitando un symlink y un servicio.
   - *Negativas:* Interrupción de 1–2 min por actualización; la Home estática requiere rebuild para reflejar cambios del CMS (DEPLOY-01); sin backups automáticos (DEPLOY-03).
+
+---
+
+### ADR-017 — Identidad Visual Multimedia, Carga Responsiva y Fallbacks Cinemáticos (M006-B.2)
+- **Fecha:** 2026-10-23
+- **Estado:** Aprobado e Implementado
+- **Contexto:** La plataforma requería elevar la experiencia visual del artista Dany Glock sin depender de plantillas ni placeholders ficticios. Era indispensable soportar imágenes de alta resolución administrables desde Payload CMS (`Media`), selección responsiva (desktop vs. móvil), video de fondo con soporte de accesibilidad estricto (`prefers-reduced-motion`), carátulas 1:1 consistentes, retratos verticales 4:5 y videografía sin sobrecargar la red ni violar WCAG 2.2.
+- **Decisión:**
+  1. **Configuración de Imágenes y Dominios Remotos (`next.config.ts`):** Habilitar formatos modernos `image/avif` e `image/webp`. Declarar `images.remotePatterns` para `i.ytimg.com` e `img.youtube.com` permitiendo la optimización nativa con `<Image>` de miniaturas de YouTube.
+  2. **Profundidad de Relaciones en Payload (`src/lib/cms-queries.ts`):** Configurar `depth: 2` en las consultas de `ArtistProfile`, `Releases` y `Videos` para garantizar la población completa de los objetos `Media` vinculados (`heroDesktopMedia`, `heroMobileMedia`, `portraitImage`, `coverImage`, `customThumbnail`), incluyendo dimensiones, URLs y textos alternativos.
+  3. **Hero Multimedia Cinemático (`src/components/hero/HeroMedia.tsx`):**
+     - Soporte opcional para loop de video (`heroVideoUrl`) silenciado (`muted`), en bucle (`loop`) y sin controles intrusivos (`playsInline`).
+     - Botón accesible flotante para alternar Pausar / Reanudar el video de fondo con indicación ARIA (`aria-label`, `aria-pressed`).
+     - Detección activa de `prefers-reduced-motion` que pausa automáticamente el video de fondo respetando la preferencia del usuario.
+     - Selección responsiva con `<picture>` / imágenes optimizadas para Desktop (`16:10` / `16:9`) y Móvil (`9:16` / `4:5`).
+     - Fallback de póster y canvas Dark Cinematic Editorial generado con gradientes y tipografía monumental en caso de ausencia de medios en el CMS.
+  4. **Componente Estandarizado de Carátulas (`src/components/music/ReleaseCover.tsx`):**
+     - Proporción cuadrada 1:1 consistente en todo el sitio (Single Spotlight y catálogo).
+     - Priorización de carga (`priority={true}`) para el lanzamiento destacado (LCP optimizado) y lazy-loading nativo para el resto de la discografía.
+     - Fallback gráfico elegante de vinilo concéntrico con badge de catálogo para lanzamientos pendientes de arte o artes en sincronización, preservando el layout sin CLS.
+  5. **Retratos Verticales del Artista (`src/components/artist/ArtistPortrait.tsx`):**
+     - Formato editorial 4:5 consistente tanto en la sección Home como en `/biografia`.
+     - Soporte completo para objeto `Media` poblado de Payload y fallback editorial de textura tonal oscura con wordmark monumental del artista.
+  6. **Videoteca Optimizada y Accesible (`src/components/video/VideoGallery.tsx`):**
+     - Priorización de `customThumbnail` (Media de Payload) sobre miniaturas automáticas de YouTube con `<Image>` optimizado de Next.js.
+     - Eliminación del iframe en la carga inicial (cero bytes de YouTube embebido hasta la interacción del usuario).
+     - Reproductor en modal nativo `<dialog>` con atrapamiento de foco accesible por teclado, cierre con tecla Escape y foco restaurado al elemento activador.
+  7. **Calidad y Calibración en Pruebas:**
+     - 63 pruebas automatizadas pasando en Vitest (100% verde en 6 suites).
+     - Mock de `window.matchMedia` en entorno JSDOM para pruebas unitarias de accesibilidad de movimiento.
+     - `pnpm typecheck`: 0 errores.
+     - `pnpm lint`: 0 errores, 0 warnings.
+     - `pnpm build`: compilación de producción exitosa.
+- **Consecuencias:**
+  - *Positivas:* Calidad visual y editorial de primer nivel internacional sin dependencias externas de pago; control editorial 100% administrable desde Payload CMS; rendimiento óptimo (LCP/CLS) con Next.js Image y formatos AVIF/WebP; accesibilidad WCAG 2.2 AA completa.
+  - *Negativas:* Ninguna identificada; la arquitectura de fallbacks garantiza integridad visual incluso ante bases de datos vacías.
+
+
+---
+
+### ADR-018 — Contenido del Brochure: Trayectoria Tipada, Booking con Contacto Privado por Campo y EPK Opt-in (M006-B.2 Brochure)
+- **Fecha:** 2026-10-23
+- **Estado:** Aprobado e Implementado (local, sin desplegar)
+- **Contexto:** El brochure oficial (`local/DANY-GLOCK (2).pdf`) aporta trayectoria, premios, escenarios compartidos, formato del show, flyers y datos de management, pero mezcla hechos verificables con afirmaciones promocionales y datos personales. El repositorio de GitHub es **público**.
+- **Decisión:**
+  1. Una sola colección `career-highlights` tipada por `category` (en lugar de colecciones separadas para premios/colaboraciones), con drafts: lo no confirmado queda en borrador y lo publicado sin verificar se rotula con su fuente. `shared_stage` se separa explícitamente de `collaboration`.
+  2. Global `booking` con control de acceso **a nivel de campo**: el contacto de management solo es legible sin sesión con `publishContact = true`. Los datos de contacto no se versionan (ni en seed ni en documentación).
+  3. Global `press-kit` con `isPublic = false` por defecto; la página web compone datos ya publicados y solo hitos verificados; versión PDF preparada vía `downloadablePdf` + `downloadStatus`.
+  4. Galería reutilizando `media` (categorías `event_flyer`/`live_photo` + grupo `gallery`) en vez de una colección nueva; publicación con doble llave `visible` + `rightsStatus = approved`.
+  5. Seeds **solo-creación**; material fuente (PDF, imágenes extraídas) excluido de Git.
+  6. La migración generada se depuró para no duplicar la 20261023_180000 y su snapshot cubre el hueco de esa migración.
+- **Consecuencias:**
+  - *Positivas:* ninguna afirmación no verificada se publica por defecto; management decide desde el admin; sin datos personales en el repositorio público; esquema sin deriva.
+  - *Negativas:* `/booking`, `/biografia` y `/epk` son estáticas: activar el EPK o aprobar flyers requiere rebuild hasta resolver DEPLOY-01. La galería de producción requiere subir los archivos manualmente.
+
+---
+
+### ADR-019 — Una sola versión de sharp (alineada con Next.js)
+- **Fecha:** 2026-10-23
+- **Estado:** Aprobado e Implementado
+- **Contexto:** Next 15.4.11 depende de `sharp ^0.34.3` (optimizador `next/image`) y el proyecto declaraba `sharp ^0.35.5` para Payload. Con la adopción de `next/image` en M006-B ambas se cargan en el mismo proceso. En Windows comparten el nombre `libvips-42.dll`: si Next carga primero, Payload falla (`ERR_DLOPEN_FAILED`). En Linux no se reproduce.
+- **Decisión:** fijar `sharp` del proyecto a `^0.34.5` (la versión que resuelve Next), dejando una sola copia en el lockfile. Las plantillas oficiales de Payload 3 también usan sharp 0.34.x.
+- **Consecuencias:** desarrollo estable en Windows; producción recibe sharp 0.34.5 (libvips 8.17.3) para Payload — verificado con subida y generación de tamaños. Al actualizar Next.js, revisar que ambas dependencias sigan alineadas (`pnpm why sharp` debe mostrar una sola versión).

@@ -1,7 +1,10 @@
 import React from 'react';
 import { Button } from '@/components/ui/Button';
-import { getHomePageCmsData } from '@/lib/cms-queries';
+import { getBookingData, getHomePageCmsData, getPressKitData } from '@/lib/cms-queries';
 import { LatestReleaseSpotlight } from '@/components/music/LatestReleaseSpotlight';
+import { ReleaseCover } from '@/components/music/ReleaseCover';
+import { HeroMedia } from '@/components/hero/HeroMedia';
+import { ArtistPortrait } from '@/components/artist/ArtistPortrait';
 import { VideoGallery } from '@/components/video/VideoGallery';
 import { ContactForm } from '@/components/contact/ContactForm';
 
@@ -14,6 +17,8 @@ export default async function HomePage() {
     videos,
     events,
   } = await getHomePageCmsData();
+  const [booking, pressKit] = await Promise.all([getBookingData(), getPressKitData()]);
+  const showSpecs = [booking?.specs?.format, booking?.specs?.duration, booking?.specs?.genre].filter(Boolean);
 
   const stageName = artistProfile?.stageName || 'Dany Glock';
   const tagline =
@@ -78,40 +83,15 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Columna Visual Protagonista (16:9 / Canvas Cinemático) */}
+          {/* Columna Visual Protagonista (HeroMedia Multimedia) */}
           <div className="lg:col-span-5">
-            <div className="relative aspect-[16/10] sm:aspect-[16/9] lg:aspect-[4/5] w-full bg-gradient-to-br from-carbon via-ink to-graphite border border-white/15 p-8 flex flex-col justify-between overflow-hidden shadow-2xl group">
-              {/* Resplandor y textura visual */}
-              <div
-                className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-crimson-deep/20 via-transparent to-transparent opacity-60 pointer-events-none group-hover:scale-110 transition-transform duration-700"
-                aria-hidden="true"
-              />
-
-              {/* Marcas técnicas de encuadre editorial */}
-              <div className="relative z-10 flex items-center justify-between font-mono text-[10px] text-smoke">
-                <span>CANVAS CINEMÁTICO</span>
-                <span>ORIGIN: {city.toUpperCase()}</span>
-              </div>
-
-              {/* Monograma y presencia artística */}
-              <div className="relative z-10 text-center my-auto py-6 space-y-2">
-                <span className="font-sans font-black text-7xl sm:text-8xl tracking-tighter text-bone/25 select-none block">
-                  DG
-                </span>
-                <span className="font-mono text-xs uppercase tracking-[0.25em] text-ash block">
-                  {stageName}
-                </span>
-                <span className="inline-block font-mono text-[9px] uppercase tracking-widest text-smoke bg-black/60 px-2.5 py-1 border border-white/5">
-                  Presencia Visual Oficial
-                </span>
-              </div>
-
-              {/* Metadato inferior del canvas */}
-              <div className="relative z-10 flex items-center justify-between font-mono text-[10px] text-smoke border-t border-white/5 pt-3">
-                <span>SONIDO & IMAGEN</span>
-                <span>2024–2026</span>
-              </div>
-            </div>
+            <HeroMedia
+              desktopMedia={artistProfile?.heroDesktopMedia}
+              mobileMedia={artistProfile?.heroMobileMedia}
+              videoUrl={artistProfile?.heroVideoUrl}
+              stageName={stageName}
+              city={city}
+            />
           </div>
         </div>
 
@@ -157,51 +137,17 @@ export default async function HomePage() {
                   key={release.id}
                   className="group bg-carbon/40 border border-white/10 hover:border-crimson/50 transition-all duration-300 flex flex-col justify-between overflow-hidden"
                 >
-                  {/* Arte Editorial de Portada */}
-                  <div className="relative aspect-square w-full bg-gradient-to-br from-carbon via-ink to-graphite p-6 flex flex-col justify-between border-b border-white/5 overflow-hidden">
-                    {/* Anillos concéntricos de vinilo */}
-                    <div
-                      className="absolute inset-4 rounded-full border border-white/5 opacity-50 pointer-events-none group-hover:scale-105 transition-transform duration-700"
-                      aria-hidden="true"
-                    />
-                    <div
-                      className="absolute inset-12 rounded-full border border-white/5 opacity-30 pointer-events-none"
-                      aria-hidden="true"
-                    />
-
-                    {/* Cabecera del arte */}
-                    <div className="relative z-10 flex items-start justify-between font-mono text-[10px]">
-                      <span className="uppercase tracking-wider bg-black/60 border border-white/10 px-2 py-0.5 text-ash">
-                        {release.type === 'single' ? 'Single' : release.type === 'ep' ? 'EP' : 'Álbum'}
-                      </span>
-
-                      <span
-                        className={`uppercase tracking-widest px-2 py-0.5 border ${
-                          isLead
-                            ? 'bg-white/5 border-white/10 text-bone'
-                            : 'bg-crimson/20 border-crimson text-crimson-text'
-                        }`}
-                      >
-                        {isLead ? 'Artista Principal' : 'Artista Invitado'}
-                      </span>
-                    </div>
-
-                    {/* Centro del vinilo */}
-                    <div className="relative z-10 text-center my-auto py-4">
-                      <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-smoke block mb-1">
-                        DANY GLOCK
-                      </span>
-                      <h3 className="font-sans font-black text-xl sm:text-2xl text-bone tracking-tighter uppercase line-clamp-2">
-                        {release.title}
-                      </h3>
-                    </div>
-
-                    {/* Metadato inferior */}
-                    <div className="relative z-10 flex items-end justify-between font-mono text-[10px] text-smoke pt-2">
-                      <span>{release.catalogNumber || 'DG-DSP'}</span>
-                      <span>{releaseYear}</span>
-                    </div>
-                  </div>
+                  {/* Arte Editorial de Portada Optimizado */}
+                  <ReleaseCover
+                    coverImage={release.coverImage}
+                    title={release.title}
+                    type={release.type}
+                    coverStatus={release.coverStatus}
+                    catalogNumber={release.catalogNumber}
+                    releaseYear={releaseYear}
+                    isLead={isLead}
+                    size="md"
+                  />
 
                   {/* Ficha Editorial & Streaming */}
                   <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
@@ -276,36 +222,14 @@ export default async function HomePage() {
       {/* ========================================================= */}
       <section id="biografia" className="px-6 md:px-12 max-w-7xl mx-auto py-24 border-b border-white/10 scroll-mt-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          {/* Columna Izquierda: Retrato Vertical Editorial */}
+          {/* Columna Izquierda: Retrato Vertical Editorial (ArtistPortrait) */}
           <div className="lg:col-span-5">
-            <div className="relative aspect-[4/5] w-full max-w-md mx-auto bg-gradient-to-b from-carbon via-ink to-graphite border border-white/15 p-8 flex flex-col justify-between shadow-2xl overflow-hidden group">
-              <div
-                className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-crimson-deep/20 via-transparent to-transparent pointer-events-none"
-                aria-hidden="true"
-              />
-
-              <div className="relative z-10 flex items-center justify-between font-mono text-[10px] text-smoke">
-                <span>RETRATO ARTÍSTICO</span>
-                <span>{city.toUpperCase()}, {country.toUpperCase()}</span>
-              </div>
-
-              <div className="relative z-10 my-auto text-center space-y-3">
-                <span className="font-sans font-black text-7xl tracking-tighter text-bone/20 select-none block">
-                  DG
-                </span>
-                <span className="font-mono text-sm uppercase tracking-[0.25em] text-bone block">
-                  {stageName}
-                </span>
-                <span className="font-mono text-[10px] text-ash block">
-                  Trap Latino · Producción & Visión
-                </span>
-              </div>
-
-              <div className="relative z-10 border-t border-white/5 pt-3 flex items-center justify-between font-mono text-[10px] text-smoke">
-                <span>OFICIAL ARCHIVE</span>
-                <span>4:5 FORMAT</span>
-              </div>
-            </div>
+            <ArtistPortrait
+              portraitImage={artistProfile?.portraitImage}
+              stageName={stageName}
+              city={city}
+              country={country}
+            />
           </div>
 
           {/* Columna Derecha: Texto Editorial */}
@@ -370,7 +294,7 @@ export default async function HomePage() {
             <span className="font-mono text-xs uppercase tracking-[0.25em] text-crimson-text block mb-2">
               04 / En Vivo
             </span>
-            <h2 className="font-sans font-black text-4xl sm:text-6xl tracking-tight uppercase text-bone">
+            <h2 className="font-sans font-black text-[2rem] sm:text-6xl tracking-tight uppercase text-bone">
               SHOWS & PRESENTACIONES
             </h2>
           </div>
@@ -425,11 +349,17 @@ export default async function HomePage() {
                 Nuevas Presentaciones en Vivo por Anunciar
               </h3>
               <p className="font-sans text-sm text-ash leading-relaxed">
-                Las fechas oficiales de conciertos y festivales se publicarán conforme se confirmen los carteles y boleterías. Para contrataciones y disponibilidad, contactar a booking.
+                {booking?.showDescription ||
+                  'Las fechas oficiales de conciertos y festivales se publicarán conforme se confirmen los carteles y boleterías.'}
               </p>
+              {showSpecs.length > 0 && (
+                <p className="font-mono text-xs uppercase tracking-wider text-crimson-text">
+                  {showSpecs.join(' · ')}
+                </p>
+              )}
             </div>
-            <Button variant="secondary" href="#contacto">
-              Solicitar Fecha para Evento →
+            <Button variant="secondary" href="/booking">
+              Shows & Booking →
             </Button>
           </div>
         )}
@@ -467,9 +397,15 @@ export default async function HomePage() {
                   Dossier biográfico oficial, fotografías de prensa y fichas técnicas disponibles bajo solicitud formal para promotores, medios y curadores acreditados.
                 </p>
                 <div className="pt-2">
-                  <span className="inline-block font-mono text-xs text-smoke bg-white/5 border border-white/10 px-3 py-1">
-                    Disponible vía Solicitud Directa
-                  </span>
+                  {pressKit?.isPublic ? (
+                    <Button variant="secondary" href="/epk">
+                      Ver Press Kit →
+                    </Button>
+                  ) : (
+                    <span className="inline-block font-mono text-xs text-smoke bg-white/5 border border-white/10 px-3 py-1">
+                      Disponible vía Solicitud Directa
+                    </span>
+                  )}
                 </div>
               </div>
 

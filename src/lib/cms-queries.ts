@@ -7,6 +7,10 @@ import type {
   Video,
   Event,
   Article,
+  CareerHighlight,
+  Booking,
+  PressKit,
+  Media,
 } from '@/payload-types';
 
 export interface PublicCmsData {
@@ -28,6 +32,7 @@ export async function getArtistProfileData(): Promise<ArtistProfile | null> {
     const profile = await payload.findGlobal({
       slug: 'artist-profile',
       overrideAccess: false,
+      depth: 2,
     });
     return profile as ArtistProfile;
   } catch (error) {
@@ -79,6 +84,7 @@ export async function getPublishedReleasesData(): Promise<Release[]> {
       sort: '-releaseDate',
       limit: 20,
       overrideAccess: false,
+      depth: 2,
     });
     return res.docs as Release[];
   } catch (error) {
@@ -103,6 +109,7 @@ export async function getPublishedVideosData(): Promise<Video[]> {
       sort: '-releaseDate',
       limit: 20,
       overrideAccess: false,
+      depth: 2,
     });
     return res.docs as Video[];
   } catch (error) {
@@ -205,6 +212,92 @@ export async function getHomePageCmsData(): Promise<PublicCmsData> {
   };
 }
 
+/**
+ * Trayectoria, reconocimientos y colaboraciones publicados por un administrador.
+ * Los borradores (afirmaciones del brochure pendientes de confirmación) nunca se devuelven.
+ */
+export async function getPublishedCareerHighlightsData(): Promise<CareerHighlight[]> {
+  try {
+    const payload = await getPayload({ config });
+    const res = await payload.find({
+      collection: 'career-highlights',
+      where: { _status: { equals: 'published' } },
+      sort: 'sortOrder',
+      limit: 50,
+      overrideAccess: false,
+      depth: 1,
+    });
+    return res.docs as CareerHighlight[];
+  } catch (error) {
+    console.warn('cms-queries: Error al obtener career-highlights:', error);
+    return [];
+  }
+}
+
+/**
+ * Global de Shows & Booking. Los datos de management solo llegan si `publishContact` está activo
+ * (control de acceso a nivel de campo).
+ */
+export async function getBookingData(): Promise<Booking | null> {
+  try {
+    const payload = await getPayload({ config });
+    const booking = await payload.findGlobal({
+      slug: 'booking',
+      overrideAccess: false,
+      depth: 1,
+    });
+    return booking as Booking;
+  } catch (error) {
+    console.warn('cms-queries: Error al obtener booking:', error);
+    return null;
+  }
+}
+
+/**
+ * Global del Electronic Press Kit.
+ */
+export async function getPressKitData(): Promise<PressKit | null> {
+  try {
+    const payload = await getPayload({ config });
+    const pressKit = await payload.findGlobal({
+      slug: 'press-kit',
+      overrideAccess: false,
+      depth: 2,
+    });
+    return pressKit as PressKit;
+  } catch (error) {
+    console.warn('cms-queries: Error al obtener press-kit:', error);
+    return null;
+  }
+}
+
+/**
+ * Archivo visual de shows: solo flyers y fotos en vivo marcados visibles
+ * y con derechos de uso aprobados por management.
+ */
+export async function getShowGalleryData(): Promise<Media[]> {
+  try {
+    const payload = await getPayload({ config });
+    const res = await payload.find({
+      collection: 'media',
+      where: {
+        and: [
+          { category: { in: ['event_flyer', 'live_photo'] } },
+          { 'gallery.visible': { equals: true } },
+          { 'gallery.rightsStatus': { equals: 'approved' } },
+        ],
+      },
+      sort: 'gallery.sortOrder',
+      limit: 40,
+      overrideAccess: false,
+    });
+    return res.docs as Media[];
+  } catch (error) {
+    console.warn('cms-queries: Error al obtener la galería de shows:', error);
+    return [];
+  }
+}
+
 // Aliases para consumo idiomático en tests y vistas
 export const getArtistProfile = getArtistProfileData;
 export const getSiteSettings = getSiteSettingsData;
@@ -212,3 +305,5 @@ export const getPublishedReleases = getPublishedReleasesData;
 export const getPublishedVideos = getPublishedVideosData;
 export const getPublishedEvents = getPublishedEventsData;
 export const getPublishedArticles = getPublishedArticlesData;
+export const getPublishedCareerHighlights = getPublishedCareerHighlightsData;
+export const getShowGallery = getShowGalleryData;

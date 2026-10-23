@@ -24,7 +24,7 @@ Despliegue inicial realizado el **2026-10-23**. Sin CI/CD ni automatización: la
 | Base de datos | PostgreSQL 16 existente — BD `danyglock_db`, rol `danyglock_app` (sin superusuario) |
 | Runtime | Node `v24.22.1`, pnpm `10.34.4` (fijado vía Corepack solo para `danyglock`) |
 | Repositorio | `https://github.com/DanielCriollo/dany-glock.git` (público, clonado por HTTPS) |
-| Rama / commit desplegado | `wip/mision-006a` @ `8ea781fbaf15e44a0e94a6c382f0e1ddf332cb3a` (M006-A.2) |
+| Rama / commit desplegado | `wip/mision-006a` @ `e12f397cbd7e46dcd5a2772a1264f2a09ebeb19e` (M006-B.1, 2026-10-23 18:47 UTC). Anterior: `8ea781f` (M006-A.2) |
 
 ### Por qué el enlace se llama `zz-…`
 Nginx carga `sites-enabled/*` en orden alfabético y el primer `server` de cada `listen` es el *default server*. Con el nombre `dany.forcefilters.com` el vhost quedaba primero y capturaba peticiones de dominios sin bloque propio en :80 / :443. El prefijo `zz-` lo carga al final y preserva el default original (`game-app.conf`). **No renombrar.**
@@ -99,8 +99,10 @@ curl -s -o /dev/null -w "%{http_code}\n" https://dany.forcefilters.com/admin
 
 Si el build falla, **no arrancar** con un `.next` roto: volver al commit anterior (sección 7) y recompilar.
 
+Recuperación rápida opcional: antes del build copiar el build actual (`cp -a .next /home/danyglock/next-prev-<commit>`); si el nuevo build falla, `git checkout <commit-anterior>`, restaurar esa copia en `.next` y arrancar (las migraciones aditivas son compatibles con el código anterior).
+
 ### Advertencias
-- `payload.config.ts` define `prodMigrations`: **al arrancar en producción Payload aplica automáticamente las migraciones pendientes**. Un simple `systemctl restart` tras un `pull` con migraciones nuevas modifica la BD → respaldar antes.
+- `payload.config.ts` define `prodMigrations`: **al arrancar en producción Payload aplica automáticamente las migraciones pendientes**. Un simple `systemctl restart` tras un `pull` con migraciones nuevas modifica la BD → respaldar antes. **También cualquier comando CLI de Payload con el `.env` cargado** (incluido `pnpm payload migrate:status` o el seed) aplica las pendientes: hacer el `pg_dump` **antes** de cualquier comando `payload` (ocurrió así en el despliegue de `e12f397`).
 - Una migración incompatible (renombrar/eliminar columnas, cambiar tipos) puede requerir coordinación adicional (migración en dos fases, ventana de mantenimiento). Revisar el SQL de cada migración nueva antes de desplegar.
 - El procedimiento provoca una interrupción breve del sitio.
 - La Home `/` se prerenderiza estáticamente en el build: **los cambios hechos en el CMS no se ven en la Home hasta el siguiente build + restart** (ver pendiente DEPLOY-01 en `08-backlog-and-blockers.md`).
@@ -155,3 +157,45 @@ Directorio local de dumps: `/var/backups/dany-glock` (propietario `danyglock`, `
 | Nginx no valida | Nunca recargar si `sudo nginx -t` falla. Restaurar el vhost desde `/root/dany.forcefilters.com.phase2.bak` o deshabilitar: `sudo rm /etc/nginx/sites-enabled/zz-dany.forcefilters.com && sudo nginx -t && sudo systemctl reload nginx`. |
 | Falta de memoria (OOM) | `free -h`; `swapon --show`. El build necesita el servicio detenido. |
 | Certificado | `sudo certbot renew --cert-name dany.forcefilters.com` (webroot; no edita configuración de Nginx). |
+
+---
+
+## 8. Próximo despliegue: M006-B integrado (Multimedia + Brochure)
+
+Estado: preparado en local, **pendiente de commit y autorización**. Diferencias respecto a `e12f397`:
+
+| Aspecto | Cambio | Impacto en el despliegue |
+| :--- | :--- | :--- |
+| Dependencias | `sharp` 0.35.5 → 0.34.5 (ADR-019) | **`pnpm install --frozen-lockfile` obligatorio** (cambia el lockfile) |
+| Migración | `20261023_194032_add_brochure_content_structure` (aditiva; `down` verificado) | Se aplica al primer comando `payload` o al arrancar el servicio → **backup antes** |
+| Datos | `seed-brochure-content.ts` (solo creación) | Ejecutar una vez tras migrar |
+| Archivos | Flyers/fotos del brochure **no viajan por Git** | Subirlos desde `/admin` cuando management apruebe derechos |
+| Rutas nuevas | `/booking`, `/epk` (404 hasta `press-kit.isPublic`) | Verificar tras el build |
+
+```bash
+ssh dany-vps
+sudo -iu danyglock
+cd /var/www/dany-glock
+git fetch origin && git log --oneline HEAD..origin/wip/mision-006a
+git pull --ff-only origin wip/mision-006a
+pnpm install --frozen-lockfile
+set -a; . ./.env; set +a
+B=/var/backups/dany-glock/pre-deploy-m006b-$(date +%Y%m%d-%H%M%S).dump
+pg_dump -Fc "$DATABASE_URL" -f "$B" && pg_restore --list "$B" | grep -c TABLE     # ANTES de cualquier comando payload
+tar czf /var/backups/dany-glock/media-$(date +%Y%m%d-%H%M).tgz media
+pnpm payload migrate                                                              # aplica 20261023_194032 (lote 3)
+node node_modules/.pnpm/tsx@*/node_modules/tsx/dist/cli.mjs src/scripts/seed-brochure-content.ts
+node -e "console.log(require('sharp').versions.vips)"                             # esperado: 8.17.3
+cp -a .next /home/danyglock/next-prev-e12f397
+exit
+```
+
+```bash
+sudo systemctl stop dany-glock
+sudo -iu danyglock bash -c 'cd /var/www/dany-glock && NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=1536 pnpm build'
+sudo systemctl start dany-glock
+```
+
+**No ejecutar** `seed-artist-data.ts` (sobrescribe globals, BRO-11) ni `import-brochure-assets.ts` (solo uso local).
+
+Verificar: `/`, `/biografia` (módulo «Trayectoria y Colaboraciones» con 5 hitos verificados, sin Kiwid/Pistolón/INPEC), `/booking` (200, «30–45 minutos», sin contacto de management), `/epk` (404), `/admin`, `/api/globals/booking` (sin `management.name/email/whatsapp`), una imagen vía `/_next/image`, logs sin errores de sharp y los 14 dominios del VPS contra la línea base.

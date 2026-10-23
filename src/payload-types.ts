@@ -75,6 +75,7 @@ export interface Config {
     events: Event;
     articles: Article;
     contacts: Contact;
+    'career-highlights': CareerHighlight;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -90,6 +91,7 @@ export interface Config {
     events: EventsSelect<false> | EventsSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     contacts: ContactsSelect<false> | ContactsSelect<true>;
+    'career-highlights': CareerHighlightsSelect<false> | CareerHighlightsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -102,10 +104,14 @@ export interface Config {
   globals: {
     'artist-profile': ArtistProfile;
     'site-settings': SiteSetting;
+    booking: Booking;
+    'press-kit': PressKit;
   };
   globalsSelect: {
     'artist-profile': ArtistProfileSelect<false> | ArtistProfileSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    booking: BookingSelect<false> | BookingSelect<true>;
+    'press-kit': PressKitSelect<false> | PressKitSelect<true>;
   };
   locale: null;
   widgets: {
@@ -173,8 +179,20 @@ export interface Media {
   id: number;
   alt: string;
   caption?: string | null;
-  category: 'artwork' | 'photo_shoot' | 'press_photo' | 'audio_preview' | 'document';
+  category: 'artwork' | 'photo_shoot' | 'press_photo' | 'audio_preview' | 'document' | 'event_flyer' | 'live_photo';
   isPressAsset?: boolean | null;
+  credit?: string | null;
+  /**
+   * Solo se muestra en la galería pública si "Visible en galería" está activo y los derechos de uso están aprobados. Transcribir únicamente datos legibles; no inferir años ni lugares.
+   */
+  gallery?: {
+    visible?: boolean | null;
+    rightsStatus?: ('pending' | 'approved' | 'third_party_consent') | null;
+    eventLabel?: string | null;
+    dateLabel?: string | null;
+    venueLabel?: string | null;
+    sortOrder?: number | null;
+  };
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -471,6 +489,47 @@ export interface Contact {
   createdAt: string;
 }
 /**
+ * Reconocimientos, hitos, colaboraciones musicales y escenarios compartidos. Solo los registros publicados aparecen en la web; los datos no verificados se muestran con la etiqueta de su fuente.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "career-highlights".
+ */
+export interface CareerHighlight {
+  id: number;
+  title: string;
+  slug: string;
+  category: 'award' | 'milestone' | 'collaboration' | 'shared_stage' | 'social_impact';
+  year?: number | null;
+  /**
+   * Ej.: "2024 — 2025". No inferir años a partir de flyers sin año legible.
+   */
+  dateLabel?: string | null;
+  description?: string | null;
+  people?:
+    | {
+        name: string;
+        origin?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  relatedRelease?: (number | null) | Release;
+  externalUrl?: string | null;
+  sourceType: 'platform' | 'press' | 'artist_brochure' | 'management';
+  sortOrder?: number | null;
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -525,6 +584,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'contacts';
         value: number | Contact;
+      } | null)
+    | ({
+        relationTo: 'career-highlights';
+        value: number | CareerHighlight;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -602,6 +665,17 @@ export interface MediaSelect<T extends boolean = true> {
   caption?: T;
   category?: T;
   isPressAsset?: T;
+  credit?: T;
+  gallery?:
+    | T
+    | {
+        visible?: T;
+        rightsStatus?: T;
+        eventLabel?: T;
+        dateLabel?: T;
+        venueLabel?: T;
+        sortOrder?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -844,6 +918,40 @@ export interface ContactsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "career-highlights_select".
+ */
+export interface CareerHighlightsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  category?: T;
+  year?: T;
+  dateLabel?: T;
+  description?: T;
+  people?:
+    | T
+    | {
+        name?: T;
+        origin?: T;
+        id?: T;
+      };
+  relatedRelease?: T;
+  externalUrl?: T;
+  sourceType?: T;
+  sortOrder?: T;
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -901,7 +1009,7 @@ export interface ArtistProfile {
    */
   heroMobileMedia?: (number | null) | Media;
   /**
-   * URL de video MP4/WebM o YouTube para ambientación cinematográfica.
+   * URL directa a un archivo de video MP4 o WebM (silenciado, en bucle). Los enlaces de YouTube no se reproducen como fondo.
    */
   heroVideoUrl?: string | null;
   /**
@@ -1005,6 +1113,77 @@ export interface SiteSetting {
   createdAt?: string | null;
 }
 /**
+ * Formato del espectáculo, tipos de evento y management. No incluir tarifas, disponibilidad ni requisitos técnicos sin confirmación.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "booking".
+ */
+export interface Booking {
+  id: number;
+  showTitle?: string | null;
+  showDescription?: string | null;
+  specsStatus: 'declared' | 'confirmed';
+  specs?: {
+    duration?: string | null;
+    format?: string | null;
+    genre?: string | null;
+    audience?: string | null;
+    includesDancers?: boolean | null;
+  };
+  liveFeatures?:
+    | {
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  eventTypes?:
+    | {
+        title: string;
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  baseLocation?: string | null;
+  availabilityNote?: string | null;
+  quoteNote?: string | null;
+  technicalRider?: (number | null) | Media;
+  /**
+   * Los datos de contacto permanecen privados (solo usuarios autenticados) hasta activar "Publicar contacto".
+   */
+  management?: {
+    publishContact?: boolean | null;
+    name?: string | null;
+    role?: string | null;
+    email?: string | null;
+    whatsapp?: string | null;
+    confirmedAt?: string | null;
+    sourceNote?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Dossier para promotores y medios. Solo muestra contenido publicado y verificado.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "press-kit".
+ */
+export interface PressKit {
+  id: number;
+  isPublic?: boolean | null;
+  headline?: string | null;
+  intro?: string | null;
+  bioVariant?: ('short' | 'medium') | null;
+  pressPhotos?: (number | Media)[] | null;
+  featuredReleases?: (number | Release)[] | null;
+  featuredVideos?: (number | Video)[] | null;
+  includeShowInfo?: boolean | null;
+  downloadStatus?: ('not_available' | 'in_preparation' | 'available') | null;
+  downloadablePdf?: (number | null) | Media;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "artist-profile_select".
  */
@@ -1088,6 +1267,74 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         consultedAt?: T;
         notes?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "booking_select".
+ */
+export interface BookingSelect<T extends boolean = true> {
+  showTitle?: T;
+  showDescription?: T;
+  specsStatus?: T;
+  specs?:
+    | T
+    | {
+        duration?: T;
+        format?: T;
+        genre?: T;
+        audience?: T;
+        includesDancers?: T;
+      };
+  liveFeatures?:
+    | T
+    | {
+        text?: T;
+        id?: T;
+      };
+  eventTypes?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  baseLocation?: T;
+  availabilityNote?: T;
+  quoteNote?: T;
+  technicalRider?: T;
+  management?:
+    | T
+    | {
+        publishContact?: T;
+        name?: T;
+        role?: T;
+        email?: T;
+        whatsapp?: T;
+        confirmedAt?: T;
+        sourceNote?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "press-kit_select".
+ */
+export interface PressKitSelect<T extends boolean = true> {
+  isPublic?: T;
+  headline?: T;
+  intro?: T;
+  bioVariant?: T;
+  pressPhotos?: T;
+  featuredReleases?: T;
+  featuredVideos?: T;
+  includeShowInfo?: T;
+  downloadStatus?: T;
+  downloadablePdf?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

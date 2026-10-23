@@ -11,17 +11,35 @@ import {
 } from '@/lib/cms-queries';
 import HomePage from '@/app/(public)/page';
 import BiografiaPage from '@/app/(public)/biografia/page';
+import { HeroMedia } from '@/components/hero/HeroMedia';
+import { ReleaseCover } from '@/components/music/ReleaseCover';
+import { ArtistPortrait } from '@/components/artist/ArtistPortrait';
 import { VideoGallery } from '@/components/video/VideoGallery';
 import { ContactForm } from '@/components/contact/ContactForm';
 import { SiteFooter } from '@/components/layout/SiteFooter';
+import type { Media } from '@/payload-types';
 
-// Mock dialog HTML5 methods in JSDOM
+// Mock dialog and matchMedia HTML5 methods in JSDOM
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
     this.open = true;
   });
   HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
     this.open = false;
+  });
+
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
   });
 });
 
@@ -231,6 +249,119 @@ describe('Misión 006-B.1 — Public Cinematic Experience & CMS Integration Test
       expect(footerHtml).not.toContain('booking@danyglock.com');
       expect(footerHtml).not.toContain('press@danyglock.com');
       expect(footerHtml).not.toContain('Guatemala');
+    });
+  });
+
+  describe('5. Componentes Multimedia y Experiencia Visual (Misión 006-B.2)', () => {
+    const mockMedia: Media = {
+      id: 99,
+      alt: 'Fotografía oficial de Dany Glock',
+      category: 'photo_shoot',
+      url: '/media/dany-glock-official.webp',
+      filename: 'dany-glock-official.webp',
+      mimeType: 'image/webp',
+      filesize: 120400,
+      width: 1920,
+      height: 1080,
+      updatedAt: '2026-10-23T00:00:00Z',
+      createdAt: '2026-10-23T00:00:00Z',
+    };
+
+    it('HeroMedia renderiza el canvas editorial cuando no hay imagen ni video cargado', () => {
+      render(
+        <HeroMedia
+          stageName="Dany Glock"
+          city="Pasto"
+        />
+      );
+
+      expect(screen.getByText('CANVAS CINEMÁTICO')).toBeDefined();
+      expect(screen.getByText('ORIGIN: PASTO')).toBeDefined();
+      expect(screen.getByText('Presencia Visual Oficial')).toBeDefined();
+    });
+
+    it('HeroMedia renderiza el video de fondo con botón accesible de pausa cuando existe videoUrl', () => {
+      const { container } = render(
+        <HeroMedia
+          stageName="Dany Glock"
+          city="Pasto"
+          videoUrl="https://example.com/ambient-loop.mp4"
+        />
+      );
+
+      const video = container.querySelector('video');
+      expect(video).not.toBeNull();
+      expect(video?.getAttribute('src')).toBe('https://example.com/ambient-loop.mp4');
+
+      const pauseButton = screen.getByRole('button', { name: /Pausar video de fondo/i });
+      expect(pauseButton).toBeDefined();
+    });
+
+    it('ReleaseCover renderiza el diseño de vinilo concéntrico para artes en sincronización', () => {
+      render(
+        <ReleaseCover
+          title="SIG Sauer"
+          coverStatus="pending"
+          catalogNumber="BG-2024-SIG"
+          releaseYear="2024"
+        />
+      );
+
+      expect(screen.getByText('SIG Sauer')).toBeDefined();
+      expect(screen.getByText('BG-2024-SIG')).toBeDefined();
+      expect(screen.getByText('2024')).toBeDefined();
+    });
+
+    it('ReleaseCover renderiza la imagen oficial cuando coverStatus es confirmed y coverImage está poblado', () => {
+      render(
+        <ReleaseCover
+          title="Cicatrices"
+          coverImage={mockMedia}
+          coverStatus="confirmed"
+          catalogNumber="BG-2026-CIC"
+          releaseYear="2026"
+        />
+      );
+
+      const img = screen.getByAltText(/Fotografía oficial de Dany Glock/i);
+      expect(img).toBeDefined();
+    });
+
+    it('ArtistPortrait renderiza el canvas editorial 4:5 cuando no hay foto oficial cargada', () => {
+      render(
+        <ArtistPortrait
+          stageName="Dany Glock"
+          city="Pasto"
+          country="Colombia"
+        />
+      );
+
+      expect(screen.getByText('RETRATO ARTÍSTICO')).toBeDefined();
+      expect(screen.getByText('PASTO, COLOMBIA')).toBeDefined();
+      expect(screen.getByText('OFICIAL ARCHIVE')).toBeDefined();
+    });
+
+    it('VideoGallery prioriza customThumbnail sobre la miniatura automática de YouTube cuando está poblado', () => {
+      const videoWithCustomThumb = [
+        {
+          id: 10,
+          title: 'SO FRESH, SO CLEAN',
+          slug: 'so-fresh-so-clean-video',
+          type: 'official_music_video' as const,
+          youtubeUrl: 'https://www.youtube.com/watch?v=SKgil-Dd1_M',
+          youtubeId: 'SKgil-Dd1_M',
+          customThumbnail: mockMedia,
+          duration: '2:50',
+          featured: true,
+          updatedAt: '2026-10-23T00:00:00Z',
+          createdAt: '2026-10-23T00:00:00Z',
+        },
+      ];
+
+      render(<VideoGallery videos={videoWithCustomThumb} />);
+      const img = screen.getByAltText(/Miniatura del video: SO FRESH, SO CLEAN/i);
+      expect(img).toBeDefined();
+      expect(img.getAttribute('src')).toContain('dany-glock-official.webp');
     });
   });
 });
