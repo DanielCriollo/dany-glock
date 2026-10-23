@@ -44,13 +44,24 @@
 
 ---
 
-## 5. Backlog Preparado para Misión 004 (Payload CMS 3 Integration & Core Data Models)
+## 5. Registro de Tareas de Misión 004 (Payload CMS 3 Integration & Core Data Models)
 
-- [ ] **CMS-01:** Instalar paquetes core de Payload CMS versión `3.91.0` (`payload`, `@payloadcms/next`, `@payloadcms/db-postgres`, `@payloadcms/richtext-lexical`).
-- [ ] **CMS-02:** Configurar base de datos PostgreSQL local (`dany_glock_dev`) con credenciales en `.env.local` y conexión verificada.
-- [ ] **CMS-03:** Crear `src/payload.config.ts` y configurar `withPayload()` en `next.config.ts`.
-- [ ] **CMS-04:** Configurar rutas del panel de administración en `src/app/(payload)/admin/` y endpoints de API en `src/app/(payload)/api/`.
-- [ ] **CMS-05:** Implementar colecciones esenciales de datos: `Users`, `Media`, `Releases`, `Tracks`, `Videos`, `Events`, `Articles`, `Contacts`.
-- [ ] **CMS-06:** Implementar configuraciones globales: `ArtistProfile` y `SiteSettings`.
-- [ ] **CMS-07:** Generar archivo de tipos TypeScript `src/payload-types.ts` y verificar compilación estricta sin errores.
+- [x] **CMS-01:** Instalar paquetes core de Payload CMS versión `3.91.0` (`payload`, `@payloadcms/next`, `@payloadcms/db-postgres`, `@payloadcms/richtext-lexical`, `graphql`, `sharp`). *(Evidencia: `package.json`, `pnpm-lock.yaml`)*
+- [x] **CMS-02:** Configurar base de datos PostgreSQL local (`dany_glock_dev`) con credenciales en `.env.local` y conexión verificada en puerto 5432. *(Evidencia: Docker `my_postgres`, tablas creadas y consultadas)*
+- [x] **CMS-03:** Crear `src/payload.config.ts` y configurar `withPayload()` en `next.config.ts`. *(Evidencia: `src/payload.config.ts`, `next.config.ts`)*
+- [x] **CMS-04:** Configurar rutas del panel de administración en `src/app/(payload)/admin/` y endpoints de API en `src/app/(payload)/api/`. *(Evidencia: rutas `page.tsx`, `layout.tsx`, `route.ts` REST y GraphQL operativas)*
+- [x] **CMS-05:** Implementar colecciones esenciales de datos: `Users`, `Media`, `Releases`, `Tracks`, `Videos`, `Events`, `Articles`, `Contacts` con validaciones e integridad referencial. *(Evidencia: `src/collections/*.ts`, migración SQL ejecutada)*
+- [x] **CMS-06:** Implementar configuraciones globales: `ArtistProfile` y `SiteSettings` con control de acceso. *(Evidencia: `src/globals/*.ts`)*
+- [x] **CMS-07:** Generar archivo de tipos TypeScript `src/payload-types.ts`, importMap y verificar compilación estricta sin errores (`tsc`, `lint`, `test`, `build` todos en PASS). *(Evidencia: `src/payload-types.ts`, `next build` exitoso)*
+
+---
+
+## 6. Backlog Preparado para Misión 005 (Core Layout, Smooth Scroll & Kinetic Navigation)
+
+- [ ] **LAY-01:** Implementar Shell estructural público (Root Layout) conectando tipografías, metadatos dinámicos y tokens visuales.
+- [ ] **LAY-02:** Diseñar e integrar la Barra de Navegación Cinematográfica (`Navbar`) con detección de scroll, backdrop blur y estados reactivos.
+- [ ] **LAY-03:** Construir el Menú Lateral Editorial desplegable con transiciones CSS fluidas y accesibilidad de teclado (`Esc`, foco atrapado, `aria-expanded`).
+- [ ] **LAY-04:** Implementar el Footer Cinematográfico con enlaces sociales, manifiesto artístico, copyright y navegación accesible.
+- [ ] **LAY-05:** Integrar y evaluar proveedor inercial de scroll (evaluación controlada de Lenis + GSAP ScrollTrigger conforme al ADR-008).
+- [ ] **LAY-06:** Conectar el scaffold público con la Local API de Payload (`getPayload({ config })`) para alimentar datos reales del perfil del artista en Server Components.
 

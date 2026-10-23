@@ -52,19 +52,20 @@ flowchart TD
 
 ---
 
-### ⏳ Misión 004 — Base de datos y Payload CMS 3.x *(Siguiente fase activa)*
-- **Objetivo:** Integrar el panel de administración y modelar las entidades de datos en PostgreSQL.
-- **Alcance:**
-  - Instalación y configuración de Payload 3.x nativo en `/admin`.
-  - Conexión del adaptador `@payloadcms/db-postgres` con PostgreSQL 17 local.
-  - Implementación de las colecciones (`releases`, `tracks`, `videos`, `events`, `articles`, `media`, `contacts`).
-  - Implementación de los globals (`artist-profile`, `site-settings`).
-  - Configuración de autenticación de administradores y roles.
-  - Carga de datos iniciales (*seed data*) representativos del artista.
+### ✅ Misión 004 — Base de datos y Payload CMS 3.x *(Completada)*
+- **Objetivo:** Integrar el panel de administración de Payload 3.91.0 y modelar las entidades de datos en PostgreSQL 17 con seguridad estricta y tipado estricto.
+- **Entregables:**
+  - Panel administrativo completamente funcional en `/admin` con autenticación JWT y roles.
+  - Conexión a base de datos exclusiva `dany_glock_dev` en PostgreSQL 17 local con migraciones versionadas (20 tablas relacionales).
+  - Implementación de 8 colecciones completas (`releases`, `tracks`, `videos`, `events`, `articles`, `media`, `contacts`, `users`).
+  - Implementación de 2 globals (`artist-profile`, `site-settings`).
+  - Seguridad validada: contactos estrictamente privados (403), borradores ocultos para anónimos (404), operaciones de escritura protegidas.
+  - Script de seed de prueba local y tipado completo generado en `src/payload-types.ts`.
+  - Verificación total: `tsc`, `lint`, `vitest` y `next build` en PASS.
 
 ---
 
-### ⏳ Misión 005 — Core Layout, Smooth Scroll & Kinetic Navigation
+### ⏳ Misión 005 — Core Layout, Smooth Scroll & Kinetic Navigation *(Siguiente fase activa)*
 - **Objetivo:** Desarrollar el marco estructural envolvente de la experiencia pública.
 - **Alcance:**
   - Root Layout con integración de Server Components y tipografías personalizadas.

@@ -3,9 +3,9 @@
 ## 1. Ficha del Proyecto
 
 - **Nombre del Proyecto:** Dany Glock — Artist Digital Experience
-- **Fase Actual:** Misión 003 — Project Bootstrap & Engineering Foundation (Completada)
-- **Última Misión Completada:** **Misión 003 — Project Bootstrap & Engineering Foundation**
-- **Misión en Curso:** Preparación para **Misión 004 — Payload CMS 3 Integration & Core Data Models**
+- **Fase Actual:** Misión 004 — Payload CMS & Content Architecture (Completada)
+- **Última Misión Completada:** **Misión 004 — Payload CMS & Content Architecture**
+- **Misión en Curso:** Preparación para **Misión 005 — Core Layout, Smooth Scroll & Kinetic Navigation**
 - **Bloqueos Activos:** Ninguno.
 
 
@@ -19,12 +19,55 @@
 | **Sistema Operativo** | Windows 10/11 (AMD64) | Verificado |
 | **Node.js** | `v22.12.0` | Cumple el requisito de Payload 3 (`>= 20.18.1`) |
 | **NPM** | `10.9.0` | Funcional |
-| **PNPM** | Presente en `AppData/Roaming/npm/pnpm.ps1` | Gestor de paquetes primario recomendado |
+| **PNPM** | `10.34.4` | Gestor de paquetes primario con `pnpm-lock.yaml` |
 | **Git** | `2.45.2.windows.1` | Inicializado y activo en rama `main` |
-| **PostgreSQL** | `psql 17.x` (`C:\Program Files\PostgreSQL\17\bin\psql.exe`) | Motor relacional local disponible para Payload 3 |
-| **Docker** | `docker 27.x` (`C:\Program Files\Docker\Docker\resources\bin\docker.exe`) | Disponible opcionalmente para contenedores locales o pruebas de VPS |
+| **PostgreSQL** | `PostgreSQL 17.6` (Docker / local: 5432) | Motor relacional local activo; BD `dany_glock_dev` |
+| **Docker** | `docker 27.x` | Contenedor `my_postgres` ejecutando Postgres 17.6 |
 
 ---
+
+### [2026-10-23] — Misión 004: Payload CMS & Content Architecture
+- **Misión:** Misión 004
+- **Implementaciones realizadas:**
+  - Creación de base de datos exclusiva `dany_glock_dev` en PostgreSQL 17.6 local.
+  - Instalación de `payload@3.91.0`, `@payloadcms/next@3.91.0`, `@payloadcms/db-postgres@3.91.0`, `@payloadcms/richtext-lexical@3.91.0`, `graphql@16.14.2` y `sharp@0.35.5`.
+  - Configuración central en `src/payload.config.ts` y envoltura `withPayload` en `next.config.ts`.
+  - Implementación de colecciones:
+    - `Users`: Autenticación de administradores, RBAC (`admin`, `editor`), acceso restringido.
+    - `Media`: Almacenamiento local, redimensionado con Sharp, validación de MIME, alt y categorías.
+    - `Releases`: Álbumes, EPs y Singles con slugs únicos, enlaces de streaming, relación con Media, SEO y control de borradores.
+    - `Tracks`: Pistas vinculadas con clave foránea a Releases, créditos, audio preview y metadata ISRC.
+    - `Videos`: Videoteca oficial con soporte de YouTube, metadatos y miniaturas personalizadas.
+    - `Events`: Agenda de conciertos, recintos, ciudades y estado de venta de tickets.
+    - `Articles`: Journal editorial con editor Lexical, categorías, extractos y borradores.
+    - `Contacts`: Solicitudes privadas de contratación y prensa.
+  - Implementación de Globals: `ArtistProfile` y `SiteSettings`.
+  - Políticas de seguridad estrictas:
+    - Contactos: `read` denegado para anónimos (403 Forbidden); `create` abierto para formularios web.
+    - Borradores: documentos `draft` filtrados para visitantes anónimos (404 al consultar por ID directo).
+    - Usuarios: administración restringida con autenticación JWT.
+    - Globals: lectura pública, modificación autenticada (403 para anónimos).
+  - Migración inicial generada y ejecutada en PostgreSQL (`src/migrations/20261023_054057_initial_setup.ts`), creando 20 tablas relacionales.
+  - Tipos TypeScript autogenerados en `src/payload-types.ts` e importMap en `src/app/(payload)/admin/importMap.js`.
+  - Rutas de App Router configuradas en `src/app/(payload)/admin/` y `src/app/(payload)/api/`.
+- **Arquitectura y decisiones:** Registrado ADR-010 en `05-technical-decisions.md`.
+- **Pruebas ejecutadas:**
+  - `pnpm typecheck` (`tsc --noEmit`): 0 errores.
+  - `pnpm test` (`vitest run`): 3/3 tests unitarios pasados.
+  - `pnpm lint` (`next lint`): 0 errores, 0 advertencias.
+  - `pnpm build` (`next build`): compilación exitosa en 55s; rutas estáticas y dinámicas (`/admin`, `/api`) generadas.
+  - Pruebas HTTP en dev server:
+    - Anon GET `/api/contacts` -> 403 Forbidden.
+    - Anon POST `/api/contacts` -> 201 Created (doc id: 1 creado).
+    - Anon GET `/api/releases` -> Solo 1 release publicado (`Noctámbulo`), el borrador permanece invisible.
+    - Anon GET `/api/releases/3` (borrador) -> 404 Not Found.
+    - Admin Login POST `/api/users/login` -> 200 OK con token JWT.
+    - Admin GET `/api/contacts` con JWT -> 200 OK (retorna solicitud creada).
+    - Admin GET `/api/releases?draft=true` con JWT -> 200 OK (retorna tanto publicados como borradores).
+    - Anon POST `/api/globals/artist-profile` -> 403 Forbidden.
+    - Anon GET `/` (Home pública) -> 200 OK con scaffold e identidad `DANY GLOCK` intactos.
+- **Pendientes y bloqueos:** Ninguno.
+- **Próximos pasos:** Misión 005 — Core Layout, Smooth Scroll & Kinetic Navigation.
 
 ### [2026-10-23] — Misión 003: Project Bootstrap & Engineering Foundation
 - **Misión:** Misión 003

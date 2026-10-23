@@ -10,6 +10,15 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    ignores: [
+      'src/migrations/**',
+      'src/payload-types.ts',
+      'src/app/(payload)/admin/importMap.js',
+      '.next/**',
+      'node_modules/**',
+    ],
+  },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
 ];
 

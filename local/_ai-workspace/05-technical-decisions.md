@@ -160,5 +160,31 @@ Este documento registra las decisiones arquitectónicas fundamentales tomadas pa
   - Se previene contaminación de `node_modules` y fallos silenciosos de compilación de Drizzle/Payload en Next.js.
   - Cero deuda técnica generada.
 
+---
+
+## ADR-010: Arquitectura de Seguridad, Modelo Relacional y Control de Acceso en Payload CMS 3 con PostgreSQL 17
+
+- **Estado:** Aceptado (Implementado en Misión 004)
+- **Fecha:** Octubre 2026
+- **Contexto:**  
+  La integración de Payload CMS 3 en Next.js App Router requiere definir el modelo relacional, las políticas de seguridad (Principio de Mínimo Privilegio) y la persistencia de datos en PostgreSQL 17:
+  1. Los mensajes de contacto y solicitudes de booking contienen información comercial confidencial.
+  2. Los borradores editoriales y lanzamientos inéditos no deben filtrarse a visitantes anónimos bajo ninguna circunstancia.
+  3. Las relaciones entre entidades (`releases` <-> `tracks`, `media` <-> `releases`) deben contar con integridad referencial a nivel de base de datos.
+- **Decisión:**  
+  1. **Control de Acceso Estricto (RBAC + Contextual):**
+     - `Contacts`: Lectura restringida exclusivamente a usuarios autenticados (`req.user`). La creación permanece abierta públicamente para procesar formularios del sitio web.
+     - `Releases`, `Articles`, `Videos`: Acceso público condicionado a `_status === 'published'`. Los documentos en estado `draft` son invisibles para usuarios anónimos (retornan 404 por ID o se filtran en listas).
+     - `Users`: Creación y borrado restringidos a `admin`. Auto-edición permitida para el propio usuario.
+     - `Globals` (`ArtistProfile`, `SiteSettings`): Lectura pública, actualización autenticada.
+  2. **Persistencia e Integridad Referencial:**
+     - Uso de base de datos exclusiva `dany_glock_dev` en PostgreSQL 17 local.
+     - Migraciones versionadas mediante Payload CLI (`src/migrations/20261023_054057_initial_setup.ts`).
+     - Llaves foráneas y restricciones ON DELETE gestionadas por el adaptador `@payloadcms/db-postgres`.
+  3. **Tipado Estricto:**
+     - Generación automatizada de tipos TypeScript en `src/payload-types.ts` mediante `payload generate:types`.
+- **Consecuencias:**  
+  - *Positivas:* Seguridad verificada mediante tests HTTP (403 en contactos y usuarios anónimos, 404 en borradores sin autenticación). Cero exposición de datos sensibles. Integridad referencial garantizada.
+
 
 
