@@ -1,13 +1,37 @@
 import config from '../payload.config';
 import { getPayload } from 'payload';
+import readline from 'node:readline';
+
+async function promptPassword(promptText: string): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) => {
+    rl.question(promptText, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
 
 async function rotatePassword() {
-  const email = process.env.ROTATE_ADMIN_EMAIL || process.env.ADMIN_EMAIL;
-  const newPassword = process.env.ROTATE_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
+  const email = process.env.ROTATE_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'admin@danyglock.com';
+  let newPassword = process.env.ROTATE_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
+
+  if (!newPassword) {
+    if (process.stdin.isTTY) {
+      newPassword = await promptPassword(`Introduce la nueva contraseña para ${email} (mínimo 14 caracteres): `);
+    } else {
+      console.error('ERROR: Debes definir las variables ROTATE_ADMIN_EMAIL y ROTATE_ADMIN_PASSWORD en el entorno.');
+      console.error('Ejemplo: $env:ROTATE_ADMIN_EMAIL="admin@danyglock.com"; $env:ROTATE_ADMIN_PASSWORD="[NUEVA_CLAVE]"; pnpm exec tsx src/scripts/rotate-admin-password.ts');
+      process.exit(1);
+    }
+  }
 
   if (!email || !newPassword) {
-    console.error('ERROR: Debes definir las variables ROTATE_ADMIN_EMAIL y ROTATE_ADMIN_PASSWORD en el entorno.');
-    console.error('Ejemplo: $env:ROTATE_ADMIN_EMAIL="admin@dominio.com"; $env:ROTATE_ADMIN_PASSWORD="[NUEVA_CLAVE]"; pnpm exec tsx src/scripts/rotate-admin-password.ts');
+    console.error('ERROR: Correo o contraseña no definidos.');
     process.exit(1);
   }
 
@@ -28,7 +52,7 @@ async function rotatePassword() {
   });
 
   if (users.totalDocs === 0) {
-    console.error('ERROR: No se encontró ningún usuario con el correo especificado.');
+    console.error('ERROR: No se encontró ningún usuario con el correo especificado:', email);
     process.exit(1);
   }
 
