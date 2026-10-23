@@ -27,17 +27,19 @@ flowchart TD
 
 ---
 
-### ⏳ Misión 002 — Design System, tokens y dirección visual
+### ✅ Misión 002 — Design System & Cinematic Art Direction *(Completada técnicamente; validación visual sujeta a conformidad humana)*
 - **Objetivo:** Establecer la especificación visual y componentes base del concepto *Dark Cinematic Editorial*.
-- **Alcance:**
-  - Definición completa de tokens de diseño (tipografías, escala modular, paleta de colores cromática y neutra, elevaciones, bordes y espaciados).
-  - Especificación de curvas cinemáticas de animación y micro-interacciones.
-  - Creación de guías de accesibilidad de contraste y foco para entornos oscuros.
-  - Prototipos conceptuales de componentes primarios (Hero Card, Track Row, Event Pill, Media Badge, Player Bar).
+- **Entregables:**
+  - Especificación completa de tokens de diseño semánticos en `04-design-system-strategy.md`.
+  - Catálogo de componentes conceptuales y estados accesibles en `10-components.md`.
+  - Sistema de movimiento CSS-first y GSAP en `11-motion-system.md`.
+  - Arquitectura visual de 8 escenas para la Home en `12-home-visual-architecture.md`.
+  - Registros de decisiones arquitectónicas ADR-006, ADR-007 y ADR-008 en `05-technical-decisions.md`.
+  - Herramienta de contraste WCAG `local/design-preview/contrast.mjs` y Style Tile `local/design-preview/style-tile.html`.
 
 ---
 
-### ⏳ Misión 003 — Inicialización del proyecto y tooling
+### ⏳ Misión 003 — Inicialización del proyecto y tooling *(Siguiente fase activa)*
 - **Objetivo:** Crear el andamiaje del proyecto Next.js 15 con TypeScript y herramientas de desarrollo limpias.
 - **Alcance:**
   - Creación del proyecto base con `pnpm` y Next.js 15 App Router.
@@ -45,6 +47,7 @@ flowchart TD
   - Configuración de Tailwind CSS v3.4 con tokens semánticos del Design System.
   - Integración de Vitest y Testing Library para pruebas unitarias.
   - Configuración de linters, formato de código y estructura de carpetas profesional.
+
 
 ---
 

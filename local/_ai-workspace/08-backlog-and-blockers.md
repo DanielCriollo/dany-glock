@@ -18,11 +18,24 @@ El entorno local dispone de Node.js v22.12.0, npm 10.9.0, pnpm, PostgreSQL 17 y 
 
 ---
 
-## 3. Backlog Preparado para Misión 002 (Design System & Dirección Visual)
+## 3. Registro de Tareas de Misión 002 (Completadas Técnicamente)
 
-- [ ] **DS-01:** Definir la matriz completa de tokens de diseño semánticos en formato CSS Custom Properties y Tailwind Theme.
-- [ ] **DS-02:** Diseñar la paleta de contrastes validada WCAG 2.1 AA para escala de grises oscuros (*Void, Obsidian, Elevated*) y acentos cromáticos (*Amber Gold, Crimson*).
-- [ ] **DS-03:** Seleccionar y documentar las tipografías definitivas (Display vs Sans vs Mono) con especificación de tamaños, interlineados y trackings editoriales.
-- [ ] **DS-04:** Diseñar la especificación técnica de las animaciones cinemáticas (curvas Bézier, duraciones, estados de hover magnéticos).
-- [ ] **DS-05:** Especificar los estados y anatomía accesible del reproductor de audio flotante persistente.
-- [ ] **DS-06:** Crear la guía de diseño para el Electronic Press Kit (EPK) y ficha de lanzamiento musical.
+- [x] **DS-01:** Definir la matriz completa de tokens de diseño semánticos en formato CSS Custom Properties y Tailwind Theme. *(Evidencia: `04-design-system-strategy.md`)*
+- [x] **DS-02:** Diseñar la paleta de contrastes validada WCAG 2.1/2.2 AA para escala oscura (`ink`, `graphite`, `carbon`, `steel`) y jerarquía `crimson` / `ember`. *(Evidencia: script `local/design-preview/contrast.mjs` con ratios certificados > 4.5:1)*
+- [x] **DS-03:** Seleccionar y documentar las tipografías definitivas (`Archivo` variable + `Instrument Serif` + `JetBrains Mono`) con escalas, interlineados y trackings editoriales. *(Evidencia: `04-design-system-strategy.md` y `ADR-007`)*
+- [x] **DS-04:** Diseñar la especificación técnica de las animaciones cinemáticas (curvas Bézier, duraciones, estados de hover, enfoque CSS-first + GSAP y accesibilidad `prefers-reduced-motion`). *(Evidencia: `11-motion-system.md` y `ADR-008`)*
+- [x] **DS-05:** Especificar los estados y anatomía accesible del reproductor de audio flotante persistente. *(Evidencia: `10-components.md §10`)*
+- [x] **DS-06:** Crear la guía de diseño para el Electronic Press Kit (EPK), ficha de lanzamiento musical y recorrido narrativo de la Home. *(Evidencia: `10-components.md` y `12-home-visual-architecture.md`)*
+
+> **Nota de Aprobación Humana:** La conformidad estética del Style Tile (`local/design-preview/style-tile.html`) queda abierta a revisión humana del usuario/director creativo antes de la maquetación final en producción.
+
+---
+
+## 4. Backlog Preparado para Misión 003 (Inicialización del Proyecto y Tooling)
+
+- [ ] **TL-01:** Inicializar proyecto base con Next.js 15 App Router y TypeScript estricto mediante `pnpm`.
+- [ ] **TL-02:** Configurar Tailwind CSS v3.4 mapeando los tokens semánticos aprobados en `globals.css` y `tailwind.config.ts`.
+- [ ] **TL-03:** Configurar fuentes autoalojadas con `next/font/google` (`Archivo`, `Instrument Serif`, `JetBrains Mono`) con fallback métrico anti-CLS.
+- [ ] **TL-04:** Configurar entorno de pruebas con Vitest y React Testing Library.
+- [ ] **TL-05:** Establecer la estructura de directorios modular (`src/app/(public)`, `src/components/`, `src/lib/`, `src/styles/`) y scripts de verificación (`pnpm lint`, `pnpm test`).
+

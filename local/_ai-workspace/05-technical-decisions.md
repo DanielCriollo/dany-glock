@@ -85,3 +85,56 @@ Este documento registra las decisiones arquitectónicas fundamentales tomadas pa
   Gestionar los archivos multimedia mediante la colección `media` de Payload CMS, respaldada por la librería de procesamiento de imagen de alto rendimiento `sharp`. Los audios de previa se almacenarán localmente optimizados en formato MP3/AAC con bitrate controlado (192 kbps), mientras que los videoclips completos se alojarán e incrustarán desde YouTube para maximizar la velocidad de carga y no consumir ancho de banda innecesario del VPS.
 - **Consecuencias:**  
   - *Positivas:* Carga ultra-rápida, generación automática de miniaturas y formatos modernos (WebP/AVIF), descargas organizadas para la prensa en el EPK.
+
+---
+
+## ADR-006: Paleta Carmesí Nocturna y Sustitución del Acento Oro Festivo
+
+- **Estado:** Aceptado (Sustituye la paleta preliminar de la Misión 001)
+- **Fecha:** Octubre 2026 (Misión 002)
+- **Contexto:**  
+  En la Misión 001 se propuso un acento primario ámbar/oro (`#e5a93c`) y un acento secundario carmesí (`#e0283c`). Al evaluar la identidad visual completa *Dark Cinematic Editorial*, la combinación de negro, oro y rojo evocaba una estética festiva o de lujo corporativo tradicional que chocaba con la crudeza sofisticada de la música urbana contemporánea. Además, los cálculos de luminancia revelaron que usar carmesí puro (`#B3122E`) como color de texto sobre fondo negro produce un contraste de apenas 2.87:1, violando el criterio WCAG 2.2 AA (mínimo 4.5:1).
+- **Decisión:**  
+  Adoptar una paleta de negros profundos y superficies neutras (`ink` `#0A0A0B`, `graphite` `#141416`, `carbon` `#1C1C1F`, `steel` `#2A2A2E`) combinada con textos en blanco hueso cálido (`bone` `#EDEAE4`, `ash` `#A8A49E`, `smoke` `#8A8680`) y una jerarquía cromática carmesí estricta:
+  1. `crimson` (`#B3122E`): Color de marca oficial. Usado **únicamente como relleno sólido** en botones primarios y bloques destacados. Con texto `bone` alcanza un contraste de 5.75:1 (pasa AA). Prohibido su uso como color de texto sobre fondo oscuro.
+  2. `crimson-signal` (`#E1243F`): Destinado a elementos gráficos no textuales, halos luminosos y puntos de estado "en vivo" (contraste ≥ 3.66:1 sobre superficies oscuras).
+  3. `crimson-text` (`#FF5468`): Carmesí calibrado para tipografía, enlaces y anillo de foco por teclado, con un contraste certificado de 6.33:1 sobre `ink` (supera holgadamente el requisito de 4.5:1).
+  4. `ember` (`#C8A27A`): Color secundario (luz de tungsteno/sodio) con uso **estrictamente restringido** a etiquetas de estado temporal ("Preventa" / "Próximamente"). 8.39:1 sobre `ink`.
+- **Consecuencias:**  
+  - *Positivas:* Coherencia estética cinematográfica, foco visual contundente y cumplimiento matemático estricto de accesibilidad WCAG 2.2 AA.
+  - *Mitigaciones:* Los componentes deben consumir exclusivamente tokens semánticos (ej. `--color-fg-accent`, `--color-focus`), impidiendo el uso accidental de `#B3122E` en textos.
+
+---
+
+## ADR-007: Sistema Tipográfico Editorial con Autoalojamiento OFL (Archivo + Instrument Serif + JetBrains Mono)
+
+- **Estado:** Aceptado (Sustituye las propuestas exploratorias de Syne y Clash Display)
+- **Fecha:** Octubre 2026 (Misión 002)
+- **Contexto:**  
+  La Misión 001 consideró tipografías como `Syne` y `Clash Display`. Sin embargo, `Clash Display` depende de Fontshare (requiere gestión externa de fuentes y no se integra nativamente en el pipeline de `next/font/google`), mientras que `Syne` posee un uso saturado en sitios web genéricos y carece de eje condensado para titulares tipo póster.
+- **Decisión:**  
+  Consolidar el sistema en tres familias de código abierto bajo licencia SIL Open Font License (OFL), garantizando autoalojamiento automático y cero peticiones externas en producción:
+  1. **`Archivo` (Fuente Variable):** Ejes `wdth` (62 a 125) y `wght` (100 a 900). Resuelve en una sola fuente los titulares gigantes extra-condensados de póster (`wdth 62`, `wght 850`), los subtítulos y el texto corrido de lectura (`wdth 100`, `wght 400`). Minimiza descargas y previene Layout Shifts (CLS) mediante ajuste métrico de fallback.
+  2. **`Instrument Serif` (Regular + Italic):** Utilizada como contrapunto editorial de revista para citas de prensa, capitulares y números destacados (solo en tamaños ≥ 24px).
+  3. **`JetBrains Mono` (400, 500):** Utilizada con moderación para metadatos técnicos, duraciones `03:42`, códigos ISRC y fechas en formato claqueta.
+- **Consecuencias:**  
+  - *Positivas:* Máximo rendimiento (menos archivos WOFF2), flexibilidad compositiva total con una tipografía variable y cero deuda de licenciamiento comercial.
+
+---
+
+## ADR-008: Estrategia de Movimiento CSS-First y GSAP (Aplazamiento de Motion y Lenis)
+
+- **Estado:** Aceptado (Actualiza y precisa el ADR-002 de la Misión 001)
+- **Fecha:** Octubre 2026 (Misión 002)
+- **Contexto:**  
+  El ADR-002 planteó la integración simultánea de Lenis + GSAP + Motion. En la Misión 002 se verificó el soporte moderno de navegadores (CSS scroll-driven animations disponible en Chrome/Edge 115+, Safari 26+ y Firefox 160+) y la capacidad del elemento nativo `<dialog>` de HTML5 con `@starting-style` para transiciones de modales y menús sin librerías.
+- **Decisión:**  
+  Reorganizar el sistema de animación bajo una jerarquía **CSS-First**:
+  1. **CSS Puro:** Microinteracciones (hover, focus, pressed), animación de entrada del hero (garantiza render inmediato del titular y protege el LCP antes de hidratación de JavaScript) y revelados estándar por scroll mediante `animation-timeline: view()` como mejora progresiva.
+  2. **GSAP 3.15 + ScrollTrigger:** Reservado exclusivamente para scroll complejo en desktop (`lg+`), específicamente pinning de carátulas discográficas y revelados tipográficos sincronizados (*scrub*). Todos los plugins de GSAP son gratuitos y comerciales desde v3.13.
+  3. **Descarte de Motion (`motion`):** No se incorpora en esta fase. Los modales y transiciones de estado se resuelven con CSS y `<dialog>`, evitando duplicar herramientas de animación y ahorrando sobrecarga en el bundle de cliente.
+  4. **Aplazamiento de Lenis (`lenis`):** El smooth scroll forzado altera el comportamiento nativo del navegador, navegación por teclado y atajos. Se aplaza su evaluación a la Misión 005 como prueba opcional sujeta a medición de INP y accesibilidad.
+  5. **Accesibilidad Obligatoria:** Todo movimiento se desactiva o sustituye por estados estáticos legibles cuando el usuario tiene activo `prefers-reduced-motion: reduce`.
+- **Consecuencias:**  
+  - *Positivas:* Bundle JavaScript ultra-ligero, respeto riguroso a Core Web Vitals y compatibilidad total con Server Components.
+

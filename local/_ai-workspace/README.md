@@ -36,5 +36,15 @@ Este espacio almacena la documentación viva, decisiones arquitectónicas, estra
    *Evaluación de skills del ecosistema Antigravity, recomendaciones de adopción y creación interna.*
 
 10. [DANY-GLOCK-RESEARCH-BRAIN.md](file:///c:/Users/DUCKER/Documents/dany-glock/local/_ai-workspace/DANY-GLOCK-RESEARCH-BRAIN.md)  
-   *Investigación pública preliminar sobre el artista, discografía verificada y fuentes de prensa.*
+    *Investigación pública preliminar sobre el artista, discografía verificada y fuentes de prensa.*
+
+11. [10-components.md](file:///c:/Users/DUCKER/Documents/dany-glock/local/_ai-workspace/10-components.md)  
+    *Especificación conceptual de componentes: anatomía, variantes, estados interactivos y accesibilidad.*
+
+12. [11-motion-system.md](file:///c:/Users/DUCKER/Documents/dany-glock/local/_ai-workspace/11-motion-system.md)  
+    *Sistema de movimiento, catálogo de animaciones, matriz CSS/GSAP y directrices de reducción de movimiento.*
+
+13. [12-home-visual-architecture.md](file:///c:/Users/DUCKER/Documents/dany-glock/local/_ai-workspace/12-home-visual-architecture.md)  
+    *Arquitectura visual y narrativa de 8 escenas para la Home, comportamiento responsive y orden de foco.*
+
 
