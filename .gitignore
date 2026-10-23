@@ -1,0 +1,47 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+.yarn/
+.npm
+
+# Compilación y builds
+.next/
+out/
+build/
+dist/
+
+# Payload CMS
+payload-types.ts.bak
+
+# Base de datos y entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+
+# Archivos multimedia subidos localmente
+media/
+public/media/
+
+# Logs y depuración
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# NOTA: local/_ai-workspace/ DEBE ser rastreado en Git para mantener persistencia del Project Brain
+!local/_ai-workspace/
