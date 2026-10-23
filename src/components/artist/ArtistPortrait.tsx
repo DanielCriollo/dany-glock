@@ -69,18 +69,22 @@ export const ArtistPortrait: React.FC<ArtistPortraitProps> = ({
         </span>
       </div>
 
-      {/* Monograma y presencia artística */}
-      <div className="relative z-10 my-auto text-center space-y-3">
-        <span className="font-sans font-black text-7xl sm:text-8xl tracking-tighter text-bone/20 select-none block drop-shadow-lg">
-          DG
-        </span>
-        <span className="font-mono text-sm uppercase tracking-[0.25em] text-bone block drop-shadow">
-          {stageName}
-        </span>
-        <span className="font-mono text-[10px] text-ash block bg-black/60 px-2.5 py-1 border border-white/10 max-w-xs mx-auto backdrop-blur-sm">
-          {hasRealImage ? 'Fotografía de Prensa Oficial' : 'Trap Latino · Producción & Visión'}
-        </span>
-      </div>
+      {/* Monograma solo en el canvas de respaldo: con fotografía real no debe tapar el rostro */}
+      {hasRealImage ? (
+        <div className="flex-1" aria-hidden="true" />
+      ) : (
+        <div className="relative z-10 my-auto text-center space-y-3">
+          <span className="font-sans font-black text-7xl sm:text-8xl tracking-tighter text-bone/20 select-none block drop-shadow-lg">
+            DG
+          </span>
+          <span className="font-mono text-sm uppercase tracking-[0.25em] text-bone block drop-shadow">
+            {stageName}
+          </span>
+          <span className="font-mono text-[10px] text-ash block bg-black/60 px-2.5 py-1 border border-white/10 max-w-xs mx-auto backdrop-blur-sm">
+            Trap Latino · Producción & Visión
+          </span>
+        </div>
+      )}
 
       {/* Metadato inferior */}
       <div className="relative z-10 border-t border-white/10 pt-3 flex items-center justify-between font-mono text-[10px] text-smoke">

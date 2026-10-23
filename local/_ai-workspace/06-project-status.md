@@ -5,9 +5,9 @@
 - **Nombre del Proyecto:** Dany Glock — Official Artist Website
 - **Fase Actual:** Misión 006-B — Integración final (Multimedia + Brochure) **lista para commit y despliegue manual** (local, sin commit)
 - **Última Misión Completada:** **Misión 006-B — Integración final y preparación para despliegue** (integra M006-B.2 Multimedia de Antigravity y M006-B.2 Brochure de Claude Code)
-- **Siguiente Misión:** Commit + despliegue manual de M006-B (ver `14-vps-deployment.md` §8); después **Misión 007** y aprobaciones BRO-01…BRO-09.
+- **Siguiente Misión:** Desplegar M006-B.3 (revalidación, ver `16-cache-revalidation.md` §5), aprobaciones editoriales BRO-01…BRO-09 y **Misión 007**.
 - **Bloqueos Activos:** Ninguno.
-- **Producción:** `https://dany.forcefilters.com` — rama `wip/mision-006a` @ `e12f397` (M006-B.1), actualizado 2026-10-23 18:47 UTC. Guía: `14-vps-deployment.md`.
+- **Producción:** `https://dany.forcefilters.com` — rama `wip/mision-006a` @ `45b84d2` (M006-B integrado: Multimedia + Brochure), actualizado 2026-10-23 20:30 UTC (anterior: `e12f397`). Guía: `14-vps-deployment.md`.
 
 ---
 
@@ -24,6 +24,27 @@
 | **Docker** | `docker 27.x` | Contenedor `my_postgres` ejecutando Postgres 17.6 |
 
 ---
+
+### [2026-10-23] — Misión 006-B.4: Imágenes oficiales y contenido multimedia real (local, sin desplegar)
+- **Material recuperado** (fuentes públicas oficiales, autenticidad verificada; `local/official-assets/`, excluido de Git): 4 portadas de Apple Music vía iTunes Lookup (3000² salvo Cicatrices 1400², máximo disponible), avatar y banner del canal oficial de YouTube (identidad verificada por `channelId` del video oficial), 6 miniaturas maxres de videoclips. Sin ampliaciones artificiales. Instagram/TikTok/Spotify sin material accesible sin login: no se eludió.
+- **Autorización:** confirmada por el responsable del sitio para portadas e imágenes del canal; brochure sigue pendiente (BRO-08).
+- **Payload local:** 4 portadas asignadas (`coverStatus = confirmed`), retrato = avatar oficial; Hero desktop/móvil vacíos (banner descartado: terceros identificables y artista no reconocible). Script idempotente `import-official-assets.ts` (no sobrescribe medios reales).
+- **Correcciones visuales justificadas:** `ReleaseCover` ya no superpone el título sobre portadas reales (el arte lo incluye; título conservado para lectores de pantalla sin duplicar el `h2` del spotlight); `ArtistPortrait` y `HeroMedia` ya no superponen el monograma «DG» sobre fotografías reales.
+- **Calidad:** tests 96/96, typecheck 0, lint 0, build OK; E2E de revalidación 13/13; QA headless (Edge) desktop/móvil en `/`, `/biografia`, `/booking` sin imágenes rotas, sin overflow, sin errores de consola ni saltos de encabezado. Capturas en `local/official-assets/verification/`.
+- **Documentación:** `17-media-inventory.md` (inventario, fuentes, derechos, pendientes). Incidencia de entorno: `next dev` quedó bloqueado al compilar `/api/[...slug]` y el panel del navegador estaba oculto; la verificación se hizo con build de producción y Edge headless.
+
+### [2026-10-23] — Misión 006-B.3: Revalidación del CMS sin rebuild (local, sin desplegar)
+- **Implementación:** `src/lib/revalidate.ts` (mapa de dependencias + hooks), hooks en `releases`, `tracks`, `videos`, `events`, `articles`, `career-highlights`, `media` y en los globals `artist-profile`, `booking`, `press-kit`, `site-settings`; `export const revalidate = 3600` en `/`, `/biografia`, `/booking`, `/epk`; `cms-queries.ts` y layout propagan errores; endpoint `POST /api/revalidate` solo admin (`src/endpoints/revalidateSite.ts`).
+- **Pruebas:** `src/tests/revalidation.test.ts` (18); E2E `src/scripts/verify-revalidation.ts` contra `next start` local 13/13 (EPK on/off, publicar/retirar hito, portada, retrato, booking, privacidad); control negativo con SQL directo (sin revalidar no cambia: caché `HIT`). Suite 96/96, typecheck 0, lint 0, build OK (rutas `○` con `Revalidate 1h`), sin migración.
+- **Documentación:** `16-cache-revalidation.md` (estrategia, seguridad, riesgos, despliegue); ADR-020.
+- **Resuelve:** DEPLOY-01.
+
+### [2026-10-23] — Despliegue de M006-B en producción (`e12f397` → `45b84d2`)
+- **Procedimiento (§8 de `14-vps-deployment.md`):** GitHub = local (`45b84d2`, contenido auditado: sin PDF, imágenes ni contactos) → backups previos a cualquier comando `payload`: `pre-deploy-m006b-20261023-202816.dump` (23 tablas con datos), `media-m006b-*.tgz`, `env-m006b-*` (600) → `git pull --ff-only` (VPS limpio) → `pnpm install --frozen-lockfile` (una sola `sharp` 0.34.5 / libvips 8.17.3) → `payload migrate` → `seed-brochure-content.ts` → copia `.next` en `/home/danyglock/next-prev-e12f397` → stop → build → start.
+- **Migraciones:** `20261023_194032_add_brochure_content_structure` aplicada una vez (lote 3); 5/5 registradas.
+- **Seed:** 5 hitos verificados publicados, 4 afirmaciones del brochure en borrador, `booking` (especificaciones declaradas, contacto vacío y privado) y `press-kit` (`isPublic = false`) inicializados; segunda ejecución sin cambios. **No** se ejecutaron `seed-artist-data.ts` ni `import-brochure-assets.ts`. Datos previos intactos (5 releases, 6 videos, 1 usuario, 1 media, 0 contactos).
+- **Build:** OK. Interrupción: 73 s. Sin rollback.
+- **Verificación pública:** `/`, `/biografia`, `/booking`, `/admin` 200; `/epk` 404 (privado); `first-register` 403; API `booking` sin datos de management; API `career-highlights` anónima solo 5 publicados (también con `draft=true`); 17/17 estáticos y `/_next/image` 200; formulario valida (400) sin crear registros; sin textos pendientes de aprobación en la web. Logs sin errores de sharp. 14/14 dominios del VPS idénticos a la línea base.
 
 ### [2026-10-23] — Misión 006-B: Integración final y preparación para despliegue
 - **Alcance:** revisión conjunta de M006-B.2 Multimedia (Antigravity: `HeroMedia`, `ReleaseCover`, `ArtistPortrait`, `VideoGallery`, `next.config.ts`, `depth: 2`) y M006-B.2 Brochure (Claude Code: `career-highlights`, `booking`, `press-kit`, galería en `media`, `/booking`, `/epk`, migración `20261023_194032`).

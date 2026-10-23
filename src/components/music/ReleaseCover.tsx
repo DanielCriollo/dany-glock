@@ -29,6 +29,8 @@ export const ReleaseCover: React.FC<ReleaseCoverProps> = ({
   const hasRealImage = Boolean(mediaObj?.url && coverStatus === 'confirmed');
 
   const typeLabel = type === 'single' ? 'Single' : type === 'ep' ? 'EP' : 'Álbum';
+  // En el spotlight (size 'lg') la sección ya tiene su <h2> con el título: aquí no se repite como encabezado.
+  const TitleTag = size === 'lg' ? 'p' : 'h3';
 
   return (
     <div
@@ -100,19 +102,27 @@ export const ReleaseCover: React.FC<ReleaseCoverProps> = ({
         </span>
       </div>
 
-      {/* Centro: Título y Artista */}
-      <div className="relative z-10 text-center my-auto py-3">
-        <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-smoke block mb-1 drop-shadow">
-          DANY GLOCK
-        </span>
-        <h3
-          className={`font-sans font-black tracking-tighter uppercase line-clamp-2 text-bone drop-shadow-md ${
-            size === 'lg' ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl'
-          }`}
-        >
-          {title}
-        </h3>
-      </div>
+      {/* Centro: Título y Artista. Con portada oficial el arte ya incluye el título: no se superpone
+          texto sobre él (se conserva el título para lectores de pantalla y la jerarquía h2 → h3 → h4). */}
+      {hasRealImage ? (
+        <>
+          {size !== 'lg' && <TitleTag className="sr-only">{title}</TitleTag>}
+          <div className="flex-1" aria-hidden="true" />
+        </>
+      ) : (
+        <div className="relative z-10 text-center my-auto py-3">
+          <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-smoke block mb-1 drop-shadow">
+            DANY GLOCK
+          </span>
+          <TitleTag
+            className={`font-sans font-black tracking-tighter uppercase line-clamp-2 text-bone drop-shadow-md ${
+              size === 'lg' ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl'
+            }`}
+          >
+            {title}
+          </TitleTag>
+        </div>
+      )}
 
       {/* Metadato inferior: Código de Catálogo y Año */}
       <div className="relative z-10 flex items-end justify-between font-mono text-[10px] text-smoke pt-2 border-t border-white/5">

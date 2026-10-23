@@ -193,3 +193,21 @@ Detalle y evidencias en `15-brochure-audit.md`.
 - [ ] **INT-07 (Baja):** Commit único con trabajo de dos agentes: revisar el diff antes del commit; considerar dos commits (Multimedia / Brochure) para trazabilidad.
 - [ ] **BRO-01…BRO-09:** aprobaciones editoriales del brochure (§11).
 - [ ] **BRO-11:** `seed-artist-data.ts` sobrescribe `ArtistProfile`/`SiteSettings` → **no ejecutarlo en producción** hasta convertirlo en solo-creación.
+
+### Actualización 2026-10-23 20:30 UTC — M006-B desplegado
+- [x] **BRO-10:** Despliegue de M006-B en producción (`45b84d2`): migración lote 3, `seed-brochure-content.ts` ejecutado, verificaciones públicas y de privacidad superadas.
+- Siguen abiertos: DEPLOY-01 (revalidación), INT-04 (Journal), INT-05 (`coverStatus`), INT-06 (priority hero), BRO-01…BRO-09 (aprobaciones), BRO-11 (seed-artist-data).
+- Para publicar contenido aprobado en producción: editar en `/admin` → rebuild + restart (§4 de `14-vps-deployment.md`).
+
+### Actualización M006-B.3 — Revalidación (local, sin desplegar)
+- [x] **DEPLOY-01:** Revalidación bajo demanda implementada y verificada (ver `16-cache-revalidation.md`, ADR-020). Efectiva en producción tras desplegar.
+- [ ] **REV-01 (Media):** Desplegar M006-B.3 (sin migración ni cambios de dependencias).
+- [ ] **REV-02 (Baja):** Tras ejecutar seeds por CLI en producción, llamar a `POST /api/revalidate` con sesión admin (o esperar ≤ 1 h).
+- [ ] **REV-03 (Baja):** Si el sitio pasa a varias instancias, configurar un cache handler compartido para ISR.
+
+### Actualización M006-B.4 — Imágenes oficiales (local, sin desplegar)
+- [x] **INT-05:** portadas oficiales asignadas con `coverStatus = confirmed` (local).
+- [ ] **MED-05 (Alta):** Solicitar al equipo fotos de prensa originales: retrato 4:5 ≥ 1600×2000, Hero 16:9 ≥ 1920×1080 sin texto, Hero móvil 9:16 ≥ 1080×1920, 3–6 fotos EPK con crédito (`17-media-inventory.md` §4).
+- [ ] **MED-06 (Media):** Portada de Cicatrices en ≥ 3000² (Apple solo publica 1400²).
+- [ ] **MED-07 (Media):** Producción: las imágenes no viajan por Git. Tras desplegar código, subir desde `/admin` las 4 portadas y el retrato (archivos en `local/official-assets/web/`) o ejecutar `import-official-assets.ts` copiando antes esa carpeta al VPS. La revalidación (M006-B.3) las publica sin rebuild.
+- [ ] **MED-08 (Baja):** Conservar por escrito la conformidad de los sellos (Beatmen Generations, Prix Music Group) para el uso de portadas.

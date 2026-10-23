@@ -456,3 +456,13 @@ Este documento registra las decisiones arquitectónicas fundamentales tomadas pa
 - **Contexto:** Next 15.4.11 depende de `sharp ^0.34.3` (optimizador `next/image`) y el proyecto declaraba `sharp ^0.35.5` para Payload. Con la adopción de `next/image` en M006-B ambas se cargan en el mismo proceso. En Windows comparten el nombre `libvips-42.dll`: si Next carga primero, Payload falla (`ERR_DLOPEN_FAILED`). En Linux no se reproduce.
 - **Decisión:** fijar `sharp` del proyecto a `^0.34.5` (la versión que resuelve Next), dejando una sola copia en el lockfile. Las plantillas oficiales de Payload 3 también usan sharp 0.34.x.
 - **Consecuencias:** desarrollo estable en Windows; producción recibe sharp 0.34.5 (libvips 8.17.3) para Payload — verificado con subida y generación de tamaños. Al actualizar Next.js, revisar que ambas dependencias sigan alineadas (`pnpm why sharp` debe mostrar una sola versión).
+
+---
+
+### ADR-020 — ISR con revalidación bajo demanda desde hooks de Payload (M006-B.3)
+- **Fecha:** 2026-10-23
+- **Estado:** Aprobado e Implementado (local, sin desplegar)
+- **Contexto:** Las páginas públicas eran estáticas sin revalidación (DEPLOY-01): cualquier cambio del CMS exigía `pnpm build` + reinicio (≈ 1–2 min de corte).
+- **Alternativas descartadas:** `dynamic = 'force-dynamic'` (renuncia a la caché y consulta PostgreSQL en cada visita en un VPS de 1.9 GB); webhook/endpoint con token compartido (superficie expuesta innecesaria, Payload ya corre en el mismo proceso); solo revalidación por tiempo (cambios con hasta 1 h de retraso, publicar/retirar no inmediato).
+- **Decisión:** ISR (`revalidate = 3600` como red de seguridad) + `revalidatePath` en `afterChange`/`afterDelete` de colecciones y globals según un mapa de dependencias (`src/lib/revalidate.ts`), siguiendo el patrón de la plantilla oficial de Payload. Consultas que propagan errores para no cachear páginas vacías. Endpoint `POST /api/revalidate` solo para administradores.
+- **Consecuencias:** cambios editoriales visibles en la siguiente visita sin build; HTML sigue sirviéndose desde caché; seeds por CLI requieren revalidación manual o esperar 1 h; diseño válido para una sola instancia (caché en disco local).

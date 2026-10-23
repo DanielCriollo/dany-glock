@@ -177,22 +177,22 @@ export const HeroMedia: React.FC<HeroMediaProps> = ({
         </span>
       </div>
 
-      {/* Monograma y presencia artística central */}
-      <div className="relative z-10 text-center my-auto py-6 space-y-2">
-        <span className="font-sans font-black text-7xl sm:text-8xl tracking-tighter text-bone/25 select-none block drop-shadow-lg">
-          DG
-        </span>
-        <span className="font-mono text-xs uppercase tracking-[0.25em] text-ash block">
-          {stageName}
-        </span>
-        <span className="inline-block font-mono text-[9px] uppercase tracking-widest text-smoke bg-black/70 px-2.5 py-1 border border-white/10 backdrop-blur-sm">
-          {hasDirectVideo
-            ? 'Ambientación Visual'
-            : hasImages
-            ? 'Material Fotográfico Oficial'
-            : 'Presencia Visual Oficial'}
-        </span>
-      </div>
+      {/* Monograma central solo sin fotografía: con imagen o video real no debe tapar al artista */}
+      {!hasDirectVideo && !hasImages ? (
+        <div className="relative z-10 text-center my-auto py-6 space-y-2">
+          <span className="font-sans font-black text-7xl sm:text-8xl tracking-tighter text-bone/25 select-none block drop-shadow-lg">
+            DG
+          </span>
+          <span className="font-mono text-xs uppercase tracking-[0.25em] text-ash block">
+            {stageName}
+          </span>
+          <span className="inline-block font-mono text-[9px] uppercase tracking-widest text-smoke bg-black/70 px-2.5 py-1 border border-white/10 backdrop-blur-sm">
+            Presencia Visual Oficial
+          </span>
+        </div>
+      ) : (
+        <div className="flex-1" aria-hidden="true" />
+      )}
 
       {/* Metadatos y control de video inferior */}
       <div className="relative z-10 flex items-center justify-between font-mono text-[10px] text-smoke border-t border-white/10 pt-3">

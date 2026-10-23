@@ -24,7 +24,7 @@ Despliegue inicial realizado el **2026-10-23**. Sin CI/CD ni automatización: la
 | Base de datos | PostgreSQL 16 existente — BD `danyglock_db`, rol `danyglock_app` (sin superusuario) |
 | Runtime | Node `v24.22.1`, pnpm `10.34.4` (fijado vía Corepack solo para `danyglock`) |
 | Repositorio | `https://github.com/DanielCriollo/dany-glock.git` (público, clonado por HTTPS) |
-| Rama / commit desplegado | `wip/mision-006a` @ `e12f397cbd7e46dcd5a2772a1264f2a09ebeb19e` (M006-B.1, 2026-10-23 18:47 UTC). Anterior: `8ea781f` (M006-A.2) |
+| Rama / commit desplegado | `wip/mision-006a` @ `45b84d2d0d2a432287ea2c2fba8f91af0b91154b` (M006-B integrado, 2026-10-23 20:30 UTC). Anteriores: `e12f397` (M006-B.1), `8ea781f` (M006-A.2) |
 
 ### Por qué el enlace se llama `zz-…`
 Nginx carga `sites-enabled/*` en orden alfabético y el primer `server` de cada `listen` es el *default server*. Con el nombre `dany.forcefilters.com` el vhost quedaba primero y capturaba peticiones de dominios sin bloque propio en :80 / :443. El prefijo `zz-` lo carga al final y preserva el default original (`game-app.conf`). **No renombrar.**
@@ -105,7 +105,7 @@ Recuperación rápida opcional: antes del build copiar el build actual (`cp -a .
 - `payload.config.ts` define `prodMigrations`: **al arrancar en producción Payload aplica automáticamente las migraciones pendientes**. Un simple `systemctl restart` tras un `pull` con migraciones nuevas modifica la BD → respaldar antes. **También cualquier comando CLI de Payload con el `.env` cargado** (incluido `pnpm payload migrate:status` o el seed) aplica las pendientes: hacer el `pg_dump` **antes** de cualquier comando `payload` (ocurrió así en el despliegue de `e12f397`).
 - Una migración incompatible (renombrar/eliminar columnas, cambiar tipos) puede requerir coordinación adicional (migración en dos fases, ventana de mantenimiento). Revisar el SQL de cada migración nueva antes de desplegar.
 - El procedimiento provoca una interrupción breve del sitio.
-- La Home `/` se prerenderiza estáticamente en el build: **los cambios hechos en el CMS no se ven en la Home hasta el siguiente build + restart** (ver pendiente DEPLOY-01 en `08-backlog-and-blockers.md`).
+- Hasta desplegar M006-B.3, los cambios del CMS requieren build + restart. **Con M006-B.3 desplegado** se publican sin build (ISR bajo demanda, `16-cache-revalidation.md`); tras seeds por CLI usar `POST /api/revalidate` (admin) o esperar ≤ 1 h.
 
 ### Seed de datos verificados (idempotente)
 `seed-artist-data.ts` solo se ejecuta si `argv[1]` contiene `seed-artist-data`; con `pnpm payload run` **no hace nada**. Forma correcta:
@@ -162,7 +162,7 @@ Directorio local de dumps: `/var/backups/dany-glock` (propietario `danyglock`, `
 
 ## 8. Próximo despliegue: M006-B integrado (Multimedia + Brochure)
 
-Estado: preparado en local, **pendiente de commit y autorización**. Diferencias respecto a `e12f397`:
+Estado: **desplegado el 2026-10-23 20:30 UTC** (`45b84d2`, interrupción 73 s, migración en lote 3, seed ejecutado). Rollback rápido disponible en `/home/danyglock/next-prev-e12f397` + backup `pre-deploy-m006b-20261023-202816.dump`. Diferencias respecto a `e12f397`:
 
 | Aspecto | Cambio | Impacto en el despliegue |
 | :--- | :--- | :--- |
@@ -199,3 +199,9 @@ sudo systemctl start dany-glock
 **No ejecutar** `seed-artist-data.ts` (sobrescribe globals, BRO-11) ni `import-brochure-assets.ts` (solo uso local).
 
 Verificar: `/`, `/biografia` (módulo «Trayectoria y Colaboraciones» con 5 hitos verificados, sin Kiwid/Pistolón/INPEC), `/booking` (200, «30–45 minutos», sin contacto de management), `/epk` (404), `/admin`, `/api/globals/booking` (sin `management.name/email/whatsapp`), una imagen vía `/_next/image`, logs sin errores de sharp y los 14 dominios del VPS contra la línea base.
+
+---
+
+## 9. Próximo despliegue: M006-B.3 (revalidación del CMS)
+
+Sin migraciones ni cambios de dependencias. Procedimiento y verificación en `16-cache-revalidation.md` §5. Tras desplegarlo, **los cambios editoriales ya no requieren build ni reinicio**.
