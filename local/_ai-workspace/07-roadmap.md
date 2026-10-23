@@ -102,12 +102,18 @@ flowchart TD
 
 ---
 
-### ⏳ Misión 006-A.2 — Conexión de Vistas Públicas con Datos Reales del CMS
-- **Objetivo:** Conectar el layout público existente, Hero y secciones a los registros reales sembrados en Payload CMS vía Local API (`getPayload({ config })`), reemplazando scaffolds estáticos.
-- **Alcance:**
-  - Mostrar en Home el último lanzamiento verificado (`Cicatrices` / `SO FRESH, SO CLEAN` / `SIG Sauer`).
-  - Mostrar perfiles oficiales y enlaces a YouTube / Apple Music / Instagram desde `SiteSettings`.
-  - Asegurar que los borradores no confirmados no se rendericen para usuarios no autenticados.
+### ✅ Misión 006-A.2 — Transformar la landing demostrativa en la web oficial de Dany Glock *(Completada)*
+- **Objetivo:** Convertir la landing Dark Cinematic Editorial en la web oficial del artista alimentada por Payload CMS y PostgreSQL, eliminando cualquier dato provisional o de scaffolding.
+- **Entregables:**
+  - Capa de consultas unificada `src/lib/cms-queries.ts` (`getHomePageCmsData`, etc.) con filtrado estricto por publicación y verificación editorial.
+  - Landing oficial `src/app/(public)/page.tsx` con Dany Glock como protagonista, origen en Pasto, Colombia, spotlight dinámico de lanzamiento, catálogo discográfico real con vinilo visual para artes en sincronización y distinción de artista invitado en *EXCESO*.
+  - Galería de videografía interactiva `src/components/video/VideoGallery.tsx` con modal `<dialog>` y embeds privacy-enhanced (`youtube-nocookie.com`).
+  - Estados vacíos editoriales de alta calidad visual para Tour & Shows y Journal sin datos inventados.
+  - Formulario de Contacto & Booking accesible `src/components/contact/ContactForm.tsx` con honeypot anti-spam conectado a `/api/contacts`.
+  - Saneamiento completo de `EditorialMenu.tsx` y `SiteFooter.tsx` (cero menciones a Guatemala ni correos inventados).
+  - Configuración de `push: false` en `payload.config.ts` y saneamiento de registros dev en migraciones.
+  - Suite de pruebas de integración `src/tests/public-views.test.tsx` (16 pruebas pasando; total 55 pruebas en el repo).
+  - Compilación Next.js 15 de producción exitosa al 100% (First Load JS 119 kB).
 
 ---
 

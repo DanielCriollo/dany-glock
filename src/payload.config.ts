@@ -60,6 +60,7 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/dany_glock_dev',
     },
+    push: false,
     prodMigrations: migrations,
   }),
 });

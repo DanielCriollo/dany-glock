@@ -3,9 +3,9 @@
 ## 1. Ficha del Proyecto
 
 - **Nombre del Proyecto:** Dany Glock — Artist Digital Experience
-- **Fase Actual:** Misión 006-A.1 — Retomar Trabajo Interrumpido y Sembrar Contenido Real en Payload CMS (Completada)
-- **Última Misión Completada:** **Misión 006-A.1 — Retomar Trabajo Interrumpido y Sembrar Contenido Real en Payload CMS**
-- **Misión en Curso:** Preparada para **Misión 006-A.2 — Conexión de Vistas Públicas con Datos Reales del CMS**
+- **Fase Actual:** Misión 006-A.2 — Transformar la landing demostrativa en la web oficial de Dany Glock (Completada)
+- **Última Misión Completada:** **Misión 006-A.2 — Transformar la landing demostrativa en la web oficial de Dany Glock**
+- **Siguiente Misión:** **Misión 006-B — Optimización de Medios, Galería Visual y Assets del Artista** (o según defina el roadmap)
 - **Bloqueos Activos:** Ninguno.
 
 ---
@@ -18,9 +18,36 @@
 | **Node.js** | `v22.12.0` | Cumple el requisito de Payload 3 (`>= 20.18.1`) |
 | **NPM** | `10.9.0` | Funcional |
 | **PNPM** | `10.34.4` | Gestor de paquetes primario con `pnpm-lock.yaml` |
-| **Git** | `2.45.2.windows.1` | Activo en rama de respaldo `wip/mision-006a` |
+| **Git** | `2.45.2.windows.1` | Activo en rama `wip/mision-006a` |
 | **PostgreSQL** | `PostgreSQL 17.6` (Docker / local: 5432) | Motor relacional local activo; BD `dany_glock_dev` |
 | **Docker** | `docker 27.x` | Contenedor `my_postgres` ejecutando Postgres 17.6 |
+
+---
+
+### [2026-10-23] — Misión 006-A.2: Transformar la landing demostrativa en la web oficial de Dany Glock
+- **Misión:** Misión 006-A.2
+- **Implementaciones realizadas:**
+  - **Capa de Consultas Públicas del CMS (`src/lib/cms-queries.ts`):**
+    - Métodos para Server Components: `getArtistProfileData`, `getSiteSettingsData`, `getPublishedReleasesData`, `getPublishedVideosData`, `getPublishedEventsData`, `getPublishedArticlesData`, y agregador unificado `getHomePageCmsData`.
+    - Respeto estricto a RBAC (`overrideAccess: false`) y filtrado estricto por `_status: 'published'` y `verification.status: 'verified'` para releases y contenidos.
+  - **Reescritura de la Landing Page Oficial (`src/app/(public)/page.tsx`):**
+    - Dany Glock como protagonista con tipografía póster editorial de impacto (`text-6xl` a `text-9xl`) y origen en Pasto, Nariño, Colombia.
+    - Cero referencias a scaffolding, misiones técnicas, fases o falsas locaciones de Guatemala.
+    - Spotlight automático del último lanzamiento oficial (*Cicatrices feat. Maick Records*).
+    - Catálogo dinámico de los 4 lanzamientos publicados con tratamiento gráfico para artes en sincronización y distinción explícita de "Artista Invitado" en *EXCESO*.
+    - Galería audiovisual interactiva con reproductor modal accesible HTML5 `<dialog>` y embeds privacy-enhanced (`youtube-nocookie.com`).
+    - Estados vacíos editoriales de alta calidad visual para Tours ("Nuevas Presentaciones en Vivo por Anunciar") y Journal ("Comunicados Oficiales en Preparación").
+    - Formulario interactivo de Booking y Prensa conectado a `/api/contacts` con honeypot anti-spam.
+  - **Limpieza de Scaffolding y Endurecimiento de Migraciones:**
+    - `src/components/layout/EditorialMenu.tsx` y `src/components/layout/SiteFooter.tsx` saneados (enlaces limpios a `#contacto`, redes verificadas, sin correos inventados).
+    - `push: false` añadido a `src/payload.config.ts`, permitiendo builds de Next.js desatendidos sin prompts interactivos de migraciones.
+  - **Pruebas y Calidad:**
+    - `src/tests/public-views.test.tsx`: 16 pruebas automatizadas cubriendo consultas CMS, renderizado de componentes, ausencia de placeholders y estados vacíos.
+    - Total de pruebas en repositorio: 6 suites, 55 pruebas pasando al 100%.
+    - `pnpm typecheck`: 0 errores.
+    - `pnpm lint`: 0 errores, 0 advertencias.
+    - `pnpm build`: 100% exitoso con generación estática de ruta `/` (13 kB).
+    - Verificación visual browser: Capturas desktop (1440x900) y mobile (390x844) confirmadas.
 
 ---
 

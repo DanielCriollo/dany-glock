@@ -281,6 +281,49 @@ Este documento registra las decisiones arquitectónicas fundamentales tomadas pa
 - **Consecuencias:**
   - *Positivas:* PostgreSQL es ahora la fuente de verdad inmutable y estructurada con datos reales; cero contenido inventado en producción; pruebas pasando al 100% (39/39); build de producción pasando con cero errores de tipo o lint.
 
+---
+
+## ADR-014: Capa de Consultas Públicas del CMS, Eliminación de Placeholders y Transformación de la Landing a Experiencia Artística Oficial
+
+- **Estado:** Aceptado (Implementado en Misión 006-A.2)
+- **Fecha:** Octubre 2026
+- **Contexto:**
+  1. La landing page pública (`src/app/(public)/page.tsx`) conservaba textos de scaffolding heredados de la Fase 005 ("Fase 005 — Cinematic Layout", "Quetzaltenango / Guatemala", "booking@danyglock.com", falsas giras y comunicados inventados).
+  2. Misión 006-A.1 preparó la base de datos PostgreSQL con datos reales investigados (4 lanzamientos verificados, 1 borrador, 6 videos oficiales de YouTube, globals de Pasto, Colombia y evento borrador).
+  3. Era imperativo transformar la experiencia pública en un sitio musical profesional, cinematográfico y administrable, donde Payload CMS sea la única fuente de verdad consumida directamente desde Server Components (`overrideAccess: false`).
+  4. Los borradores y registros en proceso de verificación debían permanecer rigurosamente aislados del frontend público, mostrando estados vacíos editoriales de alta calidad visual donde correspondiera (Shows y Journal).
+- **Decisión:**
+  1. **Capa Unificada de Consultas Públicas (`src/lib/cms-queries.ts`):**
+     - Funciones asíncronas para Server Components: `getArtistProfileData`, `getSiteSettingsData`, `getPublishedReleasesData`, `getPublishedVideosData`, `getPublishedEventsData`, `getPublishedArticlesData`, y `getHomePageCmsData` unificada en paralelo (`Promise.all`).
+     - Consultas configuradas con `overrideAccess: false` para respetar la seguridad RBAC de Payload.
+     - Filtrado estricto por `_status: 'published'` y verificación editorial `verification.status: 'verified'` en Releases, garantizando la exclusión de borradores (`sig-sauer-remix`) y registros de prueba locales.
+  2. **Hero Cinematográfico Oficial:**
+     - Dany Glock como protagonista central con tipografía editorial de gran escala (`text-6xl` a `text-9xl`) y subtítulo en `font-serif italic`.
+     - Origen verificado en Pasto, Nariño, Colombia.
+     - Spotlight automático del lanzamiento oficial más reciente (*Cicatrices feat. Maick Records*), con enlaces directos hacia la discografía y videografía.
+     - Cero referencias a fases de desarrollo, nombres de misiones o tecnologías.
+  3. **Catálogo de Discografía Real:**
+     - Consumo directo de `Releases` con tratamiento visual de vinilo concéntrico para artes en sincronización (`coverStatus: 'pending'`).
+     - Distinción visual explícita entre lanzamientos principales (`artistRole: 'main'`) y participaciones como artista invitado (`artistRole: 'featured'`) como en *EXCESO*.
+     - Enlaces directos a plataformas de streaming verificadas (Apple Music, YouTube, Amazon Music).
+  4. **Videografía Oficial Interactiva (`src/components/video/VideoGallery.tsx`):**
+     - Galería responsiva con miniaturas de YouTube (`i.ytimg.com/vi/<id>/hqdefault.jpg`), badges de tipo (`Video Oficial`, `Trailer`, `Visualizer`), y etiquetas de duración.
+     - Reproductor modal accesible utilizando el elemento nativo `<dialog>`, captura de foco, cierre con teclado (`Escape`) y modo privacy-enhanced (`youtube-nocookie.com/embed/<id>`).
+     - Sin reproducción automática con sonido.
+  5. **Estados Vacíos Editoriales de Shows y Journal:**
+     - Eliminación total de giras inventadas y falsas notas de prensa sobre Guatemala.
+     - Diseño de tarjetas vacías editoriales elegantes: *"Temporada en Programación — Nuevas Presentaciones en Vivo por Anunciar"* y *"Archivo Editorial — Comunicados Oficiales en Preparación"*, dirigiendo el interés hacia el canal de booking y prensa.
+  6. **Canal Oficial de Contacto y Booking (`src/components/contact/ContactForm.tsx`):**
+     - Formulario accesible conectado al endpoint `/api/contacts` con honeypot anti-spam (`websiteHoneypot`), validaciones de tipo, estados visuales de carga, éxito y error.
+     - Reemplazo de enlaces `mailto:` hardcodeados por navegación hacia `#contacto` cuando no existan correos confirmados en `SiteSettings`.
+  7. **Limpieza de Scaffolding y Endurecimiento de Migraciones:**
+     - Saneamiento completo de `EditorialMenu.tsx` y `SiteFooter.tsx`.
+     - Establecimiento de `push: false` en `payload.config.ts` para evitar la inserción del registro dev con `batch: '-1'` en `payload_migrations`, permitiendo que `next build` ejecute limpiamente sin requerir confirmación interactiva.
+  8. **Suite de Pruebas de Integración (`src/tests/public-views.test.tsx`):**
+     - 16 pruebas que verifican: consultas públicas, exclusión de borradores, distinción de roles de artista, presencia de videos, estados vacíos, ausencia total de referencias a Guatemala, falsos emails y textos de misiones.
+- **Consecuencias:**
+  - *Positivas:* Sitio 100% oficial, profesional e inmersivo; navegación y renderizado rápidos (First Load JS 119 kB); 55/55 pruebas automatizadas pasando; build de producción Next.js 15 compilando exitosamente con generación estática de la Home.
+
 
 
 

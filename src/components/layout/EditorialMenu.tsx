@@ -179,7 +179,9 @@ export const EditorialMenu: React.FC<EditorialMenuProps> = ({
               {bookingEmail}
             </a>
           ) : (
-            <span className="text-ash">booking@danyglock.com</span>
+            <Link href="#contacto" onClick={handleLinkClick} className="text-ash hover:text-bone transition-colors">
+              Canal de Contacto Oficial ↗
+            </Link>
           )}
         </div>
       </div>

@@ -97,3 +97,7 @@ export function youTubeEmbedUrl(id: string | null | undefined): string | null {
   }
   return `https://www.youtube-nocookie.com/embed/${id}?rel=0`;
 }
+
+// Aliases para máxima compatibilidad
+export const getYouTubeThumbnailUrl = youTubeThumbnailUrl;
+export const getYouTubeEmbedUrl = youTubeEmbedUrl;

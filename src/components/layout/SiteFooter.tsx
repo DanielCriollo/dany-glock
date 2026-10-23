@@ -23,10 +23,10 @@ export async function SiteFooter() {
   const stageName = artistProfile?.stageName || 'DANY GLOCK';
   const manifesto =
     artistProfile?.manifesto ||
-    'La música urbana como cinematografía sonora: una narrativa nocturna nacida en el altiplano de Guatemala y proyectada a la escena global.';
+    'La música urbana como cinematografía sonora: una narrativa nocturna nacida en el sur de Colombia y proyectada a la escena global.';
   const copyright = siteSettings?.copyrightText || `© ${new Date().getFullYear()} Dany Glock. Todos los derechos reservados.`;
-  const bookingEmail = siteSettings?.contactEmails?.booking || 'booking@danyglock.com';
-  const pressEmail = siteSettings?.contactEmails?.press || 'press@danyglock.com';
+  const bookingEmail = siteSettings?.contactEmails?.booking || null;
+  const pressEmail = siteSettings?.contactEmails?.press || null;
 
   return (
     <footer className="relative bg-graphite text-bone border-t border-white/10 overflow-hidden pt-20 pb-8">
@@ -44,24 +44,36 @@ export async function SiteFooter() {
             <div className="p-6 bg-carbon/50 border border-white/5 hover:border-crimson/50 transition-colors duration-200">
               <span className="font-mono text-[10px] uppercase text-ash tracking-widest block mb-2">01 / Conciertos & Shows</span>
               <h3 className="font-sans font-bold text-lg text-bone mb-2">Booking Oficial</h3>
-              <a href={`mailto:${bookingEmail}`} className="font-mono text-xs text-crimson-text hover:underline break-all">
-                {bookingEmail} ↗
-              </a>
+              {bookingEmail ? (
+                <a href={`mailto:${bookingEmail}`} className="font-mono text-xs text-crimson-text hover:underline break-all">
+                  {bookingEmail} ↗
+                </a>
+              ) : (
+                <Link href="#contacto" className="font-mono text-xs text-crimson-text hover:underline">
+                  Formulario de Booking ↗
+                </Link>
+              )}
             </div>
 
             <div className="p-6 bg-carbon/50 border border-white/5 hover:border-crimson/50 transition-colors duration-200">
               <span className="font-mono text-[10px] uppercase text-ash tracking-widest block mb-2">02 / Medios & Entrevistas</span>
               <h3 className="font-sans font-bold text-lg text-bone mb-2">Prensa & Editorial</h3>
-              <a href={`mailto:${pressEmail}`} className="font-mono text-xs text-crimson-text hover:underline break-all">
-                {pressEmail} ↗
-              </a>
+              {pressEmail ? (
+                <a href={`mailto:${pressEmail}`} className="font-mono text-xs text-crimson-text hover:underline break-all">
+                  {pressEmail} ↗
+                </a>
+              ) : (
+                <Link href="#contacto" className="font-mono text-xs text-ash hover:text-bone hover:underline">
+                  Acreditación de Medios ↗
+                </Link>
+              )}
             </div>
 
             <div className="p-6 bg-carbon/50 border border-white/5 hover:border-crimson/50 transition-colors duration-200">
               <span className="font-mono text-[10px] uppercase text-ash tracking-widest block mb-2">03 / Material para Medios</span>
               <h3 className="font-sans font-bold text-lg text-bone mb-2">Electronic Press Kit</h3>
               <Link href="#press-kit" className="font-mono text-xs text-bone hover:text-crimson-text transition-colors">
-                Descargar EPK Oficial ↗
+                Solicitud de EPK Oficial ↗
               </Link>
             </div>
           </div>
@@ -77,7 +89,7 @@ export async function SiteFooter() {
             </p>
             <p className="text-[11px] text-smoke">
               {artistProfile?.origin?.city ? `${artistProfile.origin.city}, ` : ''}
-              {artistProfile?.origin?.country || 'Guatemala'}
+              {artistProfile?.origin?.country || 'Colombia'}
             </p>
           </div>
 
