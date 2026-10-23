@@ -3,10 +3,11 @@
 ## 1. Ficha del Proyecto
 
 - **Nombre del Proyecto:** Dany Glock — Artist Digital Experience
-- **Fase Actual:** Misión 003 — Project Bootstrap & Engineering Foundation (Fase 2: Investigación de Compatibilidad)
-- **Última Misión Completada:** **Misión 002 — Design System & Cinematic Art Direction** *(Cerrada técnicamente)*
-- **Misión en Curso:** **Misión 003 — Project Bootstrap & Engineering Foundation** *(Detenida en Fase 2 por condición crítica de Node.js)*
-- **Bloqueos Activos:** **BLK-01** (Node.js 22.12.0 < 22.23.4 requerido por `payload@latest` 3.92.0; pendiente decisión de actualización vs fijación en 3.91.0).
+- **Fase Actual:** Misión 003 — Project Bootstrap & Engineering Foundation (Completada)
+- **Última Misión Completada:** **Misión 003 — Project Bootstrap & Engineering Foundation**
+- **Misión en Curso:** Preparación para **Misión 004 — Payload CMS 3 Integration & Core Data Models**
+- **Bloqueos Activos:** Ninguno.
+
 
 
 ---
@@ -25,7 +26,26 @@
 
 ---
 
-## 3. Registro Histórico de Misiones
+### [2026-10-23] — Misión 003: Project Bootstrap & Engineering Foundation
+- **Misión:** Misión 003
+- **Implementaciones realizadas:**
+  - Diagnóstico de compatibilidad y resolución de incompatibilidad de motor Node (`payload@latest` requería `^22.23.4`, mientras que `payload@3.91.0` requiere `>=20.18.1`, perfectamente compatible con Node `v22.12.0`).
+  - Creación de configuración unificada: `package.json`, `tsconfig.json`, `next.config.ts`, `postcss.config.mjs`, `tailwind.config.ts`, `eslint.config.mjs`, `vitest.config.ts`, `.env.example`.
+  - Instalación limpia con `pnpm install` generando `pnpm-lock.yaml` determinista.
+  - Implementación de design tokens reales en `src/app/globals.css` (escalas ink, graphite, carbon, steel, bone, ash, smoke, crimson, ember, grano SVG estático, focus visible WCAG 2.2 y reduced motion).
+  - Configuración de tipografías autoalojadas con Next.js Font (`Archivo`, `Instrument_Serif`, `JetBrains_Mono` en `src/app/fonts.ts`).
+  - Creación del componente accesible `src/components/ui/Button.tsx` (variantes primary, secondary, ghost y tamaños sm, md, lg).
+  - Scaffold de verificación técnica en `src/app/(public)/layout.tsx` y `src/app/(public)/page.tsx`.
+- **Arquitectura y decisiones:** Registrado ADR-009 en `05-technical-decisions.md` (Fijación de Payload CMS 3.91.0 para compatibilidad estricta con Node 22.12.0 y Next.js 15.4.11).
+- **Dependencias agregadas:** `next@15.4.11`, `react@^19.0.0`, `react-dom@^19.0.0`, `clsx`, `tailwind-merge`, `lucide-react`, `tailwindcss@^3.4.17`, `postcss`, `autoprefixer`, `typescript@^5.7.3`, `vitest@^3.0.7`, `jsdom`, `@testing-library/react`, `eslint@^9.0.0`, `eslint-config-next@15.4.11`.
+- **Pruebas ejecutadas:**
+  - `pnpm typecheck` (`tsc --noEmit`): 0 errores.
+  - `pnpm test` (`vitest run`): 3/3 tests unitarios pasados (100%).
+  - `pnpm lint` (`next lint`): 0 errores, 0 advertencias.
+  - `pnpm build` (`next build`): compilación estática exitosa en 15.0s, First Load JS compartido 101 kB.
+  - Servidor de desarrollo `pnpm dev` probado en puerto 3001: HTTP 200 OK en 63ms sin errores de hidratación.
+- **Pendientes y bloqueos:** Ninguno.
+- **Próximos pasos:** Misión 004 — Payload CMS 3 Integration & Core Data Models.
 
 ### [2026-10-22] — Misión 002: Design System & Cinematic Art Direction
 - **Misión:** Misión 002 / 002-B

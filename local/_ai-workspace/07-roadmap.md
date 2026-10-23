@@ -39,19 +39,20 @@ flowchart TD
 
 ---
 
-### ⏳ Misión 003 — Inicialización del proyecto y tooling *(Siguiente fase activa)*
-- **Objetivo:** Crear el andamiaje del proyecto Next.js 15 con TypeScript y herramientas de desarrollo limpias.
-- **Alcance:**
-  - Creación del proyecto base con `pnpm` y Next.js 15 App Router.
-  - Configuración de TypeScript en modo estricto.
-  - Configuración de Tailwind CSS v3.4 con tokens semánticos del Design System.
-  - Integración de Vitest y Testing Library para pruebas unitarias.
-  - Configuración de linters, formato de código y estructura de carpetas profesional.
-
+### ✅ Misión 003 — Project Bootstrap & Engineering Foundation *(Completada)*
+- **Objetivo:** Inicializar la aplicación real de Next.js 15 App Router, TypeScript estricto, tooling de pruebas y tokens del Design System, garantizando compatibilidad con Payload 3.91.0.
+- **Entregables:**
+  - Proyecto Next.js 15.4.11 con React 19.3.1 y TypeScript 5.7+ configurado en la raíz del repositorio.
+  - Gestión reproducible con `pnpm` y `pnpm-lock.yaml`.
+  - Design Tokens semánticos en `src/app/globals.css` y `tailwind.config.ts`.
+  - Tipografías autoalojadas con `next/font/google` (`Archivo`, `Instrument Serif`, `JetBrains Mono`).
+  - Primitiva accesible `Button` y utilidades de clases `cn` testeadas con Vitest (3/3 tests pasados).
+  - Scaffold de verificación técnica en `src/app/(public)/layout.tsx` y `src/app/(public)/page.tsx`.
+  - Verificación completa: `tsc --noEmit` limpio, `next lint` limpio, `next build` exitoso en 15s.
 
 ---
 
-### ⏳ Misión 004 — Base de datos y Payload CMS 3.x
+### ⏳ Misión 004 — Base de datos y Payload CMS 3.x *(Siguiente fase activa)*
 - **Objetivo:** Integrar el panel de administración y modelar las entidades de datos en PostgreSQL.
 - **Alcance:**
   - Instalación y configuración de Payload 3.x nativo en `/admin`.

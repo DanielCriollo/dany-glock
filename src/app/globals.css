@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Paleta Base — Escala de Oscuridad */
+  --ink: #0A0A0B;
+  --graphite: #141416;
+  --carbon: #1C1C1F;
+  --steel: #2A2A2E;
+
+  /* Escala de Texto Cálido */
+  --bone: #EDEAE4;
+  --ash: #A8A49E;
+  --smoke: #8A8680;
+  --iron: #4A4845;
+
+  /* Jerarquía Carmesí */
+  --crimson: #B3122E;
+  --crimson-hover: #C8152F;
+  --crimson-press: #8F0E25;
+  --crimson-signal: #E1243F;
+  --crimson-text: #FF5468;
+
+  /* Secundarios & Estado */
+  --ember: #C8A27A;
+  --success: #7BC59A;
+
+  /* Tokens Semánticos */
+  --color-bg: var(--ink);
+  --color-bg-raised: var(--graphite);
+  --color-bg-interactive: var(--carbon);
+  --color-bg-elevated: var(--steel);
+  --color-bg-glass: rgb(20 20 22 / 0.72);
+  --color-bg-overlay: rgb(10 10 11 / 0.92);
+
+  --color-fg: var(--bone);
+  --color-fg-muted: var(--ash);
+  --color-fg-subtle: var(--smoke);
+  --color-fg-disabled: var(--iron);
+  --color-fg-accent: var(--crimson-text);
+
+  --color-accent: var(--crimson);
+  --color-accent-hover: var(--crimson-hover);
+  --color-accent-press: var(--crimson-press);
+  --color-signal: var(--crimson-signal);
+  --color-upcoming: var(--ember);
+
+  --color-border: rgb(237 234 228 / 0.12);
+  --color-border-strong: rgb(237 234 228 / 0.24);
+  --color-border-input: var(--smoke);
+  --color-focus: var(--crimson-text);
+
+  /* Espaciado y Grilla */
+  --gutter: clamp(1.25rem, 0.8rem + 2.2vw, 3rem);
+  --space-section: clamp(5rem, 3rem + 8vw, 12rem);
+  --container-main: 80rem;
+
+  /* Capas */
+  --z-grain: 900;
+  --z-skip-link: 1000;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+/* Indicador de foco accesible WCAG 2.2 */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+/* Grano analógico estático (sin impacto en GPU) */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-grain);
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Skip link accesible */
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: -4rem;
+  z-index: var(--z-skip-link);
+  background: var(--bone);
+  color: var(--ink);
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  transition: top 180ms ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Reducción de movimiento respetuosa */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

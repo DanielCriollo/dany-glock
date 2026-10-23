@@ -2,13 +2,10 @@
 
 ## 1. Bloqueos Activos
 
-- **[BLK-01] Incompatibilidad de versión de Node.js con `payload@latest` (3.92.0):**
-  - **Causa:** El entorno del sistema tiene instalado `Node.js v22.12.0`. La versión más reciente en el registro npm (`payload@3.92.0`) exige `engines.node: "^22.23.4 || >=24.22.1"`.
-  - **Impacto:** Conforme a la regla obligatoria de la Misión 003, la instalación de dependencias se detiene para prevenir errores de compilación o instalación forzada con bypass de motores.
-  - **Estado:** Bloqueante para la fase 3 (Instalación de paquetes Next.js y lockfile de pnpm).
-  - **Soluciones posibles:**
-    1. Fijar Payload CMS en `3.91.0` (su motor es `>=20.18.1`, 100% compatible con Node 22.12.0).
-    2. Actualizar Node.js localmente vía `fnm install 22.23.4` (o `24.22.1`) para satisfacer `payload@3.92.0`.
+- **[BLK-01 — RESUELTO] Incompatibilidad de versión de Node.js con `payload@latest` (3.92.0):**
+  - **Resolución:** Conforme a la aprobación del usuario, se fijó la versión de Payload CMS en `3.91.0` (cuyo requisito es `node >=20.18.1`), permitiendo mantener de forma estable el runtime `Node.js v22.12.0` sin requerir modificaciones en el sistema operativo local ni afectar otros entornos.
+  - **Estado:** Resuelto (ver ADR-009). Cero bloqueos activos para la Misión 003.
+
 
 
 ---
@@ -37,11 +34,23 @@
 
 ---
 
-## 4. Backlog Preparado para Misión 003 (Inicialización del Proyecto y Tooling)
+## 4. Registro de Tareas de Misión 003 (Project Bootstrap & Engineering Foundation)
 
-- [ ] **TL-01:** Inicializar proyecto base con Next.js 15 App Router y TypeScript estricto mediante `pnpm`.
-- [ ] **TL-02:** Configurar Tailwind CSS v3.4 mapeando los tokens semánticos aprobados en `globals.css` y `tailwind.config.ts`.
-- [ ] **TL-03:** Configurar fuentes autoalojadas con `next/font/google` (`Archivo`, `Instrument Serif`, `JetBrains Mono`) con fallback métrico anti-CLS.
-- [ ] **TL-04:** Configurar entorno de pruebas con Vitest y React Testing Library.
-- [ ] **TL-05:** Establecer la estructura de directorios modular (`src/app/(public)`, `src/components/`, `src/lib/`, `src/styles/`) y scripts de verificación (`pnpm lint`, `pnpm test`).
+- [x] **TL-01:** Inicializar proyecto base con Next.js 15 App Router y TypeScript estricto mediante `pnpm`. *(Evidencia: `package.json`, `tsconfig.json`, `next.config.ts`, `pnpm-lock.yaml`)*
+- [x] **TL-02:** Configurar Tailwind CSS v3.4 mapeando los tokens semánticos aprobados en `src/app/globals.css` y `tailwind.config.ts`. *(Evidencia: `globals.css` con variables CSS y tema Tailwind)*
+- [x] **TL-03:** Configurar fuentes autoalojadas con `next/font/google` (`Archivo`, `Instrument Serif`, `JetBrains Mono`) con fallback métrico anti-CLS. *(Evidencia: `src/app/fonts.ts`)*
+- [x] **TL-04:** Configurar entorno de pruebas con Vitest y React Testing Library. *(Evidencia: `vitest.config.ts`, `src/lib/utils.test.ts` con 3 tests unitarios pasados)*
+- [x] **TL-05:** Establecer la estructura de directorios modular (`src/app/(public)`, `src/components/`, `src/lib/`), scaffold de prueba y scripts de verificación (`pnpm lint`, `pnpm test`, `pnpm typecheck`, `pnpm build`). *(Evidencia: build exitoso en 15s)*
+
+---
+
+## 5. Backlog Preparado para Misión 004 (Payload CMS 3 Integration & Core Data Models)
+
+- [ ] **CMS-01:** Instalar paquetes core de Payload CMS versión `3.91.0` (`payload`, `@payloadcms/next`, `@payloadcms/db-postgres`, `@payloadcms/richtext-lexical`).
+- [ ] **CMS-02:** Configurar base de datos PostgreSQL local (`dany_glock_dev`) con credenciales en `.env.local` y conexión verificada.
+- [ ] **CMS-03:** Crear `src/payload.config.ts` y configurar `withPayload()` en `next.config.ts`.
+- [ ] **CMS-04:** Configurar rutas del panel de administración en `src/app/(payload)/admin/` y endpoints de API en `src/app/(payload)/api/`.
+- [ ] **CMS-05:** Implementar colecciones esenciales de datos: `Users`, `Media`, `Releases`, `Tracks`, `Videos`, `Events`, `Articles`, `Contacts`.
+- [ ] **CMS-06:** Implementar configuraciones globales: `ArtistProfile` y `SiteSettings`.
+- [ ] **CMS-07:** Generar archivo de tipos TypeScript `src/payload-types.ts` y verificar compilación estricta sin errores.
 
