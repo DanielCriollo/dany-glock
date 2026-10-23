@@ -3,9 +3,9 @@
 ## 1. Ficha del Proyecto
 
 - **Nombre del Proyecto:** Dany Glock — Artist Digital Experience
-- **Fase Actual:** Misión 004-B — Security Hardening & CMS Regression Tests (Completada)
-- **Última Misión Completada:** **Misión 004-B — Security Hardening & CMS Regression Tests**
-- **Misión en Curso:** Preparación para **Misión 005 — Core Layout, Smooth Scroll & Kinetic Navigation**
+- **Fase Actual:** Misión 005 — Cinematic Layout & Kinetic Navigation (Completada — En Espera de Revisión Humana)
+- **Última Misión Completada:** **Misión 005 — Cinematic Layout & Kinetic Navigation**
+- **Misión en Curso:** En espera de revisión humana antes de **Misión 006 — Home Experience & Architectural Scenes**
 - **Bloqueos Activos:** Ninguno.
 
 
@@ -25,6 +25,42 @@
 | **Docker** | `docker 27.x` | Contenedor `my_postgres` ejecutando Postgres 17.6 |
 
 ---
+
+### [2026-10-23] — Misión 005: Cinematic Layout & Kinetic Navigation
+- **Misión:** Misión 005
+- **Implementaciones realizadas:**
+  - **SiteHeader (`src/components/layout/SiteHeader.tsx`):**
+    - Wordmark tipográfico cinematográfico DANY GLOCK con subtítulo 'Artist Digital Experience'.
+    - Navegación principal desktop (`Música`, `Videos`, `Shows`, `Journal`, `Press Kit`) con tracking editorial y transiciones de acento carmesí.
+    - Adaptación al scroll: efecto scrim/glassmorphism dinámico (`bg-ink/85 backdrop-blur-md border-b border-white/10`) al superar 40px de scroll vertical.
+    - Enlace directo a Booking y botón activador de menú con pulso crimson e indicador de estado `aria-expanded`.
+  - **EditorialMenu (`src/components/layout/EditorialMenu.tsx`):**
+    - Implementación con elemento `<dialog>` nativo y método `showModal()`, garantizando top layer y atrapamiento de foco accesible.
+    - Tipografía póster a gran escala con índices mono (`01 Música`, `02 Videografía`, `03 Tour & Shows`, etc.).
+    - Atajos de teclado: cierre con tecla `Escape`, retorno de foco al activador y bloqueo automático de scroll (`overflow: hidden`).
+    - Bloque inferior de plataformas oficiales de streaming, redes sociales y contacto directo.
+  - **SiteFooter (`src/components/layout/SiteFooter.tsx`):**
+    - Server Component conectado directamente a Payload CMS mediante Local API (`payload.findGlobal({ slug: 'artist-profile', overrideAccess: false })` y `site-settings`).
+    - Bloque de contratación y prensa directa con tarjetas de contacto profesional.
+    - Cuadrícula de 4 columnas (Manifiesto Artístico, Navegación, Canales de Streaming, Redes Oficiales).
+    - Wordmark tipográfico monumental recortado con sangrado visual (`15vw`) al fondo del footer.
+    - Enlace seguro al panel administrativo `/admin` y botón "Volver arriba ↑".
+  - **Layout Público & Scaffold Editorial (`src/app/(public)/layout.tsx` & `page.tsx`):**
+    - Integración de `<SiteHeader>`, skip link accesible (`#main-content`), y `<SiteFooter>`.
+    - Hero tipográfico editorial de sustitución temporal con manifiesto oficial, ubicación (`Quetzaltenango, Guatemala`) y secciones de anclaje para validar navegación y scroll.
+    - Botón polimórfico `Button` (`src/components/ui/Button.tsx`) con soporte transparente para `href` y enlaces de navegación accesibles.
+  - **Pruebas y Verificación:**
+    - Creado `src/tests/layout-navigation.test.tsx` con pruebas unitarias para `SiteHeader`, `EditorialMenu` y `Button` polimórfico.
+    - Verificación visual completa en navegador con agente de navegación (Desktop 1440x900 y Mobile 390x844).
+    - Verificación de aislamiento estricto del panel `/admin` sin interferencia de estilos públicos.
+- **Arquitectura y decisiones:** Registrado ADR-012 en `05-technical-decisions.md`.
+- **Pruebas ejecutadas:**
+  - `pnpm typecheck` (`tsc --noEmit`): 0 errores.
+  - `pnpm lint` (`next lint`): 0 errores, 0 advertencias.
+  - `pnpm test` (`vitest run`): 23/23 tests pasados en 3 archivos (100% verde).
+  - `pnpm build` (`next build`): compilación exitosa (código 0).
+- **Pendientes y bloqueos:** Ninguno.
+- **Próximos pasos:** Misión 006 — Home Experience & Architectural Scenes (detenerse para revisión humana previa).
 
 ### [2026-10-23] — Misión 004-B: Security Hardening & CMS Regression Tests
 - **Misión:** Misión 004-B

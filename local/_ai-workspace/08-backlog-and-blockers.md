@@ -66,12 +66,27 @@
 
 ---
 
-## 6. Backlog Preparado para Misión 005 (Core Layout, Smooth Scroll & Kinetic Navigation)
+## 6. Registro de Tareas de Misión 005 (Cinematic Layout & Kinetic Navigation)
 
-- [ ] **LAY-01:** Implementar Shell estructural público (Root Layout) conectando tipografías, metadatos dinámicos y tokens visuales.
-- [ ] **LAY-02:** Diseñar e integrar la Barra de Navegación Cinematográfica (`Navbar`) con detección de scroll, backdrop blur y estados reactivos.
-- [ ] **LAY-03:** Construir el Menú Lateral Editorial desplegable con transiciones CSS fluidas y accesibilidad de teclado (`Esc`, foco atrapado, `aria-expanded`).
-- [ ] **LAY-04:** Implementar el Footer Cinematográfico con enlaces sociales, manifiesto artístico, copyright y navegación accesible.
-- [ ] **LAY-05:** Integrar y evaluar proveedor inercial de scroll (evaluación controlada de Lenis + GSAP ScrollTrigger conforme al ADR-008).
-- [ ] **LAY-06:** Conectar el scaffold público con la Local API de Payload (`getPayload({ config })`) para alimentar datos reales del perfil del artista en Server Components.
+- [x] **LAY-01:** Implementar Shell estructural público (`src/app/(public)/layout.tsx`) conectando tipografías, metadatos dinámicos, skip link accesible y tokens visuales. *(Evidencia: `src/app/(public)/layout.tsx`)*
+- [x] **LAY-02:** Diseñar e integrar la Barra de Navegación Cinematográfica (`SiteHeader`) con detección de scroll (>40px), glassmorphism scrim y estados reactivos. *(Evidencia: `src/components/layout/SiteHeader.tsx`)*
+- [x] **LAY-03:** Construir el Menú Editorial (`EditorialMenu`) mediante elemento `<dialog>` nativo accesible, atrapamiento de foco, soporte para tecla Escape, tipografía póster gigante y compatibilidad con `prefers-reduced-motion`. *(Evidencia: `src/components/layout/EditorialMenu.tsx`)*
+- [x] **LAY-04:** Implementar el Footer Cinematográfico (`SiteFooter`) conectado al CMS mediante Payload Local API (`findGlobal`), bloque de booking/prensa, enlaces de plataformas, manifiesto y wordmark gigante con sangrado visual. *(Evidencia: `src/components/layout/SiteFooter.tsx`)*
+- [x] **LAY-05:** Evaluación de scroll nativo y movimiento cinematográfico (conforme a ADR-008, se priorizó CSS nativo sin instalar Lenis ni secuestrar el scroll, respetando navegación por anclas y accesibilidad). *(Evidencia: ADR-008 y ADR-012)*
+- [x] **LAY-06:** Conectar el layout público y la página temporal (`src/app/(public)/page.tsx`) con la Local API de Payload (`getPayload({ config })`, `overrideAccess: false`) para alimentar datos reales del perfil del artista en Server Components. *(Evidencia: `page.tsx`, `layout.tsx`, `SiteFooter.tsx`)*
+- [x] **LAY-07:** Creación de suite automatizada de pruebas para el layout y navegación (`src/tests/layout-navigation.test.tsx`), pasando el 100% de tests (23/23).
+
+---
+
+## 7. Backlog Preparado para Misión 006 (Home Experience & Architectural Scenes)
+
+- [ ] **HOM-01:** Escena 1 — Hero Cinematográfico con soporte de video loop (WCAG 2.2.2 control de pausa), tipografía póster sangrada y CTA dinámico de último lanzamiento.
+- [ ] **HOM-02:** Escena 2 — Último Lanzamiento (Single Spotlight) con arte de portada, ficha técnica, enlaces a plataformas y micro-reproductor de preescucha.
+- [ ] **HOM-03:** Escena 3 — Manifiesto Editorial & Biografía de autor con tipografía `Instrument Serif` y composición asimétrica controlada.
+- [ ] **HOM-04:** Escena 4 — Discografía & Catálogo Filtrable (Singles, EPs, Álbumes) conectado a colección `Releases` y `Tracks`.
+- [ ] **HOM-05:** Escena 5 — Galería Audiovisual (Videoclips & Directos) con modales accesibles y badges de dirección de arte.
+- [ ] **HOM-06:** Escena 6 — Tour & Próximos Shows con estado dinámico de boletería (`sold-out`, `tickets`, `anuncio`) conectado a `Events`.
+- [ ] **HOM-07:** Escena 7 — Journal Editorial & Notas de Prensa conectado a colección `Articles`.
+- [ ] **HOM-08:** Escena 8 — Direct Booking & Contact Form con validación en servidor, protección honeypot y rate limiting.
+
 

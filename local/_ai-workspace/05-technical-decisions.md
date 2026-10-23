@@ -213,5 +213,39 @@ Este documento registra las decisiones arquitectónicas fundamentales tomadas pa
 - **Consecuencias:**  
   - *Positivas:* Eliminación de cualquier vector de inyección en formularios públicos, 17 pruebas unitarias y de regresión pasando en verde, paridad total de seguridad en REST y GraphQL.
 
+---
+
+## ADR-012: Arquitectura del Layout Cinemático, Kinetic Navigation y Menú Modal Nativo (`<dialog>`)
+
+- **Estado:** Aceptado (Implementado en Misión 005)
+- **Fecha:** Octubre 2026
+- **Contexto:**  
+  La experiencia pública de Dany Glock requiere una interfaz editorial cinematográfica de alto impacto visual (Dark Cinematic Editorial) que garantice:
+  1. Navegación fluida y adaptable al scroll tanto en desktop como en dispositivos móviles.
+  2. Un menú lateral/overlay con composición tipográfica expresiva a gran escala (`display-lg`), con numeración mono (`01–06`).
+  3. Cero dependencias pesadas innecesarias (no instalar Motion, no instalar Lenis por defecto per ADR-008).
+  4. Accesibilidad total (WCAG 2.1 AA): atrapamiento de foco, soporte nativo para tecla `Escape`, retorno de foco al elemento activador y compatibilidad con `prefers-reduced-motion`.
+  5. Consumo de metadatos globales (`artist-profile` y `site-settings`) en el Footer mediante Server Components utilizando la Local API de Payload CMS con reglas de acceso público estrictas (`overrideAccess: false`).
+  6. Aislamiento absoluto de las rutas administrativas de Payload (`/admin`) y endpoints de API (`/api/`).
+- **Decisión:**  
+  1. **Uso del elemento `<dialog>` nativo de HTML5 para `EditorialMenu`:**
+     - En lugar de instalar bibliotecas pesadas de modal o portal (`@radix-ui/react-dialog`, `framer-motion`), se utiliza `<dialog>` nativo controlado con `showModal()`.
+     - Proporciona nativamente apilamiento en la capa superior (*top layer* del navegador), atrapamiento automático del foco accesible y captura del evento `cancel` (tecla `Escape`).
+     - Al abrirse, bloquea el scroll del documento (`document.body.style.overflow = 'hidden'`) y devuelve el foco al botón disparador al cerrarse.
+  2. **Efecto de Navegación Adaptativa al Scroll en `SiteHeader`:**
+     - Detección reactiva pasiva de desplazamiento (`window.scrollY > 40`).
+     - Al desplazarse, aplica un efecto scrim/glassmorphism (`bg-ink/85 backdrop-blur-md border-b border-white/10 shadow-2xl`), asegurando contraste y legibilidad impecables sobre cualquier contenido de fondo.
+  3. **Footer Cinemático Server Component con Local API:**
+     - `SiteFooter` se implementa como Server Component asíncrono que consulta en paralelo `artist-profile` y `site-settings` con `overrideAccess: false`.
+     - Incorpora fallbacks elegantes y neutrales en caso de indisponibilidad de la base de datos.
+     - Incluye bloque de booking/prensa, cuadrícula de 4 columnas, y wordmark de sangrado visual con escala responsiva `15vw`.
+  4. **Preservación del Scroll Nativo (Respeto estricto a ADR-008):**
+     - No se instala Lenis por defecto ni se secuestra el scroll de la ventana. La navegación entre anclas (`#musica`, `#videos`, `#tour`, `#journal`, `#press-kit`, `#contacto`) funciona de forma estándar, rápida y accesible con `scroll-behavior: smooth` nativo y clases de utilidad Tailwind `scroll-mt-24`.
+  5. **Primitiva `Button` Polimórfica:**
+     - `Button` soporta tanto `<button>` nativo como enlaces `<a>` / `<Link>` al pasar la propiedad `href`, unificando estilos y accesibilidad de CTAs.
+- **Consecuencias:**  
+  - *Positivas:* 0 kB añadidos por bibliotecas de modales o animaciones pesadas; accesibilidad nativa y robusta; bundle de primer carga ultraligero (106 kB First Load JS); aislamiento garantizado para `/admin`; 23/23 pruebas automatizadas pasando.
+
+
 
 

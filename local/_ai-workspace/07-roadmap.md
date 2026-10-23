@@ -76,14 +76,16 @@ flowchart TD
 
 ---
 
-### ⏳ Misión 005 — Core Layout, Smooth Scroll & Kinetic Navigation *(Siguiente fase activa)*
-- **Objetivo:** Desarrollar el marco estructural envolvente de la experiencia pública.
-- **Alcance:**
-  - Root Layout con integración de Server Components y tipografías personalizadas.
-  - Implementación del proveedor de smooth scroll inercial con Lenis y ticker de GSAP.
-  - Barra de navegación flotante cinemática con efectos de blur y estado adaptativo al scroll.
-  - Menú lateral editorial desplegable con transiciones de Motion.
-  - Footer cinematográfico con créditos, redes sociales y manifiesto.
+### ✅ Misión 005 — Cinematic Layout & Kinetic Navigation *(Completada — En espera de revisión humana)*
+- **Objetivo:** Transformar el scaffold técnico en una experiencia pública cinematográfica con navegación editorial, header adaptable al scroll, menú modal nativo accesible y footer conectado al CMS.
+- **Entregables:**
+  - `SiteHeader`: barra de navegación con wordmark tipográfico póster, desktop links con tracking editorial, scrim/glassmorphism dinámico adaptable al scroll y activación accesible del menú editorial.
+  - `EditorialMenu`: menú expandido implementado sobre `<dialog>` nativo con `showModal()`, atrapamiento de foco, soporte nativo de Escape, enlaces tipográficos masivos con numeración mono (`01–06`) y bloque de streaming/booking.
+  - `SiteFooter`: Server Component alimentado directamente desde Payload CMS (`artist-profile` y `site-settings`) mediante Local API con reglas de acceso públicas (`overrideAccess: false`), bloque de booking profesional, columnas de navegación/streaming y wordmark gigante con sangrado visual (`15vw`).
+  - `PublicRootLayout` y `page.tsx`: integración fluida con skip link accesible (`#main-content`), hero tipográfico editorial temporal y anclas de navegación.
+  - Primitiva `Button` polimórfica con soporte nativo para `href` y enlaces de navegación accesibles.
+  - Suite automatizada de pruebas de layout y navegación en `src/tests/layout-navigation.test.tsx` (23/23 tests pasando).
+  - Verificación visual en navegador desktop (1440x900) y móvil (390x844), y confirmación de aislamiento del panel `/admin`.
 
 ---
 
