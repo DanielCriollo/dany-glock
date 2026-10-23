@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { authenticated, authenticatedOrPublished } from '@/access';
 import { verificationField } from '@/fields/verification';
+import { revalidationHooks } from '@/lib/revalidate';
 
 export const Videos: CollectionConfig = {
   slug: 'videos',
@@ -13,6 +14,7 @@ export const Videos: CollectionConfig = {
   versions: {
     drafts: true,
   },
+  hooks: revalidationHooks('videos'),
   access: {
     read: authenticatedOrPublished,
     create: authenticated,

@@ -8,6 +8,13 @@ import { ArtistPortrait } from '@/components/artist/ArtistPortrait';
 import { VideoGallery } from '@/components/video/VideoGallery';
 import { ContactForm } from '@/components/contact/ContactForm';
 
+/**
+ * ISR: la página se regenera bajo demanda cuando Payload publica cambios (src/lib/revalidate.ts).
+ * El intervalo es solo una red de seguridad para cambios que no pasan por los hooks
+ * (seeds por CLI, ediciones directas en la base de datos).
+ */
+export const revalidate = 3600;
+
 export default async function HomePage() {
   const {
     artistProfile,

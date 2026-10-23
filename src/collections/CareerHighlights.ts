@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { authenticated, authenticatedOrPublished } from '@/access';
 import { verificationField } from '@/fields/verification';
+import { revalidationHooks } from '@/lib/revalidate';
 
 /**
  * Trayectoria, reconocimientos, colaboraciones y escenarios compartidos.
@@ -23,6 +24,7 @@ export const CareerHighlights: CollectionConfig = {
   versions: {
     drafts: true,
   },
+  hooks: revalidationHooks('career-highlights'),
   access: {
     read: authenticatedOrPublished,
     create: authenticated,

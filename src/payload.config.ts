@@ -19,6 +19,7 @@ import { SiteSettings } from './globals/SiteSettings';
 import { Booking } from './globals/Booking';
 import { PressKit } from './globals/PressKit';
 import { migrations } from './migrations';
+import { revalidateSiteEndpoint } from './endpoints/revalidateSite';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -50,6 +51,7 @@ export default buildConfig({
     Booking,
     PressKit,
   ],
+  endpoints: [revalidateSiteEndpoint],
   editor: lexicalEditor(),
   sharp: sharp as unknown as Parameters<typeof buildConfig>[0]['sharp'],
   secret: (() => {

@@ -1,3 +1,8 @@
+/**
+ * Capa de consultas públicas (Local API, `overrideAccess: false`, sin borradores).
+ * Las páginas que la usan se regeneran bajo demanda (ver `src/lib/revalidate.ts`); por eso
+ * los errores se propagan en vez de devolver datos vacíos.
+ */
 import config from '@payload-config';
 import { getPayload } from 'payload';
 import type {
@@ -36,8 +41,10 @@ export async function getArtistProfileData(): Promise<ArtistProfile | null> {
     });
     return profile as ArtistProfile;
   } catch (error) {
-    console.warn('cms-queries: Error al obtener artist-profile:', error);
-    return null;
+    // Se relanza: durante una regeneración ISR Next.js conserva la última versión válida
+    // en lugar de cachear una página vacía si PostgreSQL no responde.
+    console.error('cms-queries: Error al obtener artist-profile:', error);
+    throw error;
   }
 }
 
@@ -53,8 +60,10 @@ export async function getSiteSettingsData(): Promise<SiteSetting | null> {
     });
     return settings as SiteSetting;
   } catch (error) {
-    console.warn('cms-queries: Error al obtener site-settings:', error);
-    return null;
+    // Se relanza: durante una regeneración ISR Next.js conserva la última versión válida
+    // en lugar de cachear una página vacía si PostgreSQL no responde.
+    console.error('cms-queries: Error al obtener site-settings:', error);
+    throw error;
   }
 }
 
@@ -88,8 +97,10 @@ export async function getPublishedReleasesData(): Promise<Release[]> {
     });
     return res.docs as Release[];
   } catch (error) {
-    console.warn('cms-queries: Error al obtener releases:', error);
-    return [];
+    // Se relanza: durante una regeneración ISR Next.js conserva la última versión válida
+    // en lugar de cachear una página vacía si PostgreSQL no responde.
+    console.error('cms-queries: Error al obtener releases:', error);
+    throw error;
   }
 }
 
@@ -113,8 +124,10 @@ export async function getPublishedVideosData(): Promise<Video[]> {
     });
     return res.docs as Video[];
   } catch (error) {
-    console.warn('cms-queries: Error al obtener videos:', error);
-    return [];
+    // Se relanza: durante una regeneración ISR Next.js conserva la última versión válida
+    // en lugar de cachear una página vacía si PostgreSQL no responde.
+    console.error('cms-queries: Error al obtener videos:', error);
+    throw error;
   }
 }
 
@@ -147,8 +160,10 @@ export async function getPublishedEventsData(): Promise<Event[]> {
     });
     return res.docs as Event[];
   } catch (error) {
-    console.warn('cms-queries: Error al obtener events:', error);
-    return [];
+    // Se relanza: durante una regeneración ISR Next.js conserva la última versión válida
+    // en lugar de cachear una página vacía si PostgreSQL no responde.
+    console.error('cms-queries: Error al obtener events:', error);
+    throw error;
   }
 }
 
@@ -180,8 +195,10 @@ export async function getPublishedArticlesData(): Promise<Article[]> {
     });
     return res.docs as Article[];
   } catch (error) {
-    console.warn('cms-queries: Error al obtener articles:', error);
-    return [];
+    // Se relanza: durante una regeneración ISR Next.js conserva la última versión válida
+    // en lugar de cachear una página vacía si PostgreSQL no responde.
+    console.error('cms-queries: Error al obtener articles:', error);
+    throw error;
   }
 }
 
@@ -229,8 +246,10 @@ export async function getPublishedCareerHighlightsData(): Promise<CareerHighligh
     });
     return res.docs as CareerHighlight[];
   } catch (error) {
-    console.warn('cms-queries: Error al obtener career-highlights:', error);
-    return [];
+    // Se relanza: durante una regeneración ISR Next.js conserva la última versión válida
+    // en lugar de cachear una página vacía si PostgreSQL no responde.
+    console.error('cms-queries: Error al obtener career-highlights:', error);
+    throw error;
   }
 }
 
@@ -248,8 +267,10 @@ export async function getBookingData(): Promise<Booking | null> {
     });
     return booking as Booking;
   } catch (error) {
-    console.warn('cms-queries: Error al obtener booking:', error);
-    return null;
+    // Se relanza: durante una regeneración ISR Next.js conserva la última versión válida
+    // en lugar de cachear una página vacía si PostgreSQL no responde.
+    console.error('cms-queries: Error al obtener booking:', error);
+    throw error;
   }
 }
 
@@ -266,8 +287,10 @@ export async function getPressKitData(): Promise<PressKit | null> {
     });
     return pressKit as PressKit;
   } catch (error) {
-    console.warn('cms-queries: Error al obtener press-kit:', error);
-    return null;
+    // Se relanza: durante una regeneración ISR Next.js conserva la última versión válida
+    // en lugar de cachear una página vacía si PostgreSQL no responde.
+    console.error('cms-queries: Error al obtener press-kit:', error);
+    throw error;
   }
 }
 
@@ -293,8 +316,10 @@ export async function getShowGalleryData(): Promise<Media[]> {
     });
     return res.docs as Media[];
   } catch (error) {
-    console.warn('cms-queries: Error al obtener la galería de shows:', error);
-    return [];
+    // Se relanza: durante una regeneración ISR Next.js conserva la última versión válida
+    // en lugar de cachear una página vacía si PostgreSQL no responde.
+    console.error('cms-queries: Error al obtener la galería de shows:', error);
+    throw error;
   }
 }
 

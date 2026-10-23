@@ -1,5 +1,6 @@
 import type { FieldAccess, GlobalConfig } from 'payload';
 import { anyone, authenticated } from '@/access';
+import { revalidateGlobalAfterChange } from '@/lib/revalidate';
 
 /**
  * Los datos de contacto de management solo salen por la API pública cuando
@@ -15,6 +16,9 @@ export const Booking: GlobalConfig = {
     group: 'Configuración Artística',
     description:
       'Formato del espectáculo, tipos de evento y management. No incluir tarifas, disponibilidad ni requisitos técnicos sin confirmación.',
+  },
+  hooks: {
+    afterChange: [revalidateGlobalAfterChange('booking')],
   },
   access: {
     read: anyone,

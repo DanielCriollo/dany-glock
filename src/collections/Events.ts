@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { authenticated, authenticatedOrPublished } from '@/access';
 import { verificationField } from '@/fields/verification';
+import { revalidationHooks } from '@/lib/revalidate';
 
 export const Events: CollectionConfig = {
   slug: 'events',
@@ -13,6 +14,7 @@ export const Events: CollectionConfig = {
   versions: {
     drafts: true,
   },
+  hooks: revalidationHooks('events'),
   access: {
     read: authenticatedOrPublished,
     create: authenticated,

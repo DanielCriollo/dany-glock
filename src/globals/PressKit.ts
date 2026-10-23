@@ -1,5 +1,6 @@
 import type { GlobalConfig } from 'payload';
 import { anyone, authenticated } from '@/access';
+import { revalidateGlobalAfterChange } from '@/lib/revalidate';
 
 /**
  * Electronic Press Kit. La versión web compone datos ya publicados
@@ -12,6 +13,9 @@ export const PressKit: GlobalConfig = {
   admin: {
     group: 'Configuración Artística',
     description: 'Dossier para promotores y medios. Solo muestra contenido publicado y verificado.',
+  },
+  hooks: {
+    afterChange: [revalidateGlobalAfterChange('press-kit')],
   },
   access: {
     read: anyone,

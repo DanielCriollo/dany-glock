@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { anyone, authenticated } from '@/access';
 import { verificationField } from '@/fields/verification';
+import { revalidationHooks } from '@/lib/revalidate';
 
 export const Tracks: CollectionConfig = {
   slug: 'tracks',
@@ -10,6 +11,7 @@ export const Tracks: CollectionConfig = {
     defaultColumns: ['trackNumber', 'title', 'release', 'artistRole', 'duration', 'featured'],
     description: 'Canciones individuales, metadata técnica, letras oficiales y audio preview.',
   },
+  hooks: revalidationHooks('tracks'),
   access: {
     read: anyone,
     create: authenticated,

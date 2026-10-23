@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { anyone, authenticated } from '@/access';
+import { revalidationHooks } from '@/lib/revalidate';
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -9,6 +10,7 @@ export const Media: CollectionConfig = {
     defaultColumns: ['filename', 'alt', 'category', 'isPressAsset', 'filesize', 'createdAt'],
     description: 'Imágenes optimizadas, audio previews de canciones y archivos para descarga.',
   },
+  hooks: revalidationHooks('media'),
   access: {
     read: anyone,
     create: authenticated,

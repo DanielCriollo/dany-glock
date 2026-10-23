@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload';
 import { anyone, authenticated } from '@/access';
 import { verificationField } from '@/fields/verification';
+import { revalidateGlobalAfterChange } from '@/lib/revalidate';
 
 export const SiteSettings: GlobalConfig = {
   slug: 'site-settings',
@@ -8,6 +9,9 @@ export const SiteSettings: GlobalConfig = {
   admin: {
     group: 'Configuración Artística',
     description: 'Redes sociales, correos de contacto profesional y metadatos globales del sitio.',
+  },
+  hooks: {
+    afterChange: [revalidateGlobalAfterChange('site-settings')],
   },
   access: {
     read: anyone,

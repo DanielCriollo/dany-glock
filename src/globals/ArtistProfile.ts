@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload';
 import { anyone, authenticated } from '@/access';
 import { verificationField } from '@/fields/verification';
+import { revalidateGlobalAfterChange } from '@/lib/revalidate';
 
 export const ArtistProfile: GlobalConfig = {
   slug: 'artist-profile',
@@ -8,6 +9,9 @@ export const ArtistProfile: GlobalConfig = {
   admin: {
     group: 'Configuración Artística',
     description: 'Biografía oficial en 3 formatos, manifiesto y datos de identidad del artista.',
+  },
+  hooks: {
+    afterChange: [revalidateGlobalAfterChange('artist-profile')],
   },
   access: {
     read: anyone,
