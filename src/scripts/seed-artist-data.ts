@@ -537,7 +537,11 @@ export async function seedArtistData(payloadInstance?: Payload) {
     slug: 'artist-profile',
     data: {
       stageName: 'Dany Glock',
-      tagline: 'Artist Digital Experience — Dark Cinematic Editorial',
+      tagline: 'Música urbana, trap latino y estética nocturna desde Pasto, Colombia.',
+      heroTitle: 'Dany Glock',
+      heroSubtitle: 'Trap Latino & Sonido Nocturno',
+      heroCtaPrimary: 'Explorar Discografía',
+      heroCtaSecondary: 'Videografía Oficial',
       bioStatus: 'editorial_draft',
       manifesto:
         'La música urbana como cinematografía sonora: una narrativa nocturna nacida en el sur de Colombia y proyectada a la escena global.',

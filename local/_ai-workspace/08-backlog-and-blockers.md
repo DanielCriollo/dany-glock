@@ -103,16 +103,53 @@
 
 ---
 
-## 8. Backlog Preparado para Misión 006-B (Discografía, Reproductor y Lanzamientos)
+---
 
-- [ ] **HOM-01:** Escena 1 — Hero Cinematográfico con soporte de video loop (WCAG 2.2.2 control de pausa), tipografía póster sangrada y CTA dinámico de último lanzamiento.
-- [ ] **HOM-02:** Escena 2 — Último Lanzamiento (Single Spotlight) con arte de portada, ficha técnica, enlaces a plataformas y micro-reproductor de preescucha.
-- [ ] **HOM-03:** Escena 3 — Manifiesto Editorial & Biografía de autor con tipografía `Instrument Serif` y composición asimétrica controlada.
-- [ ] **HOM-04:** Escena 4 — Discografía & Catálogo Filtrable (Singles, EPs, Álbumes) conectado a colección `Releases` y `Tracks`.
-- [ ] **HOM-05:** Escena 5 — Galería Audiovisual (Videoclips & Directos) con modales accesibles y badges de dirección de arte.
-- [ ] **HOM-06:** Escena 6 — Tour & Próximos Shows con estado dinámico de boletería (`sold-out`, `tickets`, `anuncio`) conectado a `Events`.
-- [ ] **HOM-07:** Escena 7 — Journal Editorial & Notas de Prensa conectado a colección `Articles`.
-- [ ] **HOM-08:** Escena 8 — Direct Booking & Contact Form con validación en servidor, protección honeypot y rate limiting.
+## 8. Registro de Tareas de Misión 006-B.1 (Cinematic Artist Experience & Home Redesign)
+
+- [x] **CIN-01:** Expandir `ArtistProfile` con campos editables para medios del Hero desktop/mobile, video de fondo, retrato vertical 4:5, títulos y CTAs. *(Evidencia: `src/globals/ArtistProfile.ts`, migración SQL `20261023_180000_add_hero_and_portrait_media.ts`)*
+- [x] **CIN-02:** Diseñar e implementar el Hero Cinematográfico asimétrico con tipografía `DANY GLOCK` de gran formato, origen territorial (*Pasto, Colombia · Plataforma Oficial*) y canvas cinematográfico. *(Evidencia: `src/app/(public)/page.tsx`)*
+- [x] **CIN-03:** Implementar el componente independiente Single Spotlight para el último lanzamiento (*Cicatrices feat. Maick Records*) con vinilo concéntrico 1:1, créditos y enlaces de escucha. *(Evidencia: `src/components/music/LatestReleaseSpotlight.tsx`)*
+- [x] **CIN-04:** Rediseñar la sección Discografía con cuadrícula asimétrica, títulos legibles, distinción de artista principal vs. invitado (*EXCESO*) y eliminación de textos de scaffolding. *(Evidencia: `src/app/(public)/page.tsx`)*
+- [x] **CIN-05:** Crear la nueva sección editorial "El Artista — Biografía" en Home y la ruta completa `/biografia` con 3 bloques narrativos verificados y ficha técnica. *(Evidencia: `src/app/(public)/biografia/page.tsx`)*
+- [x] **CIN-06:** Optimizar la sección Videografía con jerarquía visual (video principal spotlight + cuadrícula), badges de tipo precisos y reproductor modal HTML5 `<dialog>`. *(Evidencia: `src/components/video/VideoGallery.tsx`)*
+- [x] **CIN-07:** Presentación editorial sobria de Shows sin inventar giras ni fechas ficticias. *(Evidencia: `src/app/(public)/page.tsx`)*
+- [x] **CIN-08:** Unificar Contacto & Booking profesional con medidas anti-spam y formulario validado. *(Evidencia: `src/components/contact/ContactForm.tsx`)*
+- [x] **CIN-09:** Simplificar radicalmente el Footer eliminando el enlace público a `/admin` y correos no verificados. *(Evidencia: `src/components/layout/SiteFooter.tsx`)*
+- [x] **CIN-10:** Erradicar de toda la interfaz pública términos de desarrollo (`Artist Digital Experience`, `Dark Cinematic Editorial`, `Arte Oficial en Sincronización`, `Fase 005`). *(Evidencia: `public-views.test.tsx`)*
+- [x] **CIN-11:** Calidad total certificada: 57/57 pruebas en Vitest, `typecheck` 0 errores, `lint` 0 errores/warnings, `build` exitoso (First Load JS 119 kB), verificación visual en desktop (1440x900) y móvil (390x844).
+
+---
+
+## 9. Backlog Preparado para Misión 006-B.2 (Assets Oficiales, Optimización de Medios y EPK Expandido)
+
+- [ ] **MED-01:** Subir fotografías oficiales en alta resolución (1920x1080 desktop, 1080x1920 mobile, 1600x2000 retrato 4:5) a la colección `Media` y asociarlas a `ArtistProfile`.
+- [ ] **MED-02:** Cargar carátulas de alta resolución (1:1 3000x3000px) para *SIG Sauer*, *SO FRESH, SO CLEAN*, *Cicatrices* y *EXCESO* asociadas a `Releases`.
+- [ ] **MED-03:** Sincronizar loops de video de fondo opcionales en el Hero con soporte accesible para `prefers-reduced-motion` y pausa.
+- [ ] **MED-04:** Desarrollar el paquete descargable de Electronic Press Kit (EPK) para medios y promotores.
 
 
 
+
+
+---
+
+## 10. Despliegue VPS — Misión DevOps (2026-10-23)
+
+Guía completa: `14-vps-deployment.md`.
+
+- [x] **DEP-01:** Acceso SSH por clave dedicada (`ssh dany-vps`) sin tocar acceso por contraseña.
+- [x] **DEP-02:** Auditoría del VPS compartido y línea base HTTP de 14 dominios existentes (sin cambios tras el despliegue).
+- [x] **DEP-03:** PostgreSQL `danyglock_db` / `danyglock_app` con rechazo de acceso remoto exclusivo; 3 migraciones aplicadas; seed verificado.
+- [x] **DEP-04:** Build de producción, `dany-glock.service` (systemd, `127.0.0.1:3100`, auto-restart probado), vhost Nginx exclusivo y HTTPS Let's Encrypt con renovación.
+- [x] **DEP-05:** Admin inicial creado por el usuario vía túnel SSH antes de exponer `/admin`.
+
+### Pendientes derivados del despliegue
+- [ ] **DEPLOY-01 (Alta):** La Home `/` (y `/biografia` en el código local) se prerenderiza estáticamente y no existe revalidación (`revalidate`, `revalidatePath` en hooks `afterChange`). Los cambios del CMS **no aparecen en producción hasta un nuevo build**. Resolver en código (p. ej. `export const revalidate = 60` o hooks de revalidación) mediante el flujo Git.
+- [ ] **DEPLOY-02 (Media):** Test preexistente roto en el commit desplegado `8ea781f`: `public-views.test.tsx` espera el badge `Video Oficial` y `VideoGallery` renderiza `Videoclip Oficial` (54/55). Los cambios locales sin commit de M006-B.1 reescriben ambos; confirmar al commitear.
+- [ ] **DEPLOY-03 (Media):** Sin backups automáticos ni externos de `danyglock_db` y `media/`. Definir copia periódica fuera del VPS.
+- [ ] **DEPLOY-04 (Media):** `seed-artist-data.ts` no se ejecuta vía `pnpm payload run` (guarda `argv[1]`). Añadir script `package.json` explícito (`seed:artist`).
+- [ ] **DEPLOY-05 (Baja):** Sin adaptador de email en Payload (los correos se escriben en consola): recuperación de contraseña del admin no funcional por email.
+- [ ] **DEPLOY-06 (Baja):** Añadir `packageManager: "pnpm@10.34.4"` a `package.json` para fijar pnpm en todos los entornos.
+- [ ] **INFRA-01 (Alta, ajeno al proyecto):** PostgreSQL del VPS escucha en `0.0.0.0:5432` con `host all all 0.0.0.0/0 md5` y UFW inactivo: las BD de otros proyectos (`smart`, `qwikymenu`, `swiftfield`) son accesibles desde internet. Varios certificados de otros dominios están expirados. No se modificó (fuera de alcance).
+- [ ] **INFRA-02 (Media):** RAM ajustada (1.9 GB). El build requiere detener el servicio; considerar ampliar RAM si crecen los proyectos.

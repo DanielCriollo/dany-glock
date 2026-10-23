@@ -2,11 +2,12 @@
 
 ## 1. Ficha del Proyecto
 
-- **Nombre del Proyecto:** Dany Glock — Artist Digital Experience
-- **Fase Actual:** Misión 006-A.2 — Transformar la landing demostrativa en la web oficial de Dany Glock (Completada)
-- **Última Misión Completada:** **Misión 006-A.2 — Transformar la landing demostrativa en la web oficial de Dany Glock**
-- **Siguiente Misión:** **Misión 006-B — Optimización de Medios, Galería Visual y Assets del Artista** (o según defina el roadmap)
+- **Nombre del Proyecto:** Dany Glock — Official Artist Website
+- **Fase Actual:** Misión 006-B.1 — Cinematic Artist Experience & Home Redesign (Completada)
+- **Última Misión Completada:** **Misión 006-B.1 — Cinematic Artist Experience & Home Redesign**
+- **Siguiente Misión:** **Misión 006-B.2 — Assets Oficiales, Optimización de Medios y EPK Expandido** (o según defina el roadmap)
 - **Bloqueos Activos:** Ninguno.
+- **Producción:** `https://dany.forcefilters.com` — rama `wip/mision-006a` @ `8ea781f` (M006-A.2), desplegado 2026-10-23. Guía: `14-vps-deployment.md`. Los cambios de M006-B.1 aún no están commiteados ni desplegados.
 
 ---
 
@@ -21,6 +22,52 @@
 | **Git** | `2.45.2.windows.1` | Activo en rama `wip/mision-006a` |
 | **PostgreSQL** | `PostgreSQL 17.6` (Docker / local: 5432) | Motor relacional local activo; BD `dany_glock_dev` |
 | **Docker** | `docker 27.x` | Contenedor `my_postgres` ejecutando Postgres 17.6 |
+
+---
+
+### [2026-10-23] — Misión DevOps: Despliegue inicial en VPS Ubuntu compartido
+- **Misión:** Despliegue de Dany Glock en `https://dany.forcefilters.com` sin afectar proyectos existentes.
+- **Implementaciones realizadas:**
+  - SSH por clave dedicada (`ssh dany-vps`); acceso por contraseña intacto.
+  - Auditoría: Nginx 1.24 sirve 80/443 (Apache inactivo), PHP-FPM 8.3/8.4, MySQL 8, PostgreSQL 16, Docker (n8n), bot en :3000. Swap 2 GB añadido (autorizado) tras un OOM en `pnpm install`.
+  - PostgreSQL: `danyglock_db` / `danyglock_app`, acceso remoto rechazado solo para esta BD (autorizado); 3 migraciones aplicadas con `payload migrate` previo `pg_dump`; seed idempotente ejecutado (4 releases publicados + 1 borrador, 5 tracks, 6 videos, 1 evento borrador).
+  - Calidad en VPS: typecheck 0 errores, lint 0 errores, tests 54/55 en BD temporal (fallo preexistente de texto del badge, DEPLOY-02), build OK (pico 1.4 GB).
+  - `dany-glock.service` (systemd, usuario `danyglock`, `127.0.0.1:3100`, `Restart=always` verificado con `kill -9`, habilitado al arranque).
+  - Nginx: vhost exclusivo `zz-dany.forcefilters.com`, HTTP→HTTPS 301, HSTS, `client_max_body_size 50m`. Certificado Let's Encrypt (webroot) hasta 2027-01-21, `renew --dry-run` OK.
+  - Admin de Payload creado por el usuario vía túnel SSH con `/admin` bloqueado hasta entonces.
+  - Verificación: 14 dominios existentes con respuesta HTTP/HTTPS idéntica a la línea base.
+- **Arquitectura y decisiones:** ADR-016.
+- **Pendientes:** DEPLOY-01…06, INFRA-01/02 en `08-backlog-and-blockers.md`.
+
+### [2026-10-23] — Misión 006-B.1: Cinematic Artist Experience & Home Redesign
+- **Misión:** Misión 006-B.1
+- **Implementaciones realizadas:**
+  - **Expansión del Modelo de Contenido & Migración Segura (`ArtistProfile`):**
+    - Nuevos campos administrables en `src/globals/ArtistProfile.ts`: `heroDesktopMedia`, `heroMobileMedia`, `heroVideoUrl`, `portraitImage`, `heroTitle`, `heroSubtitle`, `heroCtaPrimary`, `heroCtaSecondary`.
+    - Migración formal `src/migrations/20261023_180000_add_hero_and_portrait_media.ts` ejecutada y registrada en `payload_migrations` (batch 4).
+    - Tipos de TypeScript actualizados con `pnpm payload generate:types`.
+  - **Hero Cinematográfico Asimétrico:**
+    - Tipografía editorial `DANY GLOCK` en gran escala (`text-6xl` a `text-9xl`), subtítulo en `font-serif italic`, badges territoriales (*Pasto, Colombia · Plataforma Oficial*), y canvas visual cinematográfico adaptable (16:10 en desktop, responsive para móviles).
+  - **Single Spotlight — Último Lanzamiento (`src/components/music/LatestReleaseSpotlight.tsx`):**
+    - Sección independiente para *Cicatrices feat. Maick Records* con vinilo concéntrico 1:1, créditos de producción y enlaces a Apple Music y YouTube.
+  - **Discografía Asimétrica & Distinción de Roles:**
+    - Cuadrícula editorial de lanzamientos reales sin textos de scaffolding, distinguiendo artista principal vs. invitado (*EXCESO*).
+  - **Sección Editorial "El Artista" & Ruta Completa `/biografia` (`src/app/(public)/biografia/page.tsx`):**
+    - Nueva sección en Home y ruta dedicada `/biografia` con narrativa territorial y artística verificada (3 capítulos editoriales, ficha técnica, enlaces a discografía y contacto).
+  - **Jerarquía en Videografía (`src/components/video/VideoGallery.tsx`):**
+    - Video principal en formato spotlight 16:9 con badge de tipo (`Videoclip Oficial`) y duración, más cuadrícula de videos complementarios y modal accesible HTML5 `<dialog>`.
+  - **Shows & Booking Unificado:**
+    - Estado editorial elegante sin fechas inventadas; formulario de contacto profesional (`ContactForm.tsx`) con honeypot anti-spam.
+  - **Simplificación Radical del Footer (`src/components/layout/SiteFooter.tsx`):**
+    - Eliminado enlace público a `/admin`; navegación esencial, redes verificadas, copyright y botón volver arriba.
+  - **Limpieza Editorial Estricta:**
+    - Cero términos de desarrollo (`Artist Digital Experience`, `Dark Cinematic Editorial`, `Arte Oficial en Sincronización`, `Fase 005`).
+  - **Quality Gates & Pruebas:**
+    - 57 de 57 pruebas unitarias y de integración pasando en Vitest (`src/tests/public-views.test.tsx` actualizado).
+    - `pnpm typecheck`: 0 errores.
+    - `pnpm lint`: 0 errores, 0 warnings.
+    - `pnpm build`: 100% exitoso (Next.js 15 App Router estático + dinámico).
+    - Verificación visual con browser subagent en desktop (1440x900) y mobile (390x844).
 
 ---
 

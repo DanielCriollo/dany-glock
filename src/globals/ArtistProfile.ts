@@ -25,7 +25,66 @@ export const ArtistProfile: GlobalConfig = {
       name: 'tagline',
       type: 'text',
       label: 'Lema / Tagline Editorial',
-      defaultValue: 'Artist Digital Experience — Dark Cinematic Editorial',
+      defaultValue: 'Música urbana, trap latino y estética nocturna desde Pasto, Colombia.',
+    },
+    {
+      name: 'heroDesktopMedia',
+      type: 'upload',
+      relationTo: 'media',
+      label: 'Visual Principal del Hero (Desktop — 16:9, recomendado 1920×1080)',
+      admin: {
+        description: 'Imagen fotográfica o visual oficial del artista para pantallas de escritorio.',
+      },
+    },
+    {
+      name: 'heroMobileMedia',
+      type: 'upload',
+      relationTo: 'media',
+      label: 'Visual del Hero (Móvil — 9:16, recomendado 1080×1920)',
+      admin: {
+        description: 'Fotografía o encuadre vertical oficial para dispositivos móviles.',
+      },
+    },
+    {
+      name: 'heroVideoUrl',
+      type: 'text',
+      label: 'Video o Loop de Fondo del Hero (Opcional)',
+      admin: {
+        description: 'URL de video MP4/WebM o YouTube para ambientación cinematográfica.',
+      },
+    },
+    {
+      name: 'portraitImage',
+      type: 'upload',
+      relationTo: 'media',
+      label: 'Fotografía Vertical del Artista (Sección Biografía — 4:5, recomendado 1600×2000)',
+      admin: {
+        description: 'Retrato oficial para la sección editorial de biografía.',
+      },
+    },
+    {
+      name: 'heroTitle',
+      type: 'text',
+      label: 'Título Principal del Hero',
+      defaultValue: 'Dany Glock',
+    },
+    {
+      name: 'heroSubtitle',
+      type: 'text',
+      label: 'Subtítulo del Hero',
+      defaultValue: 'Trap Latino & Sonido Nocturno',
+    },
+    {
+      name: 'heroCtaPrimary',
+      type: 'text',
+      label: 'Texto CTA Principal del Hero',
+      defaultValue: 'Explorar Discografía',
+    },
+    {
+      name: 'heroCtaSecondary',
+      type: 'text',
+      label: 'Texto CTA Secundario del Hero',
+      defaultValue: 'Videografía Oficial',
     },
     {
       name: 'bioStatus',

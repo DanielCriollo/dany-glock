@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import {
   getArtistProfile,
   getSiteSettings,
@@ -10,6 +10,7 @@ import {
   getPublishedArticles,
 } from '@/lib/cms-queries';
 import HomePage from '@/app/(public)/page';
+import BiografiaPage from '@/app/(public)/biografia/page';
 import { VideoGallery } from '@/components/video/VideoGallery';
 import { ContactForm } from '@/components/contact/ContactForm';
 import { SiteFooter } from '@/components/layout/SiteFooter';
@@ -24,7 +25,11 @@ beforeAll(() => {
   });
 });
 
-describe('Misión 006-A.2 — Public Experience & CMS Integration Tests', () => {
+afterEach(() => {
+  cleanup();
+});
+
+describe('Misión 006-B.1 — Public Cinematic Experience & CMS Integration Tests', () => {
   describe('1. Capa de Consultas Públicas del CMS (cms-queries.ts)', () => {
     it('obtiene el perfil real del artista desde ArtistProfile (Pasto, Colombia)', async () => {
       const profile = await getArtistProfile();
@@ -94,7 +99,7 @@ describe('Misión 006-A.2 — Public Experience & CMS Integration Tests', () => 
     });
   });
 
-  describe('2. Renderizado de la Landing Page Oficial (HomePage Server Component)', () => {
+  describe('2. Renderizado de la Home Rediseñada (HomePage Server Component)', () => {
     let renderedHtml: string = '';
 
     beforeEach(async () => {
@@ -108,17 +113,19 @@ describe('Misión 006-A.2 — Public Experience & CMS Integration Tests', () => 
       expect(screen.getAllByText(/Pasto, Colombia/i).length).toBeGreaterThan(0);
     });
 
+    it('NO contiene términos prohibidos ni nombres técnicos de desarrollo', () => {
+      expect(renderedHtml).not.toContain('Artist Digital Experience');
+      expect(renderedHtml).not.toContain('Dark Cinematic Editorial');
+      expect(renderedHtml).not.toContain('Arte Oficial en Sincronización');
+      expect(renderedHtml).not.toContain('Fase 005');
+      expect(renderedHtml).not.toContain('Misión');
+      expect(renderedHtml).not.toContain('Scaffold');
+    });
+
     it('NO contiene referencias a Guatemala ni ciudades inventadas de Centroamérica', () => {
       expect(renderedHtml).not.toContain('Guatemala');
       expect(renderedHtml).not.toContain('Quetzaltenango');
       expect(renderedHtml).not.toContain('Centroamérica');
-    });
-
-    it('NO contiene textos de scaffolding, fases de desarrollo ni nombres de misiones', () => {
-      expect(renderedHtml).not.toContain('Fase 005');
-      expect(renderedHtml).not.toContain('Cinematic Layout');
-      expect(renderedHtml).not.toContain('Misión');
-      expect(renderedHtml).not.toContain('Scaffold');
     });
 
     it('NO contiene correos electrónicos inventados de booking o prensa', () => {
@@ -127,10 +134,14 @@ describe('Misión 006-A.2 — Public Experience & CMS Integration Tests', () => 
       expect(renderedHtml).not.toContain('mgmt@danyglock.com');
     });
 
-    it('renderiza el catálogo oficial con los 4 lanzamientos publicados y distingue colaboraciones', () => {
+    it('renderiza la sección Último Lanzamiento (Single Spotlight) con Cicatrices', () => {
+      expect(screen.getByText(/Último Lanzamiento/i)).toBeDefined();
+      expect(screen.getAllByRole('heading', { name: /Cicatrices/i }).length).toBeGreaterThan(0);
+    });
+
+    it('renderiza el catálogo oficial con distinción de artista principal e invitado', () => {
       expect(screen.getAllByText('SIG Sauer').length).toBeGreaterThan(0);
       expect(screen.getAllByText('SO FRESH, SO CLEAN').length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/Cicatrices/i).length).toBeGreaterThan(0);
       expect(screen.getAllByText(/EXCESO/i).length).toBeGreaterThan(0);
 
       // Distinción de artista invitado en EXCESO
@@ -140,19 +151,40 @@ describe('Misión 006-A.2 — Public Experience & CMS Integration Tests', () => 
       expect(screen.queryByText('SIG Sauer (Remix)')).toBeNull();
     });
 
-    it('muestra el estado vacío editorial de Tour & Shows sin inventar fechas', () => {
+    it('renderiza la sección editorial El Artista — Biografía con enlace a /biografia', () => {
+      expect(screen.getAllByText(/El Artista/i).length).toBeGreaterThan(0);
+      const bioLink = screen.getByRole('link', { name: /Leer Biografía Completa/i });
+      expect(bioLink).toBeDefined();
+      expect(bioLink.getAttribute('href')).toBe('/biografia');
+    });
+
+    it('muestra el estado vacío editorial de Shows sin inventar fechas ni giras', () => {
       expect(screen.getByText(/Nuevas presentaciones en vivo por anunciar/i)).toBeDefined();
       expect(screen.queryByText('Guatemala City')).toBeNull();
       expect(screen.queryByText('Teatro Bellas Artes')).toBeNull();
     });
+  });
 
-    it('muestra el estado vacío editorial de Journal sin inventar artículos ni hitos', () => {
-      expect(screen.getByText(/Comunicados oficiales en preparación/i)).toBeDefined();
+  describe('3. Renderizado de la Ruta Editorial /biografia', () => {
+    it('renderiza la página de biografía con narrativa verificada sin inventar hitos', async () => {
+      const PageComponent = await BiografiaPage();
+      const { container } = render(PageComponent);
+      const html = container.innerHTML;
+
+      expect(screen.getByRole('heading', { level: 1, name: /Dany Glock/i })).toBeDefined();
+      expect(html).toContain('Pasto, Nariño, Colombia');
+      expect(html).toContain('Dany Glock');
+      // No debe contener premios inventados
+      expect(html).not.toContain('Grammy');
+      expect(html).not.toContain('Billboard');
+      expect(html).not.toContain('Gira Internacional');
+      // Debe tener enlace de retorno al inicio
+      expect(screen.getByRole('link', { name: /Volver a la Página Principal/i })).toBeDefined();
     });
   });
 
-  describe('3. Componentes Interactivos Públicos', () => {
-    it('VideoGallery renderiza las tarjetas de video y sus badges de tipo', () => {
+  describe('4. Componentes Interactivos Públicos', () => {
+    it('VideoGallery renderiza las tarjetas de video con badges actualizados', () => {
       const mockVideos = [
         {
           id: 1,
@@ -171,7 +203,7 @@ describe('Misión 006-A.2 — Public Experience & CMS Integration Tests', () => 
       render(<VideoGallery videos={mockVideos} />);
       expect(screen.getByText('SIG Sauer (Official Video)')).toBeDefined();
       expect(screen.getByText('3:12')).toBeDefined();
-      expect(screen.getByText('Video Oficial')).toBeDefined();
+      expect(screen.getByText('Videoclip Oficial')).toBeDefined();
       expect(screen.getByRole('button', { name: /Reproducir video: SIG Sauer/i })).toBeDefined();
     });
 
@@ -189,11 +221,13 @@ describe('Misión 006-A.2 — Public Experience & CMS Integration Tests', () => 
       expect(honeypotInput).not.toBeNull();
     });
 
-    it('SiteFooter no incluye correos inventados si no están en SiteSettings', async () => {
+    it('SiteFooter simplificado no expone /admin públicamente ni correos inventados', async () => {
       const FooterComponent = await SiteFooter();
       const { container } = render(FooterComponent);
       const footerHtml = container.innerHTML;
 
+      expect(footerHtml).not.toContain('href="/admin"');
+      expect(footerHtml).not.toContain('Panel Administrativo');
       expect(footerHtml).not.toContain('booking@danyglock.com');
       expect(footerHtml).not.toContain('press@danyglock.com');
       expect(footerHtml).not.toContain('Guatemala');

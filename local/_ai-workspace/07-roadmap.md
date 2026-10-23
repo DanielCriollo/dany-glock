@@ -117,13 +117,27 @@ flowchart TD
 
 ---
 
-### ⏳ Misión 006-B — Discografía, reproductor y lanzamientos
-- **Objetivo:** Construir la experiencia musical interactiva para los fans.
-- **Alcance:**
-  - Hero Showcase del último lanzamiento con preview audiovisual y CTAs de streaming.
-  - Catálogo de discografía con filtros por tipo (Álbum, EP, Single).
-  - Ficha detallada de lanzamiento con carátula fija (*pinned scroll*), tracklist y créditos.
-  - Reproductor de audio flotante persistente con control de reproducción, volumen, scrubber y visualizador de onda sonora accesible.
+### ✅ Misión 006-B.1 — Cinematic Artist Experience & Home Redesign *(Completada)*
+- **Objetivo:** Rediseñar la Home como una experiencia digital cinematográfica, editorial y auténtica para Dany Glock, alimentada exclusivamente por Payload CMS y PostgreSQL.
+- **Entregables:**
+  - Expansión de `ArtistProfile` con campos administrables para Hero desktop (16:9), Hero mobile (9:16), video de fondo, retrato editorial (4:5), títulos y CTAs.
+  - Migración versionada `src/migrations/20261023_180000_add_hero_and_portrait_media.ts` ejecutada y registrada formalmente.
+  - Hero asimétrico de gran escala con wordmark `DANY GLOCK`, identidad territorial (*Pasto, Colombia*) y canvas cinematográfico.
+  - Single Spotlight dedicado para el último lanzamiento (*Cicatrices feat. Maick Records*).
+  - Discografía editorial asimétrica distinguiendo artista principal vs. invitado (*EXCESO*).
+  - Sección editorial "El Artista — Biografía" en Home y ruta completa `/biografia` con narrativa y ficha técnica verificada.
+  - Videografía con jerarquía visual (video principal spotlight + cuadrícula) y modal HTML5 `<dialog>`.
+  - Shows con estado editorial elegante sin fechas inventadas.
+  - Formulario de contacto y booking unificado con protección anti-spam.
+  - Simplificación radical del footer (eliminación de enlace a `/admin` y correos inventados).
+  - Erradicación total de textos técnicos y de desarrollo (`Artist Digital Experience`, `Dark Cinematic Editorial`, `Fase 005`).
+  - Suite de 18 pruebas en `src/tests/public-views.test.tsx` (57 de 57 pruebas totales pasando).
+  - 100% de calidad: `typecheck` 0 errores, `lint` 0 errores/warnings, `build` exitoso, verificación visual desktop y móvil.
+
+---
+
+### ⏳ Misión 006-B.2 — Assets Oficiales, Optimización de Medios y EPK Expandido
+- **Objetivo:** Incorporar la fotografía oficial de alta resolución del artista, sincronizar carátulas oficiales en `Media`, optimizar entrega de imágenes (Next.js Image / WebP) y desplegar un EPK profesional descargable.
 
 ---
 

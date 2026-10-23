@@ -893,6 +893,26 @@ export interface ArtistProfile {
   stageName: string;
   tagline?: string | null;
   /**
+   * Imagen fotográfica o visual oficial del artista para pantallas de escritorio.
+   */
+  heroDesktopMedia?: (number | null) | Media;
+  /**
+   * Fotografía o encuadre vertical oficial para dispositivos móviles.
+   */
+  heroMobileMedia?: (number | null) | Media;
+  /**
+   * URL de video MP4/WebM o YouTube para ambientación cinematográfica.
+   */
+  heroVideoUrl?: string | null;
+  /**
+   * Retrato oficial para la sección editorial de biografía.
+   */
+  portraitImage?: (number | null) | Media;
+  heroTitle?: string | null;
+  heroSubtitle?: string | null;
+  heroCtaPrimary?: string | null;
+  heroCtaSecondary?: string | null;
+  /**
    * Indica si la biografía ha sido revisada y confirmada directamente por el artista o su management.
    */
   bioStatus?: ('editorial_draft' | 'approved') | null;
@@ -991,6 +1011,14 @@ export interface SiteSetting {
 export interface ArtistProfileSelect<T extends boolean = true> {
   stageName?: T;
   tagline?: T;
+  heroDesktopMedia?: T;
+  heroMobileMedia?: T;
+  heroVideoUrl?: T;
+  portraitImage?: T;
+  heroTitle?: T;
+  heroSubtitle?: T;
+  heroCtaPrimary?: T;
+  heroCtaSecondary?: T;
   bioStatus?: T;
   manifesto?: T;
   shortBio?: T;

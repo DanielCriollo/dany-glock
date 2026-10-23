@@ -324,7 +324,72 @@ Este documento registra las decisiones arquitectónicas fundamentales tomadas pa
 - **Consecuencias:**
   - *Positivas:* Sitio 100% oficial, profesional e inmersivo; navegación y renderizado rápidos (First Load JS 119 kB); 55/55 pruebas automatizadas pasando; build de producción Next.js 15 compilando exitosamente con generación estática de la Home.
 
+---
+
+### ADR-015 — Rediseño Cinematográfico de la Home & Experiencia Editorial de Dany Glock (Misión 006-B.1)
+- **Fecha:** 2026-10-23
+- **Estado:** Aprobado e Implementado
+- **Contexto:**
+  1. La Misión 006-B.1 requirió transformar la Home en una experiencia digital cinematográfica, editorial y auténtica para el artista urbano Dany Glock, superando la estructura de landing funcional previa hacia una composición asimétrica de alto impacto visual.
+  2. La fuente de verdad estricta debe ser Payload CMS 3.91 y PostgreSQL 17, sin arrays estáticos hardcodeados en componentes ni alteración de registros existentes.
+  3. Era mandatorio erradicar de la vista pública cualquier jerga técnica o de desarrollo (`Artist Digital Experience`, `Dark Cinematic Editorial`, `Fase 005`, `Misión`, `Scaffold`, `Arte Oficial en Sincronización`).
+  4. La arquitectura requería preparar campos editables en Payload CMS para medios protagonistas (Hero desktop 16:9, Hero mobile 9:16, video URL, imagen de retrato vertical 4:5, títulos y CTAs) mediante migraciones formales versionadas sin operaciones destructivas sobre PostgreSQL.
+  5. Se requería diseñar secciones independientes: Single Spotlight para el lanzamiento más reciente, discografía asimétrica con distinción artista principal vs. invitado, sección editorial "El Artista — Biografía" en Home y una ruta `/biografia` funcional, videografía con jerarquía visual (video principal spotlight + cuadrícula) y modal accesible, presentación editorial de shows vacíos sin inventar giras, formulario de contacto unificado anti-spam y simplificación radical del footer eliminando el enlace público a `/admin`.
+- **Decisión:**
+  1. **Expansión del Modelo de Contenido & Migración Segura (`ArtistProfile`):**
+     - Añadidos a `src/globals/ArtistProfile.ts`: `heroDesktopMedia` (relación a `media`), `heroMobileMedia` (relación a `media`), `heroVideoUrl` (campo de texto para video de fondo), `portraitImage` (relación a `media` para retrato editorial 4:5), `heroTitle`, `heroSubtitle`, `heroCtaPrimary`, `heroCtaSecondary`.
+     - Creada y ejecutada la migración `src/migrations/20261023_180000_add_hero_and_portrait_media.ts` mediante `payload.db.migrate()`, integrando las columnas `hero_desktop_media_id`, `hero_mobile_media_id`, `hero_video_url`, `portrait_image_id`, `hero_title`, `hero_subtitle`, `hero_cta_primary`, `hero_cta_secondary` en la tabla `artist_profile` y registrándola formalmente en `payload_migrations` (batch 4).
+     - Regenerados los tipos TypeScript de Payload CMS (`pnpm payload generate:types`) en `src/payload-types.ts`.
+  2. **Hero Cinematográfico Asimétrico:**
+     - Composición editorial de gran impacto: Wordmark `DANY GLOCK` tipográfico (`text-6xl` a `text-9xl`), origen territorial (*Pasto, Colombia · Plataforma Oficial*), género (*Música Urbana & Trap Latino*), y canvas visual cinematográfico con proporción adaptable (16:10 en desktop, 4:5 en viewports amplios, responsive para móviles).
+     - CTAs directos: "Explorar Discografía ↓" y "Videografía Oficial →", más acceso directo a "El Artista ↗".
+  3. **Single Spotlight para Último Lanzamiento (`src/components/music/LatestReleaseSpotlight.tsx`):**
+     - Sección dedicada independiente para el lanzamiento más reciente verificado (*Cicatrices feat. Maick Records*).
+     - Arte de vinilo concéntrico a gran escala 1:1, metadatos editoriales de catálogo, créditos de producción (Nick Montana x Dark Pro) y botones de streaming hacia Apple Music y YouTube.
+  4. **Discografía Asimétrica & Distinción de Roles:**
+     - Cuadrícula editorial responsiva eliminando el texto `Arte Oficial en Sincronización` y reemplazándolo por fichas sobrias con año, catálogo y badges de rol (*Artista Principal* vs. *Artista Invitado* en *EXCESO*).
+  5. **Sección Editorial "El Artista" & Ruta Completa `/biografia` (`src/app/(public)/biografia/page.tsx`):**
+     - Sección en Home que destaca la identidad territorial, visión artística y enlace a `/biografia`.
+     - Ruta `/biografia` implementada como Server Component consumiendo `getArtistProfileData` y `getPublishedReleasesData`, estructurada en 3 bloques editoriales verificados: *01 / Trayectoria y Origen*, *02 / Visión Artística*, y *03 / Discografía de Referencia*, con ficha técnica del artista sin inventar premios, colaboraciones ficticias ni giras.
+  6. **Jerarquía Visual en Videografía (`src/components/video/VideoGallery.tsx`):**
+     - Spotlight visual para el video destacado principal (formato 16:9 con badge de tipo `Videoclip Oficial` y duración) acompañado de cuadrícula para el resto de entregas audiovisuales.
+     - Modal accesible HTML5 `<dialog>` con overlay `backdrop-blur-2xl`, cierre por teclado (`Escape`), botón de cierre con foco accesible y reproductor `youtube-nocookie.com`.
+  7. **Shows & Presentaciones:**
+     - Estado editorial elegante sin fechas inventadas: *"Temporada en Programación — Nuevas Presentaciones en Vivo por Anunciar"* con CTA a la sección de contacto para contratación.
+  8. **Simplificación Radical del Footer (`src/components/layout/SiteFooter.tsx`):**
+     - Eliminación del enlace visible a `/admin` (conservando el acceso administrativo legítimo mediante su URL directa).
+     - Eliminación de correos no verificados; inclusión de wordmark del artista, navegación esencial, redes verificadas (YouTube, Instagram, Apple Music), copyright oficial y botón "Volver Arriba".
+  9. **Limpieza Editorial Estricta:**
+     - Eliminados de la interfaz pública: `Artist Digital Experience`, `Dark Cinematic Editorial`, `Fase 005`, `Misión`, `Scaffold`, y `Arte Oficial en Sincronización`. Sustituidos por terminología limpia en español editorial.
+  10. **Alineación de Pruebas & Calidad:**
+      - Actualizada la suite `src/tests/public-views.test.tsx` a 18 pruebas integrales cubriendo Hero, Single Spotlight, Discografía, Biografía, Videografía, Contacto y Footer.
+      - 57 de 57 pruebas superadas en `vitest`.
+      - 0 errores en `pnpm typecheck`.
+      - 0 errores y 0 warnings en `pnpm lint`.
+      - Build de producción `next build` exitoso con generación estática de Home (`/`) y Biografía (`/biografia`).
+- **Consecuencias:**
+  - *Positivas:* Experiencia artística a la altura de estándares internacionales (Travis Scott / The Weeknd); narrativa visual sólida y cinematográfica; responsividad completa en desktop (1440x900) y móvil (390x844); fidelidad estricta al CMS sin datos hardcodeados; 100% de quality gates verdes.
 
 
 
 
+
+
+
+---
+
+### ADR-016 — Despliegue Manual en VPS Compartido (Nginx existente + systemd + PostgreSQL existente)
+- **Fecha:** 2026-10-23
+- **Estado:** Aprobado e Implementado
+- **Contexto:** El VPS `51.83.75.178` ya aloja ~14 dominios (Laravel, WordPress, n8n, phpMyAdmin) servidos por Nginx 1.24 con PHP-FPM 8.3/8.4, MySQL 8 y PostgreSQL 16. Apache está instalado pero inactivo. Solo 1.9 GB de RAM y sin swap. El despliegue no debía afectar a ningún proyecto existente ni introducir CI/CD.
+- **Decisión:**
+  1. Reutilizar Nginx (vhost exclusivo, enlazado como `zz-dany.forcefilters.com` para no convertirse en *default server*) y PostgreSQL 16 (BD y rol propios, `reject` remoto solo para `danyglock_db`).
+  2. `next start` bajo systemd como usuario sin privilegios `danyglock`, ligado a `127.0.0.1:3100`, sin Docker ni PM2.
+  3. Certificado vía `certbot certonly --webroot` para que Certbot no edite configuraciones de Nginx.
+  4. Swap de 2 GB para que el build no dispare el OOM killer sobre servicios ajenos.
+  5. Migraciones con `payload migrate` (respaldo `pg_dump` previo); `prodMigrations` sigue activo como red de seguridad al arrancar.
+  6. Admin inicial creado vía túnel SSH con `/admin` bloqueado públicamente hasta su creación.
+  7. Actualizaciones manuales: `git pull --ff-only` → `pnpm install --frozen-lockfile` → migrate → stop → build → start.
+- **Consecuencias:**
+  - *Positivas:* Aislamiento total respecto a otros proyectos (línea base HTTP idéntica), cero servicios nuevos expuestos, reversible deshabilitando un symlink y un servicio.
+  - *Negativas:* Interrupción de 1–2 min por actualización; la Home estática requiere rebuild para reflejar cambios del CMS (DEPLOY-01); sin backups automáticos (DEPLOY-03).

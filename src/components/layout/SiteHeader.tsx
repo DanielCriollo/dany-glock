@@ -53,7 +53,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({ socialLinks, bookingEmai
               DANY GLOCK
             </span>
             <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-ash group-hover:text-bone transition-colors duration-200">
-              Artist Digital Experience
+              Sitio Oficial
             </span>
           </Link>
 
@@ -72,22 +72,22 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({ socialLinks, bookingEmai
               Videos
             </Link>
             <Link
+              href="#biografia"
+              className="font-sans text-xs uppercase tracking-[0.14em] text-ash hover:text-bone transition-colors duration-200 py-1 border-b border-transparent hover:border-crimson"
+            >
+              El Artista
+            </Link>
+            <Link
               href="#tour"
               className="font-sans text-xs uppercase tracking-[0.14em] text-ash hover:text-bone transition-colors duration-200 py-1 border-b border-transparent hover:border-crimson"
             >
               Shows
             </Link>
             <Link
-              href="#journal"
+              href="#contacto"
               className="font-sans text-xs uppercase tracking-[0.14em] text-ash hover:text-bone transition-colors duration-200 py-1 border-b border-transparent hover:border-crimson"
             >
-              Journal
-            </Link>
-            <Link
-              href="#press-kit"
-              className="font-sans text-xs uppercase tracking-[0.14em] text-ash hover:text-bone transition-colors duration-200 py-1 border-b border-transparent hover:border-crimson"
-            >
-              Press Kit
+              Contacto
             </Link>
           </nav>
 
