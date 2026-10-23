@@ -3,10 +3,11 @@
 ## 1. Ficha del Proyecto
 
 - **Nombre del Proyecto:** Dany Glock — Artist Digital Experience
-- **Fase Actual:** Cimentación de Diseño y Preparación de Tooling
-- **Última Misión Completada:** **Misión 002 — Design System & Cinematic Art Direction** *(Cerrada técnicamente; validación visual sujeta a conformidad humana)*
-- **Próxima Misión:** **Misión 003 — Inicialización del proyecto y tooling (Next.js 15, TypeScript, Tailwind, Vitest)**
-- **Bloqueos Activos:** Ninguno
+- **Fase Actual:** Misión 003 — Project Bootstrap & Engineering Foundation (Fase 2: Investigación de Compatibilidad)
+- **Última Misión Completada:** **Misión 002 — Design System & Cinematic Art Direction** *(Cerrada técnicamente)*
+- **Misión en Curso:** **Misión 003 — Project Bootstrap & Engineering Foundation** *(Detenida en Fase 2 por condición crítica de Node.js)*
+- **Bloqueos Activos:** **BLK-01** (Node.js 22.12.0 < 22.23.4 requerido por `payload@latest` 3.92.0; pendiente decisión de actualización vs fijación en 3.91.0).
+
 
 ---
 

@@ -138,3 +138,26 @@ Este documento registra las decisiones arquitectónicas fundamentales tomadas pa
 - **Consecuencias:**  
   - *Positivas:* Bundle JavaScript ultra-ligero, respeto riguroso a Core Web Vitals y compatibilidad total con Server Components.
 
+---
+
+## ADR-009: Gestión de Compatibilidad de Motores (Node.js vs Payload CMS 3.x) y Estrategia de Fijación
+
+- **Estado:** Propuesto / En Evaluación (Misión 003)
+- **Fecha:** Octubre 2026
+- **Contexto:**  
+  Durante la investigación obligatoria de compatibilidad previa a la instalación de dependencias en la Misión 003, se contrastaron las versiones del registro npm:
+  - Versión instalada en el sistema local: `Node.js v22.12.0`.
+  - Versión `@latest` de Payload: `payload@3.92.0`.
+  - Requisito de motor (`engines.node`) en `payload@3.92.0`: `^22.23.4 || >=24.22.1`.
+  - Requisito en versiones anteriores (`payload@3.91.0` y menores): `>=20.18.1` (totalmente compatible con Node 22.12.0).
+  - Regla mandatoria del proyecto: *"Condición crítica: la instalación actual detectada en M001 fue Node.js 22.12.0. Verificar si cumple los requisitos actuales de Payload. Si no cumple, documentar la actualización necesaria y detener la instalación hasta resolverla de manera segura."*
+- **Alternativas Evaluadas:**
+  1. **Alternativa A (Fijar Payload en `3.91.0`):** Permite continuar el desarrollo en el entorno actual sin requerir cambios de permisos ni alterar el binario global de Node.js en Windows. `3.91.0` es una versión estable y madura de Payload 3 con soporte completo de App Router.
+  2. **Alternativa B (Actualizar Node.js en el sistema a `>=22.23.4` o `>=24.22.1`):** Permite usar la versión de corte más reciente (`payload@3.92.0`). El sistema dispone de `fnm` (`fnm install 22.23.4` o `fnm install 24.22.1`), pero modificar el runtime del sistema operativo requiere confirmación del usuario para no afectar otros proyectos locales.
+- **Decisión:**  
+  Detener la instalación de dependencias en la fase de investigación de la Misión 003 y solicitar la preferencia del usuario antes de proceder a la creación del `package.json`.
+- **Consecuencias:**  
+  - Se previene contaminación de `node_modules` y fallos silenciosos de compilación de Drizzle/Payload en Next.js.
+  - Cero deuda técnica generada.
+
+

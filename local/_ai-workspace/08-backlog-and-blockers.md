@@ -2,8 +2,14 @@
 
 ## 1. Bloqueos Activos
 
-Actualmente **NO hay bloqueos técnicos, de entorno ni de dependencias**.
-El entorno local dispone de Node.js v22.12.0, npm 10.9.0, pnpm, PostgreSQL 17 y Git instalados y operativos.
+- **[BLK-01] Incompatibilidad de versión de Node.js con `payload@latest` (3.92.0):**
+  - **Causa:** El entorno del sistema tiene instalado `Node.js v22.12.0`. La versión más reciente en el registro npm (`payload@3.92.0`) exige `engines.node: "^22.23.4 || >=24.22.1"`.
+  - **Impacto:** Conforme a la regla obligatoria de la Misión 003, la instalación de dependencias se detiene para prevenir errores de compilación o instalación forzada con bypass de motores.
+  - **Estado:** Bloqueante para la fase 3 (Instalación de paquetes Next.js y lockfile de pnpm).
+  - **Soluciones posibles:**
+    1. Fijar Payload CMS en `3.91.0` (su motor es `>=20.18.1`, 100% compatible con Node 22.12.0).
+    2. Actualizar Node.js localmente vía `fnm install 22.23.4` (o `24.22.1`) para satisfacer `payload@3.92.0`.
+
 
 ---
 

@@ -6,58 +6,32 @@ Este documento consolida la investigación técnica, versiones estables verifica
 
 ## 1. Matriz de Tecnologías y Versiones
 
-| Capa | Tecnología | Versión Objetivo | Justificación Técnica & Compatibilidad |
+| Capa | Tecnología | Versión Verificada | Requisitos Oficiales & Compatibilidad |
 | :--- | :--- | :--- | :--- |
-| **Entorno de Ejecución** | Node.js | `v22.x LTS` (v22.12.0 verificado) | Cumple con creces el requisito de Payload 3 (`>= 20.18.1`). Soporte nativo para fetch, WebCrypto y rendimiento V8 moderno. |
-| **Gestor de Paquetes** | `pnpm` | `10.x` (instalado en el sistema) | Recomendado oficialmente por el equipo de Payload CMS para evitar conflictos de peer dependencies y duplicación de módulos en React 19 / Next.js 15. |
-| **Framework Core** | Next.js (App Router) | `15.2.x` / `15.3.x` | Base nativa sobre la que corre Payload 3. Soporta React Server Components (RSC), Server Actions, Turbopack en desarrollo y optimización de imágenes (`next/image`). |
-| **Librería UI** | React | `19.0.x` | Emparejado nativamente con Next.js 15. Manejo eficiente de transiciones concurrentes y streaming de componentes. |
-| **Lenguaje** | TypeScript | `5.7.x+` | Tipado estricto (`strict: true`). Sincronización automática de contratos de datos con `payload-types.ts`. |
-| **CMS Integrado** | Payload CMS 3 | `3.25.x+` (última estable 3.x) | Ejecución nativa sin servidor Express separado. Incluye panel de control en `/admin`, editor de texto enriquecido Lexical (`@payloadcms/richtext-lexical`) y autenticación lista para producción. |
-| **Base de Datos & ORM** | PostgreSQL + Drizzle ORM | PostgreSQL 16 o 17 (v17 instalada) | Adaptador oficial `@payloadcms/db-postgres`. Drizzle ORM proporciona consultas SQL de bajísima latencia, esquema tipado estricto y sistema de migraciones reproducible. |
-| **Estilos & Diseño** | Tailwind CSS | `v3.4.x` | Máxima estabilidad y compatibilidad con el ecosistema de componentes headless y plugins de animación. Evitamos Tailwind v4 temporalmente debido a cambios recientes en la API de configuración `@theme` que pueden generar fricción con componentes de terceros. |
-| **Animación Cinematográfica** | GSAP + ScrollTrigger | `3.12.x` (`@gsap/react`) | Estándar de la industria para animaciones de scroll complejas (scrubbing, timeline pinning, revelados tipográficos y parallax cinematográfico). |
-| **Animación UI / Microestados** | Motion (Framer Motion) | `motion` `v11.x` / `v12.x` | Manejo declarativo de estados en componentes React (modales, tooltips, transiciones de layout, gestos táctiles y springs fluidos). |
-| **Smooth Scrolling** | Lenis | `lenis/react` `1.1.x+` | Scroll suave inercial de alta gama sincronizado con el ticker de GSAP mediante `gsap.ticker.add()`. Evita tirones y unifica la experiencia en Windows, macOS y dispositivos móviles. |
-| **Primitivas Accesibles** | Radix UI | `@radix-ui/react-*` | Primitivas headless sin estilos (Diálogos, Menús desplegables, Tabs, Sliders para volumen del reproductor). Garantiza cumplimiento WCAG 2.1 AA nativo. |
-| **Iconografía** | Lucide React | `0.475.x+` | Iconografía minimalista, ultra-ligera y con soporte de Server Components sin impacto en el bundle del cliente. |
-| **Testing Unitario / Integración** | Vitest + Testing Library | `3.x` | Ejecución instantánea de pruebas unitarias en TypeScript, emulación rápida de DOM y compatibilidad natural con componentes React. |
-| **Testing E2E & Accesibilidad** | Playwright + `@axe-core/playwright` | `1.50.x+` | Pruebas de navegación en navegadores reales (Chromium, Firefox, WebKit), verificación visual responsive y auditoría automatizada de accesibilidad (a11y). |
+| **Entorno de Ejecución** | Node.js | Instalado: `v22.12.0` | **HALLAZGO CRÍTICO:** `payload@latest` (3.92.0) exige `^22.23.4 || >=24.22.1`. La versión actual `22.12.0` **NO CUMPLE** con `payload@latest`. Cumple únicamente hasta `payload@3.91.0` (`>=20.18.1`). Requiere decisión arquitectónica (ADR-009). |
+| **Gestor de Paquetes** | `pnpm` | `10.34.4` (instalado en sistema) | Soporte nativo para workspaces, resolución estricta de peer-dependencies y lockfile reproducible. |
+| **Framework Core** | Next.js (App Router) | `15.2.9` / `15.4.11` (o Next 16) | Requisito explícito de `@payloadcms/next@3.91+`: `>=15.2.9 <15.3.0 \|\| >=15.3.9 <15.4.0 \|\| >=15.4.11 <15.5.0 \|\| >=16.3.3 <17.0.0`. |
+| **Librería UI** | React | `19.0.x` / `19.3.x` | Base nativa de Next.js 15. Soporte de React Server Components (RSC) y Server Actions. |
+| **Lenguaje** | TypeScript | `^5.7.3` / `^5.8.x` | Modo estricto (`strict: true`). Tipos compartidos vía `payload-types.ts`. |
+| **CMS Integrado (M004)** | Payload CMS 3 | `3.91.0` (o `3.92.0` si se actualiza Node) | Integración nativa dentro del App Router de Next.js. |
+| **Base de Datos & ORM** | PostgreSQL + Drizzle ORM | PostgreSQL 17.4 (`psql` verificado) | Adaptador oficial `@payloadcms/db-postgres`. Drizzle ORM nativo. |
+| **Estilos & Tokens** | Tailwind CSS | `v3.4.17` (o `v4.3.x` con `@tailwindcss/postcss`) | Compatible con los Design Tokens de M002. En Next 15 con App Router, v3.4 garantiza cero incompatibilidad con plugins heredados; v4 requiere arquitectura `@theme`. |
+| **Testing Unitario** | Vitest | `^3.x` / `^5.x` | Ejecución ultra-rápida de pruebas en TypeScript y emulación DOM para componentes. |
+| **Animación (M005)** | GSAP 3 | `3.15.0` (`@gsap/react`) | Gratuito y plugins desbloqueados para uso comercial. |
 
 ---
 
-## 2. Compatibilidad y Arquitectura de Paquetes de Payload 3
+## 2. Requisitos de Ejecución y Hallazgo Crítico de Motores
 
-Payload 3 revolucionó su arquitectura al convertirse en un paquete de Next.js. Los paquetes esenciales que se configurarán en la Misión 004 son:
+### Diagnóstico de Motores de Payload CMS 3.x:
+- `payload@3.25.0` hasta `3.90.0`: `engines: { node: "^18.20.2 || >=20.9.0" }`
+- `payload@3.91.0`: `engines: { node: ">=20.18.1" }` *(Compatible con Node 22.12.0)*
+- `payload@3.92.0` (`@latest`): `engines: { node: "^22.23.4 || >=24.22.1" }` *(Incompatible con Node 22.12.0)*
 
-```json
-{
-  "dependencies": {
-    "next": "^15.2.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "payload": "^3.25.0",
-    "@payloadcms/next": "^3.25.0",
-    "@payloadcms/db-postgres": "^3.25.0",
-    "@payloadcms/richtext-lexical": "^3.25.0",
-    "tailwindcss": "^3.4.17",
-    "gsap": "^3.12.7",
-    "@gsap/react": "^2.1.2",
-    "motion": "^12.4.7",
-    "lenis": "^1.1.20",
-    "lucide-react": "^0.475.0"
-  }
-}
-```
-
----
-
-## 3. Requisitos de Ejecución y Limitaciones Reales
-
-### Requisitos Locales:
-- **Node.js:** Versión instalada en el sistema `v22.12.0` (compatible).
-- **PostgreSQL:** Versión instalada en el sistema `PostgreSQL 17` (compatible y verificada en `C:\Program Files\PostgreSQL\17\bin\psql.exe`).
-- **Package Manager:** `pnpm` disponible en `C:\Users\DUCKER\AppData\Roaming\npm\pnpm.ps1`.
+### Estado del Sistema Local:
+- **Node.js actual:** `v22.12.0` (Incompatible con `payload@3.92.0`).
+- **Gestor de versiones:** `fnm` y `nvm` disponibles en el sistema. `fnm list-remote --lts` confirma existencia de `v22.23.4` y `v24.22.1`.
+- **Acción requerida:** Conforme a la regla de la Misión 003, la instalación de dependencias se detiene hasta que el usuario decida si actualizar Node.js en la máquina a `>=22.23.4` o fijar Payload en `3.91.0`.
 
 ### Limitaciones Identificadas y Estrategia de Mitigación:
 1. **Conflicto entre Ticker de GSAP y RequestAnimationFrame de Lenis:**
