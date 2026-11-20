@@ -218,3 +218,21 @@ Detalle y evidencias en `15-brochure-audit.md`.
 - [x] **REV-04:** Caché regenerada con `POST /api/revalidate` (sesión admin, 200) y portadas/retrato verificados en el HTML público.
 - [ ] **REV-05 (Baja):** Validar en producción la revalidación desde `/admin` con un cambio editorial real autorizado (p. ej. al aprobar el primer contenido pendiente).
 - Siguen abiertos: MED-05, MED-06, MED-08, BRO-01…BRO-09, BRO-11, INT-04, INT-06, REV-02, REV-03.
+
+---
+
+## 13. Misión 006-C / 006-C.1 — Trayectoria en escenarios (lista para despliegue) — 2026-11-19
+
+Detalle completo en `18-stage-history.md` y guía de despliegue en `14-vps-deployment.md` §11.
+
+### Requiere aprobación del equipo del artista / management
+- [ ] **STG-01 (Alta):** Aprobar uno a uno los 18 eventos del archivo (todos en borrador): confirmar año, lugar y participación; marcar `Verificado`, autorizar el flyer (`usageRights`) y publicar. Prioridad: Pasto Vive Flow (2026), SIG Sauer Remix (2024), Baby Nico/EXCESO, Macondo/Cicatrices, Aniversario ATM (2025).
+- [ ] **STG-04 (Alta):** Show en el INPEC — autorización expresa del artista y del INPEC antes de publicar el evento o su flyer.
+- [ ] **STG-05 (Media):** Confirmar venues dudosos: «Rey Arlequín» (Luna Roja), «Macondo» (Macondo Bye Bye), lugar de Dancehall Selekta y Alfombra Dance Hall; ciudad de Ñejo «El Broko» (Centro de Eventos Andino).
+- [ ] **STG-06 (Baja):** Pedir a promotores los originales de los 4 flyers de calidad media (capturas de Instagram/historia).
+
+### Técnicas
+- [x] **STG-02 (Alta — RESUELTO en M006-C.1):** Comprobado vía GitHub API que `DanielCriollo/dany-glock` es **público**. `storage/flyers/` excluido permanentemente de `.gitignore` (junto a `/flyers/`), 0 flyers en historial Git, originales locales intactos, importador desacoplado de Git (`--dir`/`STAGE_FLYERS_DIR`), y procedimiento de transferencia privada SSH/SCP documentado (`18-stage-history.md` §5, `14-vps-deployment.md` §11, ADR-022).
+- [ ] **STG-03 (Alta):** Commit, push y despliegue de M006-C + M006-C.1 (cuando se autorice): transferencia privada SCP + `SHA256SUMS` de los 18 flyers a `/var/www/dany-glock/storage/flyers/` (`750`/`640`) → backup `pg_dump` + `media/` → `pnpm payload migrate` (`20261120_010900_add_event_archive_fields`) → `import-stage-history.ts` (entra todo en borrador) → build → verificación post-despliegue (`14-vps-deployment.md` §11).
+- [ ] **STG-07 (Baja):** Limpieza opcional de los 9 medios del brochure duplicados en menor resolución (`flyer-*.jpg`), si management lo aprueba. No se borraron.
+- [ ] **STG-08 (Baja):** `media` bloquea anónimos para `event_flyer`/`live_photo` sin derechos aprobados (y purga `.next/cache/images` al revocar); revisar si otras categorías necesitan la misma regla (p. ej. `document` cuando se cargue el rider técnico o PDF del EPK).

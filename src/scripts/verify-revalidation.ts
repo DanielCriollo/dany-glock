@@ -72,7 +72,9 @@ async function main() {
     profile: await payload.findGlobal({ slug: 'artist-profile', depth: 0 }),
     release: (await payload.find({ collection: 'releases', where: { slug: { equals: 'exceso' } }, depth: 0 })).docs[0],
   };
-  const media = (await payload.find({ collection: 'media', where: { filename: { equals: 'live-tarima-bn.jpg' } } })).docs[0];
+  // Imagen de prueba pública (artwork). Desde M006-C los flyers y fotos en vivo sin derechos aprobados
+  // no son legibles por visitantes anónimos, así que no sirven para comprobar el HTML público.
+  const media = (await payload.find({ collection: 'media', where: { filename: { equals: 'test-cover-1.png' } } })).docs[0];
   let highlightId: number | string | undefined;
 
   try {
@@ -114,11 +116,11 @@ async function main() {
       coverStatus: 'confirmed',
       _status: 'published',
     });
-    await check('Cambiar portada actualiza la discografía (/)', '/', (p) => p.html.includes('live-tarima-bn'));
+    await check('Cambiar portada actualiza la discografía (/)', '/', (p) => p.html.includes('test-cover-1'));
 
     // 4. Fotografía: retrato del artista en /biografia
     await api('POST', '/api/globals/artist-profile', { portraitImage: media.id });
-    await check('Actualizar retrato modifica /biografia', '/biografia', (p) => p.html.includes('live-tarima-bn'));
+    await check('Actualizar retrato modifica /biografia', '/biografia', (p) => p.html.includes('test-cover-1'));
 
     // 5. Booking: datos autorizados se actualizan; contacto privado solo con autorización
     const bookingMarker = `Descripción E2E ${randomBytes(3).toString('hex')}`;

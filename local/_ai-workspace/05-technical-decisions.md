@@ -468,3 +468,30 @@ Este documento registra las decisiones arquitectónicas fundamentales tomadas pa
 - **Consecuencias:** cambios editoriales visibles en la siguiente visita sin build; HTML sigue sirviéndose desde caché; seeds por CLI requieren revalidación manual o esperar 1 h; diseño válido para una sola instancia (caché en disco local).
 
 > **Nota ADR-020 (2026-10-23, producción):** desplegado en `329157f`. Confirmado que los scripts CLI (Local API en un proceso aparte) no pueden invalidar la caché del servidor Next.js; tras importaciones o seeds se usa `POST /api/revalidate` con sesión admin.
+
+---
+
+### ADR-021 — Archivo de eventos en `events` + autorización del flyer separada de la publicación (M006-C)
+- **Fecha:** 2026-11-19
+- **Estado:** Aprobado e Implementado (local, sin desplegar)
+- **Contexto:** 18 flyers históricos sin año legible en la mayoría, con datos de terceros (teléfonos, direcciones, marcas). `events.date` era obligatoria y `city` tenía «Pasto» por defecto; `media` era legible por cualquiera, incluidos flyers ocultos.
+- **Alternativas descartadas:** colección nueva `stage-history` (duplica `events`, que ya tenía borradores, verificación y póster); solo `media.gallery` (sin borradores, descripción, ciudad ni estado editorial); inferir años por día de la semana (inventaría datos).
+- **Decisión:** ampliar `events` con `listing` (agenda/archivo), `dateLabel`, `artistRole`, `summary`, `sortOrder` y `usageRights`; `date` obligatoria solo en la agenda. Publicar el evento (`_status` + `verification = verified`) es independiente de aprobar el flyer (`usageRights.status = approved`). Los anónimos no leen `event_flyer`/`live_photo` sin derechos aprobados; un hook sincroniza la aprobación del evento con el medio. Ruta dedicada `/escenarios` (404 sin publicados) y `events` revalida todo el sitio.
+- **Consecuencias:** un evento puede publicarse sin flyer; la API de media deja de exponer piezas de terceros no aprobadas; el script E2E de M006-B.3 usa ahora un medio `artwork`. La estrategia inicial de versionar `storage/flyers/` fue revocada en ADR-022 tras verificar que el repositorio remoto es público.
+
+---
+
+### ADR-022 — Almacenamiento privado de flyers fuera de Git y purga de caché `/_next/image` (M006-C.1)
+- **Fecha:** 2026-11-19
+- **Estado:** Aceptado e Implementado (local, sin commit ni despliegue)
+- **Contexto:**
+  1. En M006-C se habían copiado los 18 flyers a `storage/flyers/` sin excluirlos de `.gitignore` a la espera de comprobar si el repositorio remoto era privado. La auditoría directa contra GitHub API (`DanielCriollo/dany-glock`) confirmó `"private": false, "visibility": "public"`. Incluso en un repositorio privado, versionar flyers de terceros con teléfonos, direcciones y QR incrementa la superficie de exposición en el historial Git.
+  2. Durante la auditoría de seguridad se detectaron tres brechas potenciales adicionales: (a) `syncFlyerRights` habilitaba el medio al aprobar `usageRights.status` aunque el evento siguiera en borrador o se despublicara; (b) `usageRights.source` era legible de forma anónima en `/api/events`; (c) Next.js 15 `ImageOptimizerCache` (`.next/cache/images/`) seguía sirviendo copias cacheadas (HTTP 200) de un flyer previamente aprobado incluso después de revocar sus derechos y recibir 403 desde `/api/media/file/*`.
+- **Decisión:**
+  1. **Exclusión permanente en Git:** añadir `storage/flyers/` a `.gitignore` (junto a `/flyers/`). Conservar todos los archivos locales intactos y transferir al VPS únicamente por canal privado SSH/SCP con verificación SHA-256 y permisos `750`/`640`.
+  2. **Importador desacoplado de Git:** `import-stage-history.ts` acepta `--dir <ruta>` y `STAGE_FLYERS_DIR` (por defecto `storage/flyers/`), saliendo limpiamente si la carpeta no existe. Los tests verifican existencia en disco solo cuando la carpeta local está presente.
+  3. **Endurecimiento de acceso y caché:** `syncFlyerRights` exige `_status === 'published' && usageRights.status === 'approved'` y revoca el flyer al despublicar, cambiar `posterImage` o borrar (`revokeFlyerRightsOnDelete`); `usageRights.source` queda restringido a usuarios autenticados; `purgeNextImageCache()` (`src/lib/revalidate.ts`) purga `.next/cache/images` en los hooks de revocación/eliminación de `Events` y `Media`.
+  4. **Migración robusta:** `down()` de `20261120_010900_add_event_archive_fields` usa `IF EXISTS` en todos los `DROP COLUMN` y `DROP TYPE`.
+- **Consecuencias:**
+  - *Positivas:* cero datos personales de terceros en Git; privacidad garantizada en URL directa, REST, GraphQL, variantes redimensionadas y `/_next/image` (incluso tras revocación); suite de tests ejecutable en clones limpios sin flyers.
+  - *Negativas:* el despliegue inicial de los 18 flyers en el VPS requiere un paso manual de `scp` con `SHA256SUMS` (mismo procedimiento ya probado en M006-B.4).

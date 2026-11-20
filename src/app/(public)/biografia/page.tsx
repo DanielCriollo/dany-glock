@@ -6,7 +6,9 @@ import {
   getBookingData,
   getPublishedCareerHighlightsData,
   getPublishedReleasesData,
+  getStageHistoryData,
 } from '@/lib/cms-queries';
+import { StageHistoryGallery } from '@/components/stage/StageHistoryGallery';
 import { Button } from '@/components/ui/Button';
 import { ArtistPortrait } from '@/components/artist/ArtistPortrait';
 import { CareerHighlights } from '@/components/career/CareerHighlights';
@@ -25,11 +27,12 @@ export const metadata: Metadata = {
 };
 
 export default async function BiografiaPage() {
-  const [artistProfile, releases, highlights, booking] = await Promise.all([
+  const [artistProfile, releases, highlights, booking, stageHistory] = await Promise.all([
     getArtistProfileData(),
     getPublishedReleasesData(),
     getPublishedCareerHighlightsData(),
     getBookingData(),
+    getStageHistoryData(),
   ]);
 
   const stageName = artistProfile?.stageName || 'Dany Glock';
@@ -187,6 +190,23 @@ export default async function BiografiaPage() {
           </div>
         </div>
       </div>
+
+      {stageHistory.length > 0 && (
+        <section aria-labelledby="escenarios-title" className="pt-16 border-t border-white/10 space-y-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="space-y-2">
+              <span className="font-mono text-xs uppercase tracking-[0.25em] text-crimson-text block">Archivo en vivo</span>
+              <h2 id="escenarios-title" className="font-sans font-black text-3xl sm:text-5xl tracking-tight uppercase text-bone">
+                Trayectoria en escenarios
+              </h2>
+            </div>
+            <Link href="/escenarios" className="font-mono text-xs uppercase tracking-widest text-crimson-text hover:underline">
+              Ver {stageHistory.length === 1 ? 'el evento' : `los ${stageHistory.length} eventos`} →
+            </Link>
+          </div>
+          <StageHistoryGallery items={stageHistory.slice(0, 3)} />
+        </section>
+      )}
     </div>
   );
 }

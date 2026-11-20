@@ -1,6 +1,7 @@
 import React from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { getBookingData, getHomePageCmsData, getPressKitData } from '@/lib/cms-queries';
+import { getBookingData, getHomePageCmsData, getPressKitData, getStageHistoryData } from '@/lib/cms-queries';
 import { LatestReleaseSpotlight } from '@/components/music/LatestReleaseSpotlight';
 import { ReleaseCover } from '@/components/music/ReleaseCover';
 import { HeroMedia } from '@/components/hero/HeroMedia';
@@ -24,7 +25,11 @@ export default async function HomePage() {
     videos,
     events,
   } = await getHomePageCmsData();
-  const [booking, pressKit] = await Promise.all([getBookingData(), getPressKitData()]);
+  const [booking, pressKit, stageHistory] = await Promise.all([
+    getBookingData(),
+    getPressKitData(),
+    getStageHistoryData(),
+  ]);
   const showSpecs = [booking?.specs?.format, booking?.specs?.duration, booking?.specs?.genre].filter(Boolean);
 
   const stageName = artistProfile?.stageName || 'Dany Glock';
@@ -369,6 +374,21 @@ export default async function HomePage() {
               Shows & Booking →
             </Button>
           </div>
+        )}
+
+        {stageHistory.length > 0 && (
+          <Link
+            href="/escenarios"
+            className="group mt-8 flex items-center justify-between gap-6 border border-white/10 hover:border-crimson/50 bg-carbon/20 px-6 py-5 transition-colors duration-300"
+          >
+            <span className="font-mono text-xs uppercase tracking-widest text-ash group-hover:text-bone transition-colors">
+              Trayectoria en escenarios · {stageHistory.length}{' '}
+              {stageHistory.length === 1 ? 'presentación documentada' : 'presentaciones documentadas'}
+            </span>
+            <span className="font-mono text-xs text-crimson-text" aria-hidden="true">
+              →
+            </span>
+          </Link>
         )}
       </section>
 

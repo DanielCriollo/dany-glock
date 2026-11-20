@@ -3,9 +3,9 @@
 ## 1. Ficha del Proyecto
 
 - **Nombre del Proyecto:** Dany Glock — Official Artist Website
-- **Fase Actual:** Misión 006-B — Integración final (Multimedia + Brochure) **lista para commit y despliegue manual** (local, sin commit)
-- **Última Misión Completada:** **Misión 006-B — Integración final y preparación para despliegue** (integra M006-B.2 Multimedia de Antigravity y M006-B.2 Brochure de Claude Code)
-- **Siguiente Misión:** Desplegar M006-B.3 (revalidación, ver `16-cache-revalidation.md` §5), aprobaciones editoriales BRO-01…BRO-09 y **Misión 007**.
+- **Fase Actual:** Misión 006-C.1 — Cierre de seguridad y preparación para producción **completada en local** (M006-C lista para commit y despliegue; sin commit, push ni despliegue; 18 eventos en borrador y 0 flyers aprobados)
+- **Última Misión Completada:** **Misión 006-C.1 — Cierre de seguridad y preparación para producción** (local). Anterior desplegada: M006-B.3 + M006-B.4.
+- **Siguiente Misión:** Commit y despliegue de M006-C + M006-C.1 con transferencia privada de flyers al VPS (STG-03), aprobación editorial de los 18 eventos (STG-01), aprobaciones BRO-01…BRO-09 y **Misión 007**.
 - **Bloqueos Activos:** Ninguno.
 - **Producción:** `https://dany.forcefilters.com` — rama `wip/mision-006a` @ `329157f` (M006-B.3 ISR + M006-B.4 material oficial), desplegado 2026-10-23 21:43 UTC (anterior: `45b84d2`). Guía: `14-vps-deployment.md`.
 
@@ -24,6 +24,37 @@
 | **Docker** | `docker 27.x` | Contenedor `my_postgres` ejecutando Postgres 17.6 |
 
 ---
+
+### [2026-11-19] — Misión 006-C.1: Cierre de seguridad y preparación para producción (local, sin commit ni despliegue)
+- **Misión:** Misión 006-C.1 — Cierre de seguridad de M006-C y privacidad de flyers. Detalle en `18-stage-history.md` y `14-vps-deployment.md` §11; ADR-022.
+- **Implementaciones realizadas:**
+  - **Auditoría de repositorio remoto y Git:** confirmado vía GitHub API que `DanielCriollo/dany-glock` es **público** (`private: false`, `visibility: public`). Añadido `storage/flyers/` a `.gitignore` (junto a `/flyers/`). Verificado historial completo de Git (0 flyers commiteados) y paridad SHA-256 de los 18 originales y 18 copias locales (conservados intactos).
+  - **Endurecimiento de control de acceso y caché:** `syncFlyerRights` (`src/collections/Events.ts`) ahora exige `_status === 'published'` y `usageRights.status === 'approved'` y revoca el medio al despublicar, cambiar `posterImage` o borrar (`revokeFlyerRightsOnDelete`); `usageRights.source` restringido a usuarios autenticados (`access.read`); añadido `purgeNextImageCache()` (`src/lib/revalidate.ts`) en hooks de `Events` y `Media` tras detectar en E2E que `/_next/image` servía copias cacheadas (HTTP 200) incluso después de revocar derechos (403 en origen).
+  - **Importador independiente de Git:** `src/scripts/import-stage-history.ts` soporta `--dir <ruta>` y `STAGE_FLYERS_DIR`, maneja limpiamente la ausencia de carpeta privada y se desacoplaron los tests de la presencia de `storage/flyers/` en clones limpios.
+  - **Migración:** `down()` de `20261120_010900_add_event_archive_fields.ts` reforzado con `IF EXISTS` y probado en BD temporal aislada (`prod 1..5` + fila previa → `up` → `down` → `down` → `up`, 0 pérdida de datos).
+  - **Procedimiento VPS:** documentada transferencia privada SSH/SCP con `SHA256SUMS`, permisos `750`/`640` y checklist post-despliegue en `18-stage-history.md` §5 y `14-vps-deployment.md` §11.
+- **Arquitectura y decisiones:** ADR-022 en `05-technical-decisions.md`.
+- **Dependencias agregadas:** ninguna.
+- **Pruebas ejecutadas:**
+  - Escaneo de datos sensibles sobre 117 archivos versionables: 0 teléfonos reales, 0 direcciones privadas, 0 enlaces WhatsApp/Nequi, 0 secretos.
+  - `pnpm typecheck` 0 errores · `pnpm lint` 0 errores/warnings · `pnpm test` **116/116** (9 suites; 20 en `stage-history.test.tsx`) · `pnpm build` OK (`/escenarios` ISR 1 h).
+  - Importador validado: `--dry-run` local **18 sin cambios**; `--dir` inexistente sale limpio sin error.
+  - E2E contra `next start` local: `verify-stage-history.ts` **25/25** (incluye rutas estáticas 404, archivo original y 3 tamaños redimensionados 403, `/_next/image` bloqueado antes y tras revocación, REST `/api/media`, `/api/events?depth=2`, GraphQL y borrador con derechos aprobados bloqueado) y `verify-revalidation.ts` **13/13**.
+  - Auditoría final de BD local: 18/18 eventos en borrador (`to_confirm`, `usageRights=pending`), 32/32 medios `event_flyer`/`live_photo` ocultos/pendientes, 0 legibles por anónimos, 1 usuario admin, 6 migraciones limpias.
+- **Pendientes y bloqueos:** Cero bloqueos técnicos. Pendientes editoriales y de ejecución de despliegue en `08-backlog-and-blockers.md` §13 (STG-01, STG-03…STG-08).
+- **Próximos pasos:** Commit, push y despliegue controlado de M006-C + M006-C.1 (con transferencia privada SCP de flyers), seguido de aprobación editorial en `/admin`.
+
+### [2026-11-19] — Misión 006-C: Historial de eventos y flyers (local, sin commit)
+- **Misión:** Misión 006-C — Trayectoria en escenarios. Detalle en `18-stage-history.md`; ADR-021.
+- **Auditoría:** 18 flyers, 18 eventos distintos, 0 duplicados de archivo; 1 evento ya registrado (`pasto-vive-flow-2026`, completado sin duplicar); 9 coinciden con flyers del brochure (se usa la copia de mayor resolución); 4 de calidad media; 1 sensible (INPEC). Solo 2 flyers muestran el año (2026 y 2024); el resto queda con la fecha transcrita.
+- **Archivos:** originales intactos en `/flyers` (ignorado); copias idénticas versionables en `storage/flyers/` por petición de Daniel (verificar repo privado: STG-02).
+- **Payload:** `events` ampliado (`listing`, `sortOrder`, `dateLabel`, `artistRole`, `summary`, `usageRights`), `date` solo obligatoria en la agenda, `city` sin «Pasto» por defecto. Migración aditiva `20261120_010900_add_event_archive_fields` (lote 6) aplicada en local tras backup `local/backups/pre-m006c-*.dump`. `media`: anónimos ya no leen flyers/fotos en vivo sin derechos aprobados; hook `syncFlyerRights`.
+- **Web:** ruta `/escenarios` (404 sin publicados), galería responsive con flyers completos y visor `<dialog>`, bloque en `/biografia`, enlace en home y en el menú solo con contenido publicado; agenda de la home limitada a fechas futuras; `events` revalida todo el sitio.
+- **Importador:** `src/scripts/import-stage-history.ts` + `src/data/stage-history.ts`: 17 creados + 1 completado, 2.ª ejecución 18 sin cambios. Todo en borrador; nada publicado.
+- **Dependencias agregadas:** ninguna.
+- **Pruebas:** Vitest 112/112 (nuevo `stage-history.test.tsx`, 16); typecheck 0; lint 0; build OK (`/escenarios` ISR 1 h); E2E `verify-stage-history.ts` 18/18 y `verify-revalidation.ts` 13/13 contra `next start` local (el segundo ahora usa un medio `artwork`); QA visual desktop/móvil con publicación temporal y restauración automática. Estado final: 0 eventos publicados, 0 flyers aprobados.
+- **Pendientes:** STG-01…STG-08 en `08-backlog-and-blockers.md` §13.
+- **Próximos pasos:** aprobación editorial, commit y despliegue de M006-C.
 
 ### [2026-10-23] — Cierre y despliegue de M006-B.3 + M006-B.4 (`45b84d2` → `329157f`)
 - **Commits (push a `origin/wip/mision-006a`, local = remoto):** `d6bd589` feat(cms) ISR + revalidación (M006-B.3); `329157f` feat(media) material oficial (M006-B.4).

@@ -226,3 +226,68 @@ node node_modules/.pnpm/tsx@*/node_modules/tsx/dist/cli.mjs src/scripts/import-o
 Después hay que **regenerar la caché** (los scripts CLI no la invalidan): con sesión de admin en `/admin`, en la consola del navegador `fetch('/api/revalidate',{method:'POST'}).then(r=>r.status)` → `200`, o esperar ≤ 1 h.
 
 **Desde M006-B.3, los cambios de contenido hechos en `/admin` no requieren build ni reinicio.**
+
+---
+
+## 11. Próximo despliegue: M006-C + M006-C.1 (Trayectoria en escenarios — flyers privados)
+
+Estado: **listo para commit y despliegue** (sin commit, push ni despliegue todavía). Ver detalle y auditoría en `18-stage-history.md`.
+
+| Aspecto | Cambio | Impacto en el despliegue |
+| :--- | :--- | :--- |
+| Dependencias | Ninguna | `pnpm-lock.yaml` sin cambios |
+| Migración | `20261120_010900_add_event_archive_fields` (aditiva; `down` con `IF EXISTS` verificado desde línea base prod 1..5) | Se aplica al primer comando `payload` o al arrancar → **respaldo `pg_dump` obligatorio antes** |
+| Flyers | **Excluidos de Git** (`storage/flyers/` y `/flyers/` en `.gitignore`; repo público verificado) | Transferencia privada previa por SSH/SCP con verificación SHA-256 |
+| Importación | `src/scripts/import-stage-history.ts` (idempotente; soporta `--dir` y `STAGE_FLYERS_DIR`) | Importa 18 eventos en **borrador** y 18 flyers **ocultos/pendientes**; no publica nada |
+| Seguridad | `Media.access.read` bloquea `event_flyer`/`live_photo` no aprobados; `syncFlyerRights` exige publicado + aprobado; `usageRights.source` solo admin; `purgeNextImageCache()` limpia `.next/cache/images` al revocar | `/escenarios` responde **404** hasta publicar al menos un evento verificado |
+
+### Procedimiento (cuando se autorice)
+
+1. **Transferencia privada de los 18 flyers desde Windows (PowerShell):**
+   ```powershell
+   Get-ChildItem storage\flyers\*.jpg | ForEach-Object {
+     "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)"
+   } | Set-Content -Encoding ascii storage\flyers\SHA256SUMS
+
+   ssh dany-vps 'mkdir -p -m 700 /tmp/dany-m006c-flyers'
+   scp storage\flyers\*.jpg storage\flyers\SHA256SUMS dany-vps:/tmp/dany-m006c-flyers/
+   Remove-Item storage\flyers\SHA256SUMS
+
+   ssh dany-vps 'cd /tmp/dany-m006c-flyers && sha256sum -c SHA256SUMS && sudo install -d -o danyglock -g danyglock -m 750 /var/www/dany-glock/storage /var/www/dany-glock/storage/flyers && sudo install -o danyglock -g danyglock -m 640 *.jpg /var/www/dany-glock/storage/flyers/ && rm -rf /tmp/dany-m006c-flyers'
+   ```
+2. **Actualización, respaldo, migración e importación en el VPS:**
+   ```bash
+   ssh dany-vps
+   sudo -iu danyglock
+   cd /var/www/dany-glock
+   git fetch origin && git log --oneline HEAD..origin/wip/mision-006a
+   git pull --ff-only origin wip/mision-006a
+
+   # Respaldo ANTES de cualquier comando payload (prodMigrations se ejecuta al cargar Payload)
+   set -a; . ./.env; set +a
+   B=/var/backups/dany-glock/pre-deploy-m006c-$(date +%Y%m%d-%H%M%S).dump
+   pg_dump -Fc "$DATABASE_URL" -f "$B" && pg_restore --list "$B" | grep -c TABLE
+   tar czf /var/backups/dany-glock/media-m006c-$(date +%Y%m%d-%H%M).tgz media
+
+   pnpm payload migrate                                                                  # aplica 20261120_010900
+   node node_modules/.pnpm/tsx@*/node_modules/tsx/dist/cli.mjs src/scripts/import-stage-history.ts --dry-run
+   node node_modules/.pnpm/tsx@*/node_modules/tsx/dist/cli.mjs src/scripts/import-stage-history.ts
+   # Segunda pasada esperada: 18 sin cambios
+   node node_modules/.pnpm/tsx@*/node_modules/tsx/dist/cli.mjs src/scripts/import-stage-history.ts --dry-run
+   cp -a .next /home/danyglock/next-prev-329157f
+   exit
+   ```
+3. **Build y reinicio (interrupción ≈ 1 min):**
+   ```bash
+   sudo systemctl stop dany-glock
+   sudo -iu danyglock bash -c 'cd /var/www/dany-glock && NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=1536 pnpm build'
+   sudo systemctl start dany-glock
+   systemctl status dany-glock --no-pager
+   ```
+4. **Verificación pública y de privacidad post-despliegue:**
+   - `/`, `/biografia`, `/booking`, `/admin` → `200`; `/escenarios` → `404`; `/epk` → `404`.
+   - `/storage/flyers/club-xilon.jpg`, `/flyers/club-xilon.jpg`, `/media/escenario-club-xilon.jpg` → `404`.
+   - `/api/media/file/escenario-club-xilon.jpg` → `403`; `/_next/image?url=%2Fapi%2Fmedia%2Ffile%2Fescenario-club-xilon.jpg&w=640&q=75` → `400`.
+   - `GET /api/events?draft=true&limit=100` → `totalDocs: 0`; `GET /api/media?limit=100` → 0 registros `event_flyer`/`live_photo`.
+   - **No ejecutar** `verify-stage-history.ts` ni `verify-revalidation.ts` en producción (ambos lo bloquean para `forcefilters.com`).
+   - Opcional tras verificar la importación: limpiar `/var/www/dany-glock/storage/flyers/*.jpg` (Payload ya guardó sus copias en `media/`) o conservar con permisos `750`/`640`.

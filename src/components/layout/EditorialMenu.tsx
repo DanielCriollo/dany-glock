@@ -15,23 +15,35 @@ export interface EditorialMenuProps {
     twitter?: string | null;
   } | null;
   bookingEmail?: string | null;
+  /** Muestra «Trayectoria» solo cuando hay eventos anteriores publicados (si no, /escenarios es 404). */
+  showStageHistory?: boolean;
 }
 
-const MENU_ITEMS = [
-  { index: '01', label: 'Música', href: '/#musica', description: 'Discografía oficial, singles y álbumes' },
-  { index: '02', label: 'Videografía', href: '/#videos', description: 'Videoclips oficiales y directos' },
-  { index: '03', label: 'Tour & Shows', href: '/#tour', description: 'Fechas de conciertos y festivales' },
-  { index: '04', label: 'Journal', href: '/#journal', description: 'Noticias, comunicados y prensa' },
-  { index: '05', label: 'Press Kit (EPK)', href: '/#press-kit', description: 'Recursos para medios y promotores' },
-  { index: '06', label: 'Booking & Contacto', href: '/booking', description: 'Contrataciones y alianzas' },
+const BASE_MENU_ITEMS = [
+  { key: 'musica', label: 'Música', href: '/#musica', description: 'Discografía oficial, singles y álbumes' },
+  { key: 'videos', label: 'Videografía', href: '/#videos', description: 'Videoclips oficiales y directos' },
+  { key: 'tour', label: 'Tour & Shows', href: '/#tour', description: 'Fechas de conciertos y festivales' },
+  { key: 'escenarios', label: 'Trayectoria', href: '/escenarios', description: 'Archivo de presentaciones en vivo' },
+  { key: 'journal', label: 'Journal', href: '/#journal', description: 'Noticias, comunicados y prensa' },
+  { key: 'press-kit', label: 'Press Kit (EPK)', href: '/#press-kit', description: 'Recursos para medios y promotores' },
+  { key: 'booking', label: 'Booking & Contacto', href: '/booking', description: 'Contrataciones y alianzas' },
 ];
+
+export function getMenuItems(showStageHistory = false) {
+  return BASE_MENU_ITEMS.filter((item) => showStageHistory || item.key !== 'escenarios').map((item, i) => ({
+    ...item,
+    index: String(i + 1).padStart(2, '0'),
+  }));
+}
 
 export const EditorialMenu: React.FC<EditorialMenuProps> = ({
   isOpen,
   onClose,
   socialLinks,
   bookingEmail,
+  showStageHistory = false,
 }) => {
+  const menuItems = getMenuItems(showStageHistory);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -103,7 +115,7 @@ export const EditorialMenu: React.FC<EditorialMenuProps> = ({
       {/* Lista Principal de Enlaces Tipográficos */}
       <nav aria-label="Menú expandido" className="w-full max-w-7xl mx-auto px-6 py-12 md:px-12 flex-1 flex flex-col justify-center">
         <ul className="space-y-4 md:space-y-6 list-none p-0 m-0">
-          {MENU_ITEMS.map((item) => (
+          {menuItems.map((item) => (
             <li key={item.index} className="border-b border-white/5 pb-4 group">
               <Link
                 href={item.href}

@@ -14,9 +14,10 @@ export interface SiteHeaderProps {
     twitter?: string | null;
   } | null;
   bookingEmail?: string | null;
+  showStageHistory?: boolean;
 }
 
-export const SiteHeader: React.FC<SiteHeaderProps> = ({ socialLinks, bookingEmail }) => {
+export const SiteHeader: React.FC<SiteHeaderProps> = ({ socialLinks, bookingEmail, showStageHistory = false }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -121,6 +122,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({ socialLinks, bookingEmai
         onClose={() => setIsMenuOpen(false)}
         socialLinks={socialLinks}
         bookingEmail={bookingEmail}
+        showStageHistory={showStageHistory}
       />
     </>
   );

@@ -51,3 +51,10 @@ desktop.ini
 local/*.pdf
 local/brochure-assets/
 local/official-assets/
+
+# Respaldos locales de la BD y carpetas privadas de flyers (contienen teléfonos, direcciones y
+# piezas de terceros). Nunca se versionan en Git aunque el repositorio sea privado; al VPS se
+# transfieren por canal privado (SSH/SCP). Ver `local/_ai-workspace/18-stage-history.md`.
+local/backups/
+/flyers/
+storage/flyers/

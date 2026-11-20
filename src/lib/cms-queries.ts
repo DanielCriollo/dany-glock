@@ -17,6 +17,7 @@ import type {
   PressKit,
   Media,
 } from '@/payload-types';
+import { toStageHistoryItem, type StageHistoryItem } from '@/lib/stage-history';
 
 export interface PublicCmsData {
   artistProfile: ArtistProfile | null;
@@ -132,8 +133,8 @@ export async function getPublishedVideosData(): Promise<Video[]> {
 }
 
 /**
- * Obtiene los eventos en vivo publicados y verificados.
- * Excluye estrictamente eventos en borrador (como pasto-vive-flow-2026).
+ * Próximos conciertos: eventos publicados y verificados de la agenda con fecha futura.
+ * Excluye borradores y el archivo histórico (`listing = archive`).
  */
 export async function getPublishedEventsData(): Promise<Event[]> {
   try {
@@ -152,6 +153,8 @@ export async function getPublishedEventsData(): Promise<Event[]> {
               equals: 'verified',
             },
           },
+          { listing: { not_equals: 'archive' } },
+          { date: { greater_than_equal: new Date().toISOString() } },
         ],
       },
       sort: 'date',
@@ -323,6 +326,36 @@ export async function getShowGalleryData(): Promise<Media[]> {
   }
 }
 
+/**
+ * Archivo «Trayectoria en escenarios»: eventos anteriores publicados y verificados.
+ * Se devuelve una vista pública reducida; el flyer solo aparece con derechos de uso aprobados
+ * (`toStageHistoryItem`) y nunca se exponen notas internas, teléfonos ni direcciones.
+ */
+export async function getStageHistoryData(): Promise<StageHistoryItem[]> {
+  try {
+    const payload = await getPayload({ config });
+    const res = await payload.find({
+      collection: 'events',
+      where: {
+        and: [
+          { _status: { equals: 'published' } },
+          { 'verification.status': { equals: 'verified' } },
+          { listing: { equals: 'archive' } },
+        ],
+      },
+      sort: ['sortOrder', '-date'],
+      limit: 100,
+      overrideAccess: false,
+      depth: 1,
+    });
+    return (res.docs as Event[]).map(toStageHistoryItem);
+  } catch (error) {
+    // Se relanza: durante una regeneración ISR Next.js conserva la última versión válida.
+    console.error('cms-queries: Error al obtener el archivo de eventos:', error);
+    throw error;
+  }
+}
+
 // Aliases para consumo idiomático en tests y vistas
 export const getArtistProfile = getArtistProfileData;
 export const getSiteSettings = getSiteSettingsData;
@@ -332,3 +365,4 @@ export const getPublishedEvents = getPublishedEventsData;
 export const getPublishedArticles = getPublishedArticlesData;
 export const getPublishedCareerHighlights = getPublishedCareerHighlightsData;
 export const getShowGallery = getShowGalleryData;
+export const getStageHistory = getStageHistoryData;

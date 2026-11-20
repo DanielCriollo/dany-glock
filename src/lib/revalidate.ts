@@ -1,9 +1,28 @@
+import fs from 'fs';
+import path from 'path';
 import { revalidatePath } from 'next/cache';
 import type {
   CollectionAfterChangeHook,
   CollectionAfterDeleteHook,
   GlobalAfterChangeHook,
 } from 'payload';
+
+/**
+ * Purga la caché en disco del optimizador `/_next/image` (`.next/cache/images`).
+ * Next.js sirve copias cacheadas (incluso vencidas) si el origen pasa a responder 403;
+ * al revocar derechos o retirar un flyer/foto restringida, purgarla asegura que `/_next/image`
+ * deje de entregar la imagen de inmediato.
+ */
+export function purgeNextImageCache(): void {
+  const cacheDir = path.resolve(process.cwd(), '.next', 'cache', 'images');
+  try {
+    if (fs.existsSync(cacheDir)) {
+      fs.rmSync(cacheDir, { recursive: true, force: true });
+    }
+  } catch {
+    // Mejor esfuerzo: no interrumpir escrituras del CMS si el directorio está ocupado.
+  }
+}
 
 /**
  * Revalidación bajo demanda de las páginas públicas (ISR).
@@ -14,7 +33,7 @@ import type {
  * `revalidatePath` actúa sobre la caché del servidor sin endpoints públicos adicionales.
  */
 
-export const PUBLIC_PATHS = ['/', '/biografia', '/booking', '/epk'] as const;
+export const PUBLIC_PATHS = ['/', '/biografia', '/booking', '/epk', '/escenarios'] as const;
 export type PublicPath = (typeof PUBLIC_PATHS)[number];
 
 /** Rutas que muestran datos de cada colección o global. `'*'` = todo el sitio (layout). */
@@ -22,13 +41,14 @@ export const CONTENT_DEPENDENCIES: Record<string, readonly PublicPath[] | '*'> =
   releases: ['/', '/biografia', '/epk'],
   tracks: ['/', '/biografia', '/epk'],
   videos: ['/', '/epk'],
-  events: ['/'],
   articles: ['/'],
   'career-highlights': ['/biografia', '/epk'],
   'artist-profile': ['/', '/biografia', '/epk'],
   booking: ['/', '/biografia', '/booking', '/epk'],
   'press-kit': ['/', '/epk'],
   // Media se usa en portadas, hero, retrato, galería y EPK; SiteSettings en header y footer.
+  // Events alimenta la agenda (/), el archivo (/escenarios, /biografia) y el enlace del menú (layout).
+  events: '*',
   media: '*',
   'site-settings': '*',
 };

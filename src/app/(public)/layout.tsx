@@ -27,6 +27,18 @@ export default async function PublicRootLayout({
     slug: 'site-settings',
     overrideAccess: false,
   })) as SiteSetting;
+  // El enlace a «Trayectoria en escenarios» solo aparece si el archivo tiene eventos publicados.
+  const stageHistory = await payload.count({
+    collection: 'events',
+    where: {
+      and: [
+        { _status: { equals: 'published' } },
+        { 'verification.status': { equals: 'verified' } },
+        { listing: { equals: 'archive' } },
+      ],
+    },
+    overrideAccess: false,
+  });
 
   return (
     <html
@@ -42,6 +54,7 @@ export default async function PublicRootLayout({
         <SiteHeader
           socialLinks={siteSettings?.socialLinks}
           bookingEmail={siteSettings?.contactEmails?.booking}
+          showStageHistory={stageHistory.totalDocs > 0}
         />
 
         {/* Contenedor Principal */}

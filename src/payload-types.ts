@@ -378,7 +378,7 @@ export interface Video {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Conciertos en vivo, festivales internacionales y fechas de gira.
+ * Próximos conciertos y archivo histórico de presentaciones. Solo se publican eventos verificados; el flyer requiere derechos aprobados.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "events".
@@ -390,14 +390,49 @@ export interface Event {
    * Identificador para URLs y rutas del evento (ej: pasto-vive-flow-2026).
    */
   slug: string;
-  date: string;
-  city: string;
+  /**
+   * La agenda solo muestra fechas futuras; el archivo muestra presentaciones ya realizadas.
+   */
+  listing: 'upcoming' | 'archive';
+  /**
+   * Menor número = aparece antes. Se usa cuando no hay fecha exacta.
+   */
+  sortOrder?: number | null;
+  /**
+   * Obligatoria para la agenda. En el archivo, completar solo si el año está confirmado; si no, usar "Fecha tal como aparece".
+   */
+  date?: string | null;
+  /**
+   * Transcribir sin inferir el año.
+   */
+  dateLabel?: string | null;
+  /**
+   * Dejar vacío si la ciudad no está confirmada.
+   */
+  city?: string | null;
   country: string;
-  venue: string;
-  ticketStatus: 'available' | 'sold_out' | 'presale' | 'free' | 'cancelled';
+  /**
+   * Nombre del lugar. No publicar direcciones ni teléfonos de terceros.
+   */
+  venue?: string | null;
+  artistRole?: ('headliner' | 'special_guest' | 'opening_act' | 'lineup' | 'release_event' | 'unspecified') | null;
+  /**
+   * Solo datos visibles en el flyer o confirmados por el equipo. Sin teléfonos, precios ni direcciones.
+   */
+  summary?: string | null;
+  ticketStatus?: ('available' | 'sold_out' | 'presale' | 'free' | 'cancelled') | null;
   ticketUrl?: string | null;
   vipPackageUrl?: string | null;
   posterImage?: (number | null) | Media;
+  /**
+   * El flyer solo se muestra en la web si el estado es "Aprobado". Los flyers pueden incluir imágenes, marcas y datos de terceros.
+   */
+  usageRights?: {
+    status?: ('pending' | 'approved' | 'third_party_consent' | 'rejected') | null;
+    source?: string | null;
+    credit?: string | null;
+    approvalNote?: string | null;
+  };
   /**
    * Fotografías oficiales del show para cobertura editorial.
    */
@@ -847,14 +882,27 @@ export interface VideosSelect<T extends boolean = true> {
 export interface EventsSelect<T extends boolean = true> {
   eventName?: T;
   slug?: T;
+  listing?: T;
+  sortOrder?: T;
   date?: T;
+  dateLabel?: T;
   city?: T;
   country?: T;
   venue?: T;
+  artistRole?: T;
+  summary?: T;
   ticketStatus?: T;
   ticketUrl?: T;
   vipPackageUrl?: T;
   posterImage?: T;
+  usageRights?:
+    | T
+    | {
+        status?: T;
+        source?: T;
+        credit?: T;
+        approvalNote?: T;
+      };
   gallery?: T;
   relatedVideoUrl?: T;
   instagramPostUrl?: T;
