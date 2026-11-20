@@ -187,7 +187,7 @@ Detalle y evidencias en `15-brochure-audit.md`.
 
 ### Pendientes reales
 - [ ] **DEPLOY-01 (Alta):** sin revalidación: `/`, `/biografia`, `/booking` y `/epk` son estáticas. Aprobar contenido en el CMS (hitos, flyers, EPK, contacto) exige rebuild + restart.
-- [ ] **INT-04 (Media):** Ítem «Journal» del menú apunta a `/#journal`, sección inexistente (desde M005). Decidir: ocultarlo o construir la sección con `articles`.
+- [x] **INT-04 (Media — RESUELTO en M006-C.3):** Ítem roto «Journal» (`/#journal`) eliminado del menú editorial mediante el contrato unificado `src/lib/navigation.ts` (ver `19-navigation-and-routes.md`, ADR-023).
 - [ ] **INT-05 (Media):** `ReleaseCover` solo muestra la portada si `coverStatus = confirmed`; al subir carátulas, management debe cambiar también ese estado (todas están en `pending`).
 - [ ] **INT-06 (Baja):** `HeroMedia` marca `priority` en la imagen móvil y en la de escritorio → ambas se precargan en cualquier dispositivo cuando existan las dos. Optimizar con `<picture>`/`getImageProps` cuando se carguen fotos reales.
 - [ ] **INT-07 (Baja):** Commit único con trabajo de dos agentes: revisar el diff antes del commit; considerar dos commits (Multimedia / Brochure) para trazabilidad.
@@ -221,9 +221,9 @@ Detalle y evidencias en `15-brochure-audit.md`.
 
 ---
 
-## 13. Misión 006-C / 006-C.1 — Trayectoria en escenarios (lista para despliegue) — 2026-11-19
+## 13. Misión 006-C / 006-C.1 / 006-C.3 — Trayectoria, seguridad y navegación (lista para despliegue) — 2026-11-20
 
-Detalle completo en `18-stage-history.md` y guía de despliegue en `14-vps-deployment.md` §11.
+Detalle completo en `18-stage-history.md`, `19-navigation-and-routes.md` y guía de despliegue en `14-vps-deployment.md` §11.
 
 ### Requiere aprobación del equipo del artista / management
 - [ ] **STG-01 (Alta):** Aprobar uno a uno los 18 eventos del archivo (todos en borrador): confirmar año, lugar y participación; marcar `Verificado`, autorizar el flyer (`usageRights`) y publicar. Prioridad: Pasto Vive Flow (2026), SIG Sauer Remix (2024), Baby Nico/EXCESO, Macondo/Cicatrices, Aniversario ATM (2025).

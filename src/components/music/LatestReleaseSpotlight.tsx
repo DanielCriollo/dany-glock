@@ -41,7 +41,7 @@ export const LatestReleaseSpotlight: React.FC<LatestReleaseSpotlightProps> = ({ 
         <div className="lg:col-span-7 space-y-8">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <span className="w-2 h-2 rounded-full bg-crimson animate-pulse" aria-hidden="true" />
+              <span className="w-2 h-2 rounded-full bg-crimson animate-pulse motion-reduce:animate-none" aria-hidden="true" />
               <span className="font-mono text-xs uppercase tracking-[0.25em] text-crimson-text">
                 Último Lanzamiento Destacado
               </span>

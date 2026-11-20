@@ -229,9 +229,9 @@ Después hay que **regenerar la caché** (los scripts CLI no la invalidan): con 
 
 ---
 
-## 11. Próximo despliegue: M006-C + M006-C.1 (Trayectoria en escenarios — flyers privados)
+## 11. Próximo despliegue: M006-C + M006-C.1 + M006-C.3 (Trayectoria, flyers privados y navegación unificada)
 
-Estado: **listo para commit y despliegue** (sin commit, push ni despliegue todavía). Ver detalle y auditoría en `18-stage-history.md`.
+Estado: **listo para commit y despliegue** (sin commit, push ni despliegue todavía). Ver detalle en `18-stage-history.md` y `19-navigation-and-routes.md`.
 
 | Aspecto | Cambio | Impacto en el despliegue |
 | :--- | :--- | :--- |

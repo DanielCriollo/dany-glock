@@ -495,3 +495,20 @@ Este documento registra las decisiones arquitectónicas fundamentales tomadas pa
 - **Consecuencias:**
   - *Positivas:* cero datos personales de terceros en Git; privacidad garantizada en URL directa, REST, GraphQL, variantes redimensionadas y `/_next/image` (incluso tras revocación); suite de tests ejecutable en clones limpios sin flyers.
   - *Negativas:* el despliegue inicial de los 18 flyers en el VPS requiere un paso manual de `scp` con `SHA256SUMS` (mismo procedimiento ya probado en M006-B.4).
+
+---
+
+### ADR-023 — Contrato Único de Navegación y Separación de Actividad en Vivo (`/#tour` ↔ `/booking` ↔ `/escenarios`) (M006-C.3)
+- **Fecha:** 2026-11-20
+- **Estado:** Aceptado e Implementado (local, sin commit ni despliegue)
+- **Contexto:**
+  1. La auditoría de navegación detectó inconsistencias entre Header de escritorio, Menú Editorial y Footer: enlace roto `/#journal` (INT-04), ausencia de `El artista` (`/biografia`) en el menú editorial, `El Artista` apuntando a `/#biografia` en escritorio en lugar de `/biografia`, ausencia de `Trayectoria` (`/escenarios`) en escritorio y footer, y ausencia de `Booking` en el footer.
+  2. `/booking` renderizaba `ShowGallery` («02 / Archivo de presentaciones»), duplicando el propósito de `/escenarios` y diluyendo el foco de contratación profesional.
+  3. `SiteFooter` duplicaba las consultas Payload ya hechas en `layout.tsx`, y `HomePage` ejecutaba `getPublishedArticlesData()` sin renderizar artículos.
+- **Decisión:**
+  1. **Fuente única `src/lib/navigation.ts`:** define los enlaces verificados (`/#musica`, `/#videos`, `/biografia`, `/#tour`, `/escenarios` condicional a `showStageHistory`, `/booking`, `/#contacto`) consumidos por `SiteHeader`, `EditorialMenu` y `SiteFooter`.
+  2. **Roles diferenciados en vivo:** `/#tour` resume próximas fechas (con acceso constante a `/booking` y condicional a `/escenarios`); `/booking` se centra en contratación profesional (ficha del show, especificaciones técnicas/rider, tipos de evento, formulario y enlace discreto a `/escenarios`); `/escenarios` aloja exclusivamente la trayectoria histórica y galería de flyers aprobados (404 sin publicados).
+  3. **Sin consultas duplicadas:** `layout.tsx` carga en paralelo `site-settings`, `artist-profile` y conteo de archivo y los pasa a `SiteHeader`/`SiteFooter`; `HomePage` ejecuta sus 8 consultas reales en un único `Promise.all`.
+- **Consecuencias:**
+  - *Positivas:* 0 enlaces rotos (resuelve INT-04), paridad desktop/móvil/footer, menor bundle en `/booking` (122 → 117 kB), 0 saltos de encabezados (`h1–h4`) y 0 overflow horizontal verificado en 1440×900 y 375×812.
+  - *Negativas:* ninguna; `ShowGallery` y `getShowGalleryData()` se mantienen disponibles para futuras necesidades editoriales.

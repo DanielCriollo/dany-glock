@@ -65,9 +65,14 @@ export default async function EscenariosPage() {
 
       <div className="mt-24 pt-10 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <p className="font-serif italic text-xl text-ash max-w-xl">La próxima fecha puede ser la tuya.</p>
-        <Button variant="primary" href="/booking">
-          Shows & Booking →
-        </Button>
+        <div className="flex flex-wrap items-center gap-4">
+          <Button variant="secondary" href="/#tour">
+            Próximas fechas
+          </Button>
+          <Button variant="primary" href="/booking">
+            Shows & Booking →
+          </Button>
+        </div>
       </div>
     </div>
   );

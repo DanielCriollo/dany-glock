@@ -43,7 +43,7 @@ export const CONTENT_DEPENDENCIES: Record<string, readonly PublicPath[] | '*'> =
   videos: ['/', '/epk'],
   articles: ['/'],
   'career-highlights': ['/biografia', '/epk'],
-  'artist-profile': ['/', '/biografia', '/epk'],
+  'artist-profile': ['/', '/biografia', '/booking', '/epk', '/escenarios'],
   booking: ['/', '/biografia', '/booking', '/epk'],
   'press-kit': ['/', '/epk'],
   // Media se usa en portadas, hero, retrato, galería y EPK; SiteSettings en header y footer.

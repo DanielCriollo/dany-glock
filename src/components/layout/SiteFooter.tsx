@@ -3,23 +3,53 @@ import Link from 'next/link';
 import config from '@payload-config';
 import { getPayload } from 'payload';
 import type { ArtistProfile, SiteSetting } from '@/payload-types';
+import { getNavigationItems } from '@/lib/navigation';
 
-export async function SiteFooter() {
-  let artistProfile: ArtistProfile | null = null;
-  let siteSettings: SiteSetting | null = null;
+export interface SiteFooterProps {
+  artistProfile?: ArtistProfile | null;
+  siteSettings?: SiteSetting | null;
+  showStageHistory?: boolean;
+}
 
-  try {
-    const payload = await getPayload({ config });
-    const [profileRes, settingsRes] = await Promise.all([
-      payload.findGlobal({ slug: 'artist-profile', overrideAccess: false }),
-      payload.findGlobal({ slug: 'site-settings', overrideAccess: false }),
-    ]);
-    artistProfile = profileRes as ArtistProfile;
-    siteSettings = settingsRes as SiteSetting;
-  } catch (error) {
-    console.warn('SiteFooter: Error al consultar globals de Payload CMS, usando fallbacks seguros.', error);
+export async function SiteFooter(props: SiteFooterProps = {}) {
+  let artistProfile: ArtistProfile | null = props.artistProfile ?? null;
+  let siteSettings: SiteSetting | null = props.siteSettings ?? null;
+  let showStageHistory = props.showStageHistory ?? false;
+
+  // Si se invoca fuera de `PublicRootLayout` (p. ej. en pruebas unitarias), consulta Payload.
+  if (props.artistProfile === undefined || props.siteSettings === undefined) {
+    try {
+      const payload = await getPayload({ config });
+      const [profileRes, settingsRes, stageCount] = await Promise.all([
+        props.artistProfile === undefined
+          ? payload.findGlobal({ slug: 'artist-profile', overrideAccess: false })
+          : Promise.resolve(props.artistProfile),
+        props.siteSettings === undefined
+          ? payload.findGlobal({ slug: 'site-settings', overrideAccess: false })
+          : Promise.resolve(props.siteSettings),
+        props.showStageHistory === undefined
+          ? payload.count({
+              collection: 'events',
+              where: {
+                and: [
+                  { _status: { equals: 'published' } },
+                  { 'verification.status': { equals: 'verified' } },
+                  { listing: { equals: 'archive' } },
+                ],
+              },
+              overrideAccess: false,
+            })
+          : Promise.resolve(null),
+      ]);
+      artistProfile = profileRes as ArtistProfile;
+      siteSettings = settingsRes as SiteSetting;
+      if (stageCount) showStageHistory = stageCount.totalDocs > 0;
+    } catch (error) {
+      console.warn('SiteFooter: Error al consultar globals de Payload CMS, usando fallbacks seguros.', error);
+    }
   }
 
+  const navItems = getNavigationItems(showStageHistory);
   const stageName = artistProfile?.stageName || 'DANY GLOCK';
   const city = artistProfile?.origin?.city || 'Pasto';
   const country = artistProfile?.origin?.country || 'Colombia';
@@ -46,23 +76,13 @@ export async function SiteFooter() {
             </p>
           </div>
 
-          {/* Navegación Esencial */}
-          <nav aria-label="Navegación pie de página" className="flex flex-wrap items-center gap-6 font-mono text-xs uppercase tracking-wider text-ash">
-            <Link href="/#musica" className="hover:text-bone transition-colors py-1">
-              Música
-            </Link>
-            <Link href="/#videos" className="hover:text-bone transition-colors py-1">
-              Videos
-            </Link>
-            <Link href="/biografia" className="hover:text-bone transition-colors py-1">
-              Biografía
-            </Link>
-            <Link href="/#tour" className="hover:text-bone transition-colors py-1">
-              Shows
-            </Link>
-            <Link href="/#contacto" className="hover:text-bone transition-colors py-1">
-              Contacto
-            </Link>
+          {/* Navegación Esencial (paridad con Header y Menú Editorial) */}
+          <nav aria-label="Navegación pie de página" className="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-xs uppercase tracking-wider text-ash">
+            {navItems.map((item) => (
+              <Link key={item.key} href={item.href} className="hover:text-bone transition-colors py-1">
+                {item.label}
+              </Link>
+            ))}
           </nav>
         </div>
 

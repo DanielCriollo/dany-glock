@@ -288,7 +288,7 @@ describe('Misión 006-C — Trayectoria en escenarios', () => {
     it('el menú solo enlaza la trayectoria cuando hay eventos publicados', () => {
       expect(getMenuItems(false).map((i) => i.href)).not.toContain('/escenarios');
       const withArchive = getMenuItems(true);
-      expect(withArchive.find((i) => i.href === '/escenarios')?.index).toBe('04');
+      expect(withArchive.find((i) => i.href === '/escenarios')?.index).toBe('05');
       expect(withArchive.map((i) => i.index)).toEqual(['01', '02', '03', '04', '05', '06', '07']);
     });
 

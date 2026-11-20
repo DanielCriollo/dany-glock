@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { getNavigationItems } from '@/lib/navigation';
 
 export interface EditorialMenuProps {
   isOpen: boolean;
@@ -17,23 +19,12 @@ export interface EditorialMenuProps {
   bookingEmail?: string | null;
   /** Muestra «Trayectoria» solo cuando hay eventos anteriores publicados (si no, /escenarios es 404). */
   showStageHistory?: boolean;
+  /** Elemento que abrió el menú para devolverle el foco al cerrar. */
+  returnFocusRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
-const BASE_MENU_ITEMS = [
-  { key: 'musica', label: 'Música', href: '/#musica', description: 'Discografía oficial, singles y álbumes' },
-  { key: 'videos', label: 'Videografía', href: '/#videos', description: 'Videoclips oficiales y directos' },
-  { key: 'tour', label: 'Tour & Shows', href: '/#tour', description: 'Fechas de conciertos y festivales' },
-  { key: 'escenarios', label: 'Trayectoria', href: '/escenarios', description: 'Archivo de presentaciones en vivo' },
-  { key: 'journal', label: 'Journal', href: '/#journal', description: 'Noticias, comunicados y prensa' },
-  { key: 'press-kit', label: 'Press Kit (EPK)', href: '/#press-kit', description: 'Recursos para medios y promotores' },
-  { key: 'booking', label: 'Booking & Contacto', href: '/booking', description: 'Contrataciones y alianzas' },
-];
-
 export function getMenuItems(showStageHistory = false) {
-  return BASE_MENU_ITEMS.filter((item) => showStageHistory || item.key !== 'escenarios').map((item, i) => ({
-    ...item,
-    index: String(i + 1).padStart(2, '0'),
-  }));
+  return getNavigationItems(showStageHistory);
 }
 
 export const EditorialMenu: React.FC<EditorialMenuProps> = ({
@@ -42,38 +33,55 @@ export const EditorialMenu: React.FC<EditorialMenuProps> = ({
   socialLinks,
   bookingEmail,
   showStageHistory = false,
+  returnFocusRef,
 }) => {
   const menuItems = getMenuItems(showStageHistory);
+  const pathname = usePathname();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const wasOpenRef = useRef(false);
 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
 
     if (isOpen) {
+      wasOpenRef.current = true;
       if (!dialog.open) {
         dialog.showModal();
       }
       document.body.style.overflow = 'hidden';
-      // Enfocar el botón de cerrar accesible
-      setTimeout(() => closeButtonRef.current?.focus(), 50);
-    } else {
-      if (dialog.open) {
-        dialog.close();
-      }
-      document.body.style.overflow = '';
+      const timer = setTimeout(() => closeButtonRef.current?.focus(), 50);
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = '';
+      };
+    }
+
+    if (dialog.open) {
+      dialog.close();
+    }
+    document.body.style.overflow = '';
+    if (wasOpenRef.current) {
+      wasOpenRef.current = false;
+      returnFocusRef?.current?.focus();
     }
 
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [isOpen, returnFocusRef]);
 
   // Manejar el evento nativo de cancelación (tecla ESC en <dialog>)
   const handleCancel = (e: React.SyntheticEvent) => {
     e.preventDefault();
     onClose();
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === dialogRef.current) {
+      onClose();
+    }
   };
 
   const handleLinkClick = () => {
@@ -84,6 +92,7 @@ export const EditorialMenu: React.FC<EditorialMenuProps> = ({
     <dialog
       ref={dialogRef}
       onCancel={handleCancel}
+      onClick={handleBackdropClick}
       className={`fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none bg-ink text-bone border-none backdrop:bg-ink/90 backdrop:backdrop-blur-xl z-[999] overflow-y-auto ${
         isOpen ? 'flex flex-col justify-between' : 'hidden'
       }`}
@@ -106,34 +115,46 @@ export const EditorialMenu: React.FC<EditorialMenuProps> = ({
           aria-label="Cerrar menú editorial"
         >
           <span>Cerrar</span>
-          <span className="font-sans text-lg leading-none group-hover:rotate-90 transition-transform duration-200" aria-hidden="true">
+          <span className="font-sans text-lg leading-none group-hover:rotate-90 transition-transform duration-200 motion-reduce:transition-none" aria-hidden="true">
             ✕
           </span>
         </button>
       </div>
 
       {/* Lista Principal de Enlaces Tipográficos */}
-      <nav aria-label="Menú expandido" className="w-full max-w-7xl mx-auto px-6 py-12 md:px-12 flex-1 flex flex-col justify-center">
-        <ul className="space-y-4 md:space-y-6 list-none p-0 m-0">
-          {menuItems.map((item) => (
-            <li key={item.index} className="border-b border-white/5 pb-4 group">
-              <Link
-                href={item.href}
-                onClick={handleLinkClick}
-                className="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-8 transition-colors duration-200"
-              >
-                <span className="font-mono text-xs md:text-sm text-smoke group-hover:text-crimson-text transition-colors duration-200">
-                  {item.index}
-                </span>
-                <span className="font-sans font-black text-3xl sm:text-5xl md:text-6xl tracking-tight uppercase text-bone group-hover:text-crimson-text transition-colors duration-200">
-                  {item.label}
-                </span>
-                <span className="hidden lg:inline-block font-serif italic text-base text-ash opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-auto">
-                  {item.description} →
-                </span>
-              </Link>
-            </li>
-          ))}
+      <nav aria-label="Menú expandido" className="w-full max-w-7xl mx-auto px-6 py-10 md:px-12 flex-1 flex flex-col justify-center">
+        <ul className="space-y-4 md:space-y-5 list-none p-0 m-0">
+          {menuItems.map((item) => {
+            const isCurrent = !item.href.includes('#') && pathname === item.href;
+            return (
+              <li key={item.key} className="border-b border-white/5 pb-4 group">
+                <Link
+                  href={item.href}
+                  onClick={handleLinkClick}
+                  aria-current={isCurrent ? 'page' : undefined}
+                  className="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-8 transition-colors duration-200 py-1 min-h-[44px]"
+                >
+                  <span
+                    className={`font-mono text-xs md:text-sm transition-colors duration-200 ${
+                      isCurrent ? 'text-crimson-text' : 'text-smoke group-hover:text-crimson-text'
+                    }`}
+                  >
+                    {item.index}
+                  </span>
+                  <span
+                    className={`font-sans font-black text-3xl sm:text-5xl md:text-6xl tracking-tight uppercase transition-colors duration-200 ${
+                      isCurrent ? 'text-crimson-text' : 'text-bone group-hover:text-crimson-text'
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                  <span className="hidden lg:inline-block font-serif italic text-base text-ash opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-auto">
+                    {item.description} →
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
 
@@ -191,8 +212,8 @@ export const EditorialMenu: React.FC<EditorialMenuProps> = ({
               {bookingEmail}
             </a>
           ) : (
-            <Link href="/#contacto" onClick={handleLinkClick} className="text-ash hover:text-bone transition-colors">
-              Canal de Contacto Oficial ↗
+            <Link href="/booking" onClick={handleLinkClick} className="text-ash hover:text-bone transition-colors">
+              Contrataciones & Cotización ↗
             </Link>
           )}
         </div>

@@ -5,13 +5,13 @@ import { SiteHeader } from '@/components/layout/SiteHeader';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import config from '@payload-config';
 import { getPayload } from 'payload';
-import type { SiteSetting } from '@/payload-types';
+import type { ArtistProfile, SiteSetting } from '@/payload-types';
 
 export const metadata: Metadata = {
-  title: 'Dany Glock — Official Artist Experience',
+  title: 'Dany Glock — Sitio Oficial',
   description:
-    'Plataforma oficial del artista urbano Dany Glock. Discografía, videografía, fechas de gira y comunicados editoriales.',
-  keywords: ['Dany Glock', 'música urbana', 'trap', 'reggaeton', 'tour', 'discografía'],
+    'Plataforma oficial del artista urbano Dany Glock. Discografía, videografía, shows, contratación y trayectoria artística.',
+  keywords: ['Dany Glock', 'música urbana', 'trap', 'reggaeton', 'shows', 'booking', 'discografía'],
   authors: [{ name: 'Dany Glock' }],
 };
 
@@ -22,23 +22,24 @@ export default async function PublicRootLayout({
 }) {
   // Sin try/catch: si la consulta falla durante una regeneración ISR, Next.js mantiene
   // la última versión válida en vez de cachear un header/footer sin datos.
+  // Una sola batería paralela alimenta Header, Menú Editorial y Footer sin duplicar consultas.
   const payload = await getPayload({ config });
-  const siteSettings = (await payload.findGlobal({
-    slug: 'site-settings',
-    overrideAccess: false,
-  })) as SiteSetting;
-  // El enlace a «Trayectoria en escenarios» solo aparece si el archivo tiene eventos publicados.
-  const stageHistory = await payload.count({
-    collection: 'events',
-    where: {
-      and: [
-        { _status: { equals: 'published' } },
-        { 'verification.status': { equals: 'verified' } },
-        { listing: { equals: 'archive' } },
-      ],
-    },
-    overrideAccess: false,
-  });
+  const [siteSettings, artistProfile, stageHistory] = await Promise.all([
+    payload.findGlobal({ slug: 'site-settings', overrideAccess: false }) as Promise<SiteSetting>,
+    payload.findGlobal({ slug: 'artist-profile', overrideAccess: false, depth: 0 }) as Promise<ArtistProfile>,
+    payload.count({
+      collection: 'events',
+      where: {
+        and: [
+          { _status: { equals: 'published' } },
+          { 'verification.status': { equals: 'verified' } },
+          { listing: { equals: 'archive' } },
+        ],
+      },
+      overrideAccess: false,
+    }),
+  ]);
+  const showStageHistory = stageHistory.totalDocs > 0;
 
   return (
     <html
@@ -54,7 +55,7 @@ export default async function PublicRootLayout({
         <SiteHeader
           socialLinks={siteSettings?.socialLinks}
           bookingEmail={siteSettings?.contactEmails?.booking}
-          showStageHistory={stageHistory.totalDocs > 0}
+          showStageHistory={showStageHistory}
         />
 
         {/* Contenedor Principal */}
@@ -63,7 +64,11 @@ export default async function PublicRootLayout({
         </main>
 
         {/* Footer Editorial Conectado al CMS */}
-        <SiteFooter />
+        <SiteFooter
+          artistProfile={artistProfile}
+          siteSettings={siteSettings}
+          showStageHistory={showStageHistory}
+        />
       </body>
     </html>
   );

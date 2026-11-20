@@ -104,7 +104,28 @@ async function main() {
     }
 
     await check('Sin eventos publicados /escenarios es 404', '/escenarios', (p) => p.status === 404);
-    await check('Sin eventos publicados el menú no enlaza /escenarios', '/', (p) => p.status === 200 && !p.html.includes('href="/escenarios"'));
+    await check(
+      'Sin eventos publicados el menú no enlaza /escenarios ni anclas rotas (#journal)',
+      '/',
+      (p) =>
+        p.status === 200 &&
+        !p.html.includes('href="/escenarios"') &&
+        !p.html.includes('/#journal') &&
+        p.html.includes('href="/biografia"') &&
+        p.html.includes('href="/booking"'),
+    );
+    await check(
+      '/booking accesible sin galería de flyers ni enlace a /escenarios cuando no hay publicados',
+      '/booking',
+      (p) =>
+        p.status === 200 &&
+        p.html.includes('href="/#tour"') &&
+        p.html.includes('href="/#musica"') &&
+        !p.html.includes('/#journal') &&
+        !p.html.includes('href="/escenarios"') &&
+        !p.html.includes('Archivo visual de presentaciones') &&
+        !p.html.includes('02 / Archivo de presentaciones'),
+    );
 
     const xilon = events.find((e) => e.slug === 'dany-glock-club-xilon')!;
     const xilonMedia = typeof xilon.posterImage === 'object' ? xilon.posterImage : null;
@@ -203,6 +224,12 @@ async function main() {
     results.push({ name: 'Flyer pendiente sigue bloqueado', ok: (await status(`/api/media/file/${coloradoFile}`)) >= 400 });
     await check('El menú enlaza /escenarios', '/', (p) => p.html.includes('href="/escenarios"'));
     await check('/biografia muestra la trayectoria', '/biografia', (p) => p.html.includes('Trayectoria en escenarios'));
+    await check('/booking enlaza /escenarios sin duplicar la galería de flyers', '/booking', (p) =>
+      p.status === 200 &&
+      p.html.includes('href="/escenarios"') &&
+      !p.html.includes('Archivo visual de presentaciones') &&
+      !p.html.includes('02 / Archivo de presentaciones'),
+    );
     await check('Otros borradores siguen ocultos', '/escenarios', (p) => !p.html.includes('Luna Roja'));
     await check('EPK sigue oculto', '/epk', (p) => p.status === 404);
 
@@ -233,6 +260,7 @@ async function main() {
     await restoreAll(events);
     await check('Retirar eventos vuelve a ocultar /escenarios', '/escenarios', (p) => p.status === 404);
     await check('Retirar eventos quita el enlace del menú', '/', (p) => !p.html.includes('href="/escenarios"'));
+    await check('Retirar eventos quita el enlace en /booking', '/booking', (p) => !p.html.includes('href="/escenarios"'));
     results.push({ name: 'Flyer vuelve a bloquearse', ok: (await status(`/api/media/file/${xilonFile}`)) >= 400 });
     results.push({
       name: 'Caché /_next/image purgada tras revocar flyer',

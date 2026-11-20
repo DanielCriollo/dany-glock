@@ -242,13 +242,16 @@ describe('Misión 006-B.2 — Brochure: datos, privacidad y vistas públicas', (
       expect(html).not.toContain('INPEC');
     });
 
-    it('/booking presenta el show, tipos de evento y cotización sin datos privados', async () => {
+    it('/booking presenta el show, especificaciones técnicas, tipos de evento y cotización sin galería de flyers ni datos privados', async () => {
       const { container } = render(await BookingPage());
       const html = container.innerHTML;
       expect(screen.getByRole('heading', { level: 1, name: /Shows & Booking/i })).toBeDefined();
       expect(html).toContain('30–45 minutos');
       expect(html).toContain('Eventos corporativos');
+      expect(html).toContain('Requerimientos técnicos');
       expect(html).toContain('Solicitud de cotización');
+      expect(html).toContain('href="/#tour"');
+      expect(html).not.toContain('Archivo de presentaciones');
       expect(html).not.toContain('@gmail.com');
       expect(html).not.toMatch(/tarifa\s*:/i);
     });

@@ -3,9 +3,9 @@
 ## 1. Ficha del Proyecto
 
 - **Nombre del Proyecto:** Dany Glock — Official Artist Website
-- **Fase Actual:** Misión 006-C.1 — Cierre de seguridad y preparación para producción **completada en local** (M006-C lista para commit y despliegue; sin commit, push ni despliegue; 18 eventos en borrador y 0 flyers aprobados)
-- **Última Misión Completada:** **Misión 006-C.1 — Cierre de seguridad y preparación para producción** (local). Anterior desplegada: M006-B.3 + M006-B.4.
-- **Siguiente Misión:** Commit y despliegue de M006-C + M006-C.1 con transferencia privada de flyers al VPS (STG-03), aprobación editorial de los 18 eventos (STG-01), aprobaciones BRO-01…BRO-09 y **Misión 007**.
+- **Fase Actual:** Misión 006-C.3 — Auditoría integral de rutas, shows y navegación **completada en local** (sin commit, push ni despliegue; 18 eventos en borrador y 0 flyers aprobados)
+- **Última Misión Completada:** **Misión 006-C.3 — Auditoría integral de rutas, shows y navegación** (local). Anterior desplegada: M006-B.3 + M006-B.4 (`329157f`).
+- **Siguiente Misión:** Commit y despliegue de M006-C.3 (junto con M006-C + M006-C.1 y transferencia privada de flyers al VPS, STG-03), aprobación editorial de los 18 eventos (STG-01), aprobaciones BRO-01…BRO-09 y **Misión 007**.
 - **Bloqueos Activos:** Ninguno.
 - **Producción:** `https://dany.forcefilters.com` — rama `wip/mision-006a` @ `329157f` (M006-B.3 ISR + M006-B.4 material oficial), desplegado 2026-10-23 21:43 UTC (anterior: `45b84d2`). Guía: `14-vps-deployment.md`.
 
@@ -24,6 +24,23 @@
 | **Docker** | `docker 27.x` | Contenedor `my_postgres` ejecutando Postgres 17.6 |
 
 ---
+
+### [2026-11-20] — Misión 006-C.3: Auditoría integral de rutas, shows y navegación (local, sin commit ni despliegue)
+- **Misión:** Misión 006-C.3 — Auditoría y unificación de rutas, Shows (`/#tour`), Booking (`/booking`) y Trayectoria (`/escenarios`). Detalle en `19-navigation-and-routes.md`; ADR-023.
+- **Implementaciones realizadas:**
+  - **Contrato único de navegación (`src/lib/navigation.ts`):** paridad total entre `SiteHeader`, `EditorialMenu` y `SiteFooter` con anclas reales verificadas (`/#musica`, `/#videos`, `/biografia`, `/#tour`, `/escenarios` condicional, `/booking`, `/#contacto`). Eliminado el enlace roto `/#journal` (resuelve INT-04) y la entrada redundante `/#press-kit`.
+  - **UX y accesibilidad:** `SiteHeader` muestra `Trayectoria` en escritorio cuando hay publicados, marca `aria-current="page"`, cierra el menú móvil al cambiar de ruta (`usePathname`) y devuelve el foco al botón `Menú` al cerrar; `EditorialMenu` cierra también por clic en backdrop. Corregidos saltos de encabezado `h2 → h4` a `h3` en `page.tsx`, añadido `motion-reduce:animate-none` en puntos pulsantes y enlace de retorno al inicio en `/epk`.
+  - **Separación de Shows en vivo:** `/#tour` mantiene siempre acceso a `/booking` (también con próximas fechas confirmadas), formatea ubicaciones opcionales sin guiones rotos y abre `ticketUrl` en nueva pestaña; `/booking` retira `ShowGallery` para centrarse en contratación profesional + bloque de requerimientos técnicos/rider + puente discreto a `/#tour` y `/escenarios` (condicional); `/escenarios` enlaza a `/#tour` y `/booking`.
+  - **Optimización Payload/ISR:** `layout.tsx` carga en paralelo `site-settings`, `artist-profile` y conteo de archivo y los pasa a `SiteHeader`/`SiteFooter` (cero consultas duplicadas); `HomePage` paraleliza sus consultas sin la consulta muerta a `articles`; `CONTENT_DEPENDENCIES['artist-profile']` cubre también `/booking` y `/escenarios`.
+- **Arquitectura y decisiones:** ADR-023 en `05-technical-decisions.md`.
+- **Dependencias agregadas:** ninguna (sin migración nueva).
+- **Pruebas ejecutadas:**
+  - `pnpm typecheck` 0 · `pnpm lint` 0 · `pnpm test` **119/119** (9 suites; 9 en `layout-navigation.test.tsx`, 20 en `stage-history.test.tsx`, 15 en `brochure-content.test.tsx`) · `pnpm build` OK (`/booking` 117 kB First Load JS).
+  - E2E contra `next start` local: `verify-stage-history.ts` **28/28** y `verify-revalidation.ts` **13/13**.
+  - QA real en Chrome headless (1440×900 y 375×812): **52/52** (0 overflow horizontal, 1 `h1` y 0 saltos de encabezado en `/`, `/biografia`, `/booking`, `/escenarios`; navegación móvil y escritorio verificada con y sin eventos históricos publicados).
+  - Estado final en BD local: 18/18 eventos en borrador, 32/32 flyers/fotos ocultos/pendientes, `/escenarios` 404, `/epk` 404.
+- **Pendientes y bloqueos:** Cero bloqueos técnicos. Pendientes de despliegue y aprobación editorial en `08-backlog-and-blockers.md` §13.
+- **Próximos pasos:** Commit, push y despliegue de M006-C + M006-C.1 + M006-C.3 (`14-vps-deployment.md` §11), seguido de aprobación editorial en `/admin`.
 
 ### [2026-11-19] — Misión 006-C.1: Cierre de seguridad y preparación para producción (local, sin commit ni despliegue)
 - **Misión:** Misión 006-C.1 — Cierre de seguridad de M006-C y privacidad de flyers. Detalle en `18-stage-history.md` y `14-vps-deployment.md` §11; ADR-022.

@@ -193,9 +193,9 @@ flowchart TD
 ### ✅ Misión 006-B.4 — Imágenes oficiales *(Completada y desplegada, `329157f`)*
 - 4 portadas oficiales y retrato del canal oficial en producción; medios reales sin superposiciones. Ver `17-media-inventory.md`.
 
-### ✅ Misión 006-C + 006-C.1 — Historial de eventos, flyers privados y cierre de seguridad *(Completada en local, lista para commit y despliegue)*
-- 18 flyers inventariados e importados en borrador; ruta `/escenarios` «Trayectoria en escenarios» con visor ampliado; autorización del flyer separada de la publicación; flyers excluidos de Git (`storage/flyers/` y `/flyers/` en `.gitignore`), endurecimiento de acceso y purga de caché `/_next/image`, migración validada y transferencia privada SCP al VPS documentada. Ver `18-stage-history.md` y `14-vps-deployment.md` §11.
+### ✅ Misión 006-C + 006-C.1 + 006-C.3 — Trayectoria en escenarios, seguridad y navegación unificada *(Completada en local, lista para despliegue)*
+- 18 flyers inventariados e importados en borrador; ruta `/escenarios` «Trayectoria en escenarios» con visor ampliado; autorización del flyer separada de la publicación; flyers excluidos de Git (`storage/flyers/` y `/flyers/` en `.gitignore`), endurecimiento de acceso y purga de caché `/_next/image`; navegación unificada (`src/lib/navigation.ts`), eliminación de `/#journal` y separación limpia entre `/#tour`, `/booking` y `/escenarios`. Ver `18-stage-history.md`, `19-navigation-and-routes.md` y `14-vps-deployment.md` §11.
 
 ### ⏳ Siguiente
-- Commit, push y despliegue de M006-C + M006-C.1 con transferencia privada de flyers al VPS (STG-03), y aprobación editorial de los 18 eventos en `/admin` (STG-01).
+- Commit, push y despliegue de M006-C.3 (junto a M006-C + M006-C.1 con transferencia privada de flyers al VPS, STG-03) y aprobación editorial de los 18 eventos en `/admin` (STG-01).
 - Fotos de prensa en alta resolución (MED-05/06), aprobaciones editoriales del brochure (BRO-01…09) y Misión 007.

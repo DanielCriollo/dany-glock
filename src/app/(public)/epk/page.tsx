@@ -65,6 +65,16 @@ export default async function EpkPage() {
 
   return (
     <div className="w-full min-h-screen pt-32 pb-24 px-6 md:px-12 max-w-6xl mx-auto">
+      <div className="mb-12">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-ash hover:text-crimson-text transition-colors"
+        >
+          <span aria-hidden="true">←</span>
+          <span>Volver a la Página Principal</span>
+        </Link>
+      </div>
+
       <header className="border-b border-white/10 pb-12 mb-16 space-y-6">
         <span className="font-mono text-xs uppercase tracking-[0.25em] text-ash block">
           {pressKit.headline || 'Electronic Press Kit'}

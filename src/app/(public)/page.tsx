@@ -1,7 +1,16 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { getBookingData, getHomePageCmsData, getPressKitData, getStageHistoryData } from '@/lib/cms-queries';
+import {
+  getArtistProfileData,
+  getBookingData,
+  getPressKitData,
+  getPublishedEventsData,
+  getPublishedReleasesData,
+  getPublishedVideosData,
+  getSiteSettingsData,
+  getStageHistoryData,
+} from '@/lib/cms-queries';
 import { LatestReleaseSpotlight } from '@/components/music/LatestReleaseSpotlight';
 import { ReleaseCover } from '@/components/music/ReleaseCover';
 import { HeroMedia } from '@/components/hero/HeroMedia';
@@ -17,19 +26,18 @@ import { ContactForm } from '@/components/contact/ContactForm';
 export const revalidate = 3600;
 
 export default async function HomePage() {
-  const {
-    artistProfile,
-    siteSettings,
-    releases,
-    featuredRelease,
-    videos,
-    events,
-  } = await getHomePageCmsData();
-  const [booking, pressKit, stageHistory] = await Promise.all([
-    getBookingData(),
-    getPressKitData(),
-    getStageHistoryData(),
-  ]);
+  const [artistProfile, siteSettings, releases, videos, events, booking, pressKit, stageHistory] =
+    await Promise.all([
+      getArtistProfileData(),
+      getSiteSettingsData(),
+      getPublishedReleasesData(),
+      getPublishedVideosData(),
+      getPublishedEventsData(),
+      getBookingData(),
+      getPressKitData(),
+      getStageHistoryData(),
+    ]);
+  const featuredRelease = releases.find((r) => r.featured) || releases[0] || null;
   const showSpecs = [booking?.specs?.format, booking?.specs?.duration, booking?.specs?.genre].filter(Boolean);
 
   const stageName = artistProfile?.stageName || 'Dany Glock';
@@ -61,7 +69,7 @@ export default async function HomePage() {
           <div className="lg:col-span-7 space-y-8">
             {/* Badge de Origen y Estatus Verificado */}
             <div className="flex flex-wrap items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-crimson animate-pulse" aria-hidden="true" />
+              <span className="w-2.5 h-2.5 rounded-full bg-crimson animate-pulse motion-reduce:animate-none" aria-hidden="true" />
               <span className="font-mono text-xs uppercase tracking-[0.25em] text-ash">
                 {city}, {country} · Plataforma Oficial
               </span>
@@ -164,9 +172,9 @@ export default async function HomePage() {
                   {/* Ficha Editorial & Streaming */}
                   <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                     <div>
-                      <h4 className="font-sans font-bold text-lg text-bone group-hover:text-crimson-text transition-colors">
+                      <h3 className="font-sans font-bold text-lg text-bone group-hover:text-crimson-text transition-colors">
                         {release.title}
-                      </h4>
+                      </h3>
                       {release.description && (
                         <p className="font-sans text-xs text-ash mt-1 line-clamp-2 leading-relaxed">
                           {release.description}
@@ -316,39 +324,51 @@ export default async function HomePage() {
         </div>
 
         {events && events.length > 0 ? (
-          <div className="border border-white/10 divide-y divide-white/10 bg-carbon/30">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4"
-              >
-                <div className="flex items-baseline gap-6">
-                  <span className="font-mono text-xs text-crimson-text uppercase">
-                    {event.date
-                      ? new Date(event.date).toLocaleDateString('es-CO', {
-                          month: 'short',
-                          day: 'numeric',
-                        })
-                      : 'Fecha oficial'}
-                  </span>
-                  <div>
-                    <h3 className="font-sans font-bold text-xl text-bone">{event.eventName}</h3>
-                    <p className="text-xs font-mono text-ash mt-1">
-                      {event.venue} — {event.city}, {event.country}
-                    </p>
+          <div className="space-y-6">
+            <div className="border border-white/10 divide-y divide-white/10 bg-carbon/30">
+              {events.map((event) => {
+                const location = [event.venue, event.city, event.country].filter(Boolean).join(' · ');
+                return (
+                  <div
+                    key={event.id}
+                    className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  >
+                    <div className="flex items-baseline gap-6">
+                      <span className="font-mono text-xs text-crimson-text uppercase shrink-0">
+                        {event.date
+                          ? new Date(event.date).toLocaleDateString('es-CO', {
+                              month: 'short',
+                              day: 'numeric',
+                              timeZone: 'America/Bogota',
+                            })
+                          : 'Fecha oficial'}
+                      </span>
+                      <div>
+                        <h3 className="font-sans font-bold text-xl text-bone">{event.eventName}</h3>
+                        {location && <p className="text-xs font-mono text-ash mt-1">{location}</p>}
+                      </div>
+                    </div>
+                    {event.ticketUrl ? (
+                      <Button variant="primary" href={event.ticketUrl} target="_blank" rel="noopener noreferrer">
+                        Entradas Disponibles ↗
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" href="/booking">
+                        Contrataciones & Info →
+                      </Button>
+                    )}
                   </div>
-                </div>
-                {event.ticketUrl ? (
-                  <Button variant="primary" href={event.ticketUrl}>
-                    Entradas Disponibles ↗
-                  </Button>
-                ) : (
-                  <Button variant="ghost" href="#contacto">
-                    Más Información →
-                  </Button>
-                )}
-              </div>
-            ))}
+                );
+              })}
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 border border-white/10 bg-carbon/20">
+              <p className="font-sans text-sm text-ash">
+                ¿Organizas un festival, club o evento privado? Consulta el formato del show y disponibilidad.
+              </p>
+              <Button variant="secondary" href="/booking">
+                Shows & Booking →
+              </Button>
+            </div>
           </div>
         ) : (
           /* Estado Vacío Editorial Elegante y Breve */
@@ -441,9 +461,9 @@ export default async function HomePage() {
                 <span className="font-mono text-xs uppercase tracking-widest text-ash block">
                   Presencia Verificada
                 </span>
-                <h4 className="font-sans font-bold text-lg text-bone">
+                <h3 className="font-sans font-bold text-lg text-bone">
                   Ecosistema Digital Oficial
-                </h4>
+                </h3>
                 <div className="space-y-3 font-mono text-xs text-ash">
                   {siteSettings?.socialLinks?.youtube && (
                     <div className="flex items-center justify-between border-b border-white/5 pb-2">
