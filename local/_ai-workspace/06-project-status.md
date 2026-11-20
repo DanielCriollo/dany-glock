@@ -2,13 +2,12 @@
 
 ## 1. Ficha del Proyecto
 
-- **Nombre del Proyecto:** Dany Glock — Artist Digital Experience
-- **Fase Actual:** Misión 005 — Cinematic Layout & Kinetic Navigation (Completada — En Espera de Revisión Humana)
-- **Última Misión Completada:** **Misión 005 — Cinematic Layout & Kinetic Navigation**
-- **Misión en Curso:** En espera de revisión humana antes de **Misión 006 — Home Experience & Architectural Scenes**
+- **Nombre del Proyecto:** Dany Glock — Official Artist Website
+- **Fase Actual:** Misión 006-C.1 — Cierre de seguridad y preparación para producción **completada en local** (M006-C lista para commit y despliegue; sin commit, push ni despliegue; 18 eventos en borrador y 0 flyers aprobados)
+- **Última Misión Completada:** **Misión 006-C.1 — Cierre de seguridad y preparación para producción** (local). Anterior desplegada: M006-B.3 + M006-B.4.
+- **Siguiente Misión:** Commit y despliegue de M006-C + M006-C.1 con transferencia privada de flyers al VPS (STG-03), aprobación editorial de los 18 eventos (STG-01), aprobaciones BRO-01…BRO-09 y **Misión 007**.
 - **Bloqueos Activos:** Ninguno.
-
-
+- **Producción:** `https://dany.forcefilters.com` — rama `wip/mision-006a` @ `329157f` (M006-B.3 ISR + M006-B.4 material oficial), desplegado 2026-10-23 21:43 UTC (anterior: `45b84d2`). Guía: `14-vps-deployment.md`.
 
 ---
 
@@ -20,9 +19,258 @@
 | **Node.js** | `v22.12.0` | Cumple el requisito de Payload 3 (`>= 20.18.1`) |
 | **NPM** | `10.9.0` | Funcional |
 | **PNPM** | `10.34.4` | Gestor de paquetes primario con `pnpm-lock.yaml` |
-| **Git** | `2.45.2.windows.1` | Inicializado y activo en rama `main` |
+| **Git** | `2.45.2.windows.1` | Activo en rama `wip/mision-006a` |
 | **PostgreSQL** | `PostgreSQL 17.6` (Docker / local: 5432) | Motor relacional local activo; BD `dany_glock_dev` |
 | **Docker** | `docker 27.x` | Contenedor `my_postgres` ejecutando Postgres 17.6 |
+
+---
+
+### [2026-11-19] — Misión 006-C.1: Cierre de seguridad y preparación para producción (local, sin commit ni despliegue)
+- **Misión:** Misión 006-C.1 — Cierre de seguridad de M006-C y privacidad de flyers. Detalle en `18-stage-history.md` y `14-vps-deployment.md` §11; ADR-022.
+- **Implementaciones realizadas:**
+  - **Auditoría de repositorio remoto y Git:** confirmado vía GitHub API que `DanielCriollo/dany-glock` es **público** (`private: false`, `visibility: public`). Añadido `storage/flyers/` a `.gitignore` (junto a `/flyers/`). Verificado historial completo de Git (0 flyers commiteados) y paridad SHA-256 de los 18 originales y 18 copias locales (conservados intactos).
+  - **Endurecimiento de control de acceso y caché:** `syncFlyerRights` (`src/collections/Events.ts`) ahora exige `_status === 'published'` y `usageRights.status === 'approved'` y revoca el medio al despublicar, cambiar `posterImage` o borrar (`revokeFlyerRightsOnDelete`); `usageRights.source` restringido a usuarios autenticados (`access.read`); añadido `purgeNextImageCache()` (`src/lib/revalidate.ts`) en hooks de `Events` y `Media` tras detectar en E2E que `/_next/image` servía copias cacheadas (HTTP 200) incluso después de revocar derechos (403 en origen).
+  - **Importador independiente de Git:** `src/scripts/import-stage-history.ts` soporta `--dir <ruta>` y `STAGE_FLYERS_DIR`, maneja limpiamente la ausencia de carpeta privada y se desacoplaron los tests de la presencia de `storage/flyers/` en clones limpios.
+  - **Migración:** `down()` de `20261120_010900_add_event_archive_fields.ts` reforzado con `IF EXISTS` y probado en BD temporal aislada (`prod 1..5` + fila previa → `up` → `down` → `down` → `up`, 0 pérdida de datos).
+  - **Procedimiento VPS:** documentada transferencia privada SSH/SCP con `SHA256SUMS`, permisos `750`/`640` y checklist post-despliegue en `18-stage-history.md` §5 y `14-vps-deployment.md` §11.
+- **Arquitectura y decisiones:** ADR-022 en `05-technical-decisions.md`.
+- **Dependencias agregadas:** ninguna.
+- **Pruebas ejecutadas:**
+  - Escaneo de datos sensibles sobre 117 archivos versionables: 0 teléfonos reales, 0 direcciones privadas, 0 enlaces WhatsApp/Nequi, 0 secretos.
+  - `pnpm typecheck` 0 errores · `pnpm lint` 0 errores/warnings · `pnpm test` **116/116** (9 suites; 20 en `stage-history.test.tsx`) · `pnpm build` OK (`/escenarios` ISR 1 h).
+  - Importador validado: `--dry-run` local **18 sin cambios**; `--dir` inexistente sale limpio sin error.
+  - E2E contra `next start` local: `verify-stage-history.ts` **25/25** (incluye rutas estáticas 404, archivo original y 3 tamaños redimensionados 403, `/_next/image` bloqueado antes y tras revocación, REST `/api/media`, `/api/events?depth=2`, GraphQL y borrador con derechos aprobados bloqueado) y `verify-revalidation.ts` **13/13**.
+  - Auditoría final de BD local: 18/18 eventos en borrador (`to_confirm`, `usageRights=pending`), 32/32 medios `event_flyer`/`live_photo` ocultos/pendientes, 0 legibles por anónimos, 1 usuario admin, 6 migraciones limpias.
+- **Pendientes y bloqueos:** Cero bloqueos técnicos. Pendientes editoriales y de ejecución de despliegue en `08-backlog-and-blockers.md` §13 (STG-01, STG-03…STG-08).
+- **Próximos pasos:** Commit, push y despliegue controlado de M006-C + M006-C.1 (con transferencia privada SCP de flyers), seguido de aprobación editorial en `/admin`.
+
+### [2026-11-19] — Misión 006-C: Historial de eventos y flyers (local, sin commit)
+- **Misión:** Misión 006-C — Trayectoria en escenarios. Detalle en `18-stage-history.md`; ADR-021.
+- **Auditoría:** 18 flyers, 18 eventos distintos, 0 duplicados de archivo; 1 evento ya registrado (`pasto-vive-flow-2026`, completado sin duplicar); 9 coinciden con flyers del brochure (se usa la copia de mayor resolución); 4 de calidad media; 1 sensible (INPEC). Solo 2 flyers muestran el año (2026 y 2024); el resto queda con la fecha transcrita.
+- **Archivos:** originales intactos en `/flyers` (ignorado); copias idénticas versionables en `storage/flyers/` por petición de Daniel (verificar repo privado: STG-02).
+- **Payload:** `events` ampliado (`listing`, `sortOrder`, `dateLabel`, `artistRole`, `summary`, `usageRights`), `date` solo obligatoria en la agenda, `city` sin «Pasto» por defecto. Migración aditiva `20261120_010900_add_event_archive_fields` (lote 6) aplicada en local tras backup `local/backups/pre-m006c-*.dump`. `media`: anónimos ya no leen flyers/fotos en vivo sin derechos aprobados; hook `syncFlyerRights`.
+- **Web:** ruta `/escenarios` (404 sin publicados), galería responsive con flyers completos y visor `<dialog>`, bloque en `/biografia`, enlace en home y en el menú solo con contenido publicado; agenda de la home limitada a fechas futuras; `events` revalida todo el sitio.
+- **Importador:** `src/scripts/import-stage-history.ts` + `src/data/stage-history.ts`: 17 creados + 1 completado, 2.ª ejecución 18 sin cambios. Todo en borrador; nada publicado.
+- **Dependencias agregadas:** ninguna.
+- **Pruebas:** Vitest 112/112 (nuevo `stage-history.test.tsx`, 16); typecheck 0; lint 0; build OK (`/escenarios` ISR 1 h); E2E `verify-stage-history.ts` 18/18 y `verify-revalidation.ts` 13/13 contra `next start` local (el segundo ahora usa un medio `artwork`); QA visual desktop/móvil con publicación temporal y restauración automática. Estado final: 0 eventos publicados, 0 flyers aprobados.
+- **Pendientes:** STG-01…STG-08 en `08-backlog-and-blockers.md` §13.
+- **Próximos pasos:** aprobación editorial, commit y despliegue de M006-C.
+
+### [2026-10-23] — Cierre y despliegue de M006-B.3 + M006-B.4 (`45b84d2` → `329157f`)
+- **Commits (push a `origin/wip/mision-006a`, local = remoto):** `d6bd589` feat(cms) ISR + revalidación (M006-B.3); `329157f` feat(media) material oficial (M006-B.4).
+- **Validación previa (local):** tests 96/96, typecheck 0, lint 0, build OK; E2E de revalidación 13/13 contra `next start` local; QA headless desktop/móvil sin errores. Escaneo de secretos/contactos/assets en lo commiteado: limpio.
+- **Discrepancia «4 portadas / 5 lanzamientos» aclarada:** el catálogo tiene 4 lanzamientos oficiales publicados (SIG Sauer; SO FRESH, SO CLEAN — un solo lanzamiento —; Cicatrices; EXCESO) más `sig-sauer-remix` en borrador sin portada oficial (conserva placeholder y `pending`). Catálogo sin cambios.
+- **VPS:** backups `pre-deploy-b34-*.dump` (32 tablas con datos), `media-b34-*.tgz`, `env-b34-*` (600, en `/var/backups/dany-glock` 750); `git pull --ff-only`; `pnpm install --frozen-lockfile` (sin cambios); migraciones comparadas por SQL (5 = 5, ninguna pendiente, sin invocar comandos `payload`); copia `.next` en `/home/danyglock/next-prev-45b84d2`; build OK, corte 54 s; servicio activo, 0 errores en logs.
+- **Imágenes en producción:** 5 archivos autorizados transferidos por SCP con verificación SHA-256 a `local/official-assets/web/` (ignorado por Git) e importados con `import-official-assets.ts` (Local API, idempotente: 2.ª ejecución sin cambios). 4 portadas (`coverStatus = confirmed`), `portraitImage` = avatar oficial, Hero vacío, sin duplicados, galería sin cambios. Banner y brochure no subidos.
+- **ISR en producción (comprobado):** 4 rutas con `initialRevalidateSeconds = 3600` y caché `HIT`; hooks y endpoint en el bundle; `POST /api/revalidate` anónimo y con JWT falso → 403; API anónima sin borradores; booking sin datos de management; EPK oculto (404). 14/14 dominios del VPS idénticos a la línea base.
+- **Incidencia:** la importación por CLI no invalida la caché del servidor (limitación REV-02): la API devolvía las portadas pero el HTML seguía en caché. **Resuelta** a las 22:03:36 UTC: el usuario ejecutó `POST /api/revalidate` con su sesión de admin → `200 {"revalidated":true}` (registrado en `journalctl`).
+- **Verificación final desde internet:** `/` muestra las 4 portadas oficiales y el retrato; `/biografia` el retrato; todas las variantes `/_next/image` y `/api/media/file/*` responden 200 `image/jpeg`; Hero con fallback editorial; caché `HIT` en las 4 rutas; `/admin` 200; `/epk` 404; `POST /api/revalidate` anónimo 403; sin borradores ni contactos de management expuestos. Servicio activo sin reinicios ni errores; 14/14 dominios idénticos a la línea base. **M006-B.3 y M006-B.4 cerradas.**
+
+### [2026-10-23] — Misión 006-B.4: Imágenes oficiales y contenido multimedia real (local, sin desplegar)
+- **Material recuperado** (fuentes públicas oficiales, autenticidad verificada; `local/official-assets/`, excluido de Git): 4 portadas de Apple Music vía iTunes Lookup (3000² salvo Cicatrices 1400², máximo disponible), avatar y banner del canal oficial de YouTube (identidad verificada por `channelId` del video oficial), 6 miniaturas maxres de videoclips. Sin ampliaciones artificiales. Instagram/TikTok/Spotify sin material accesible sin login: no se eludió.
+- **Autorización:** confirmada por el responsable del sitio para portadas e imágenes del canal; brochure sigue pendiente (BRO-08).
+- **Payload local:** 4 portadas asignadas (`coverStatus = confirmed`), retrato = avatar oficial; Hero desktop/móvil vacíos (banner descartado: terceros identificables y artista no reconocible). Script idempotente `import-official-assets.ts` (no sobrescribe medios reales).
+- **Correcciones visuales justificadas:** `ReleaseCover` ya no superpone el título sobre portadas reales (el arte lo incluye; título conservado para lectores de pantalla sin duplicar el `h2` del spotlight); `ArtistPortrait` y `HeroMedia` ya no superponen el monograma «DG» sobre fotografías reales.
+- **Calidad:** tests 96/96, typecheck 0, lint 0, build OK; E2E de revalidación 13/13; QA headless (Edge) desktop/móvil en `/`, `/biografia`, `/booking` sin imágenes rotas, sin overflow, sin errores de consola ni saltos de encabezado. Capturas en `local/official-assets/verification/`.
+- **Documentación:** `17-media-inventory.md` (inventario, fuentes, derechos, pendientes). Incidencia de entorno: `next dev` quedó bloqueado al compilar `/api/[...slug]` y el panel del navegador estaba oculto; la verificación se hizo con build de producción y Edge headless.
+
+### [2026-10-23] — Misión 006-B.3: Revalidación del CMS sin rebuild (local, sin desplegar)
+- **Implementación:** `src/lib/revalidate.ts` (mapa de dependencias + hooks), hooks en `releases`, `tracks`, `videos`, `events`, `articles`, `career-highlights`, `media` y en los globals `artist-profile`, `booking`, `press-kit`, `site-settings`; `export const revalidate = 3600` en `/`, `/biografia`, `/booking`, `/epk`; `cms-queries.ts` y layout propagan errores; endpoint `POST /api/revalidate` solo admin (`src/endpoints/revalidateSite.ts`).
+- **Pruebas:** `src/tests/revalidation.test.ts` (18); E2E `src/scripts/verify-revalidation.ts` contra `next start` local 13/13 (EPK on/off, publicar/retirar hito, portada, retrato, booking, privacidad); control negativo con SQL directo (sin revalidar no cambia: caché `HIT`). Suite 96/96, typecheck 0, lint 0, build OK (rutas `○` con `Revalidate 1h`), sin migración.
+- **Documentación:** `16-cache-revalidation.md` (estrategia, seguridad, riesgos, despliegue); ADR-020.
+- **Resuelve:** DEPLOY-01.
+
+### [2026-10-23] — Despliegue de M006-B en producción (`e12f397` → `45b84d2`)
+- **Procedimiento (§8 de `14-vps-deployment.md`):** GitHub = local (`45b84d2`, contenido auditado: sin PDF, imágenes ni contactos) → backups previos a cualquier comando `payload`: `pre-deploy-m006b-20261023-202816.dump` (23 tablas con datos), `media-m006b-*.tgz`, `env-m006b-*` (600) → `git pull --ff-only` (VPS limpio) → `pnpm install --frozen-lockfile` (una sola `sharp` 0.34.5 / libvips 8.17.3) → `payload migrate` → `seed-brochure-content.ts` → copia `.next` en `/home/danyglock/next-prev-e12f397` → stop → build → start.
+- **Migraciones:** `20261023_194032_add_brochure_content_structure` aplicada una vez (lote 3); 5/5 registradas.
+- **Seed:** 5 hitos verificados publicados, 4 afirmaciones del brochure en borrador, `booking` (especificaciones declaradas, contacto vacío y privado) y `press-kit` (`isPublic = false`) inicializados; segunda ejecución sin cambios. **No** se ejecutaron `seed-artist-data.ts` ni `import-brochure-assets.ts`. Datos previos intactos (5 releases, 6 videos, 1 usuario, 1 media, 0 contactos).
+- **Build:** OK. Interrupción: 73 s. Sin rollback.
+- **Verificación pública:** `/`, `/biografia`, `/booking`, `/admin` 200; `/epk` 404 (privado); `first-register` 403; API `booking` sin datos de management; API `career-highlights` anónima solo 5 publicados (también con `draft=true`); 17/17 estáticos y `/_next/image` 200; formulario valida (400) sin crear registros; sin textos pendientes de aprobación en la web. Logs sin errores de sharp. 14/14 dominios del VPS idénticos a la línea base.
+
+### [2026-10-23] — Misión 006-B: Integración final y preparación para despliegue
+- **Alcance:** revisión conjunta de M006-B.2 Multimedia (Antigravity: `HeroMedia`, `ReleaseCover`, `ArtistPortrait`, `VideoGallery`, `next.config.ts`, `depth: 2`) y M006-B.2 Brochure (Claude Code: `career-highlights`, `booking`, `press-kit`, galería en `media`, `/booking`, `/epk`, migración `20261023_194032`).
+- **Conflictos encontrados:** ninguno de código entre agentes (archivos compartidos — `page.tsx`, `biografia/page.tsx`, `cms-queries.ts`, `LatestReleaseSpotlight.tsx` — combinan ambos cambios sin pérdidas). Todas las secciones M006-B.1 (`lanzamiento`, `musica`, `biografia`, `videos`, `tour`, `contacto`, `press-kit`) siguen presentes.
+- **Problemas comprobados y corregidos:**
+  1. **Dos versiones de sharp en el mismo proceso** (Next 15.4 → 0.34.5, proyecto → 0.35.5). Ambas incluyen `libvips-42.dll`; en Windows, si el optimizador `next/image` (nuevo en M006-B) cargaba primero, Payload fallaba con `ERR_DLOPEN_FAILED` y la página daba error. Reproducido en `pnpm dev`. En Linux (Docker `node:24-bookworm-slim`) ambos órdenes funcionan → producción no afectada. **Corrección:** `sharp` del proyecto fijado a `^0.34.5` (una sola versión en el lockfile). Verificado: subida con generación de tamaños en Payload, orden `next/image` → `/admin` OK, build y tests OK. (ADR-019)
+  2. **`down` de la migración `20261023_194032` fallaba** (DROP CONSTRAINT tras DROP TABLE … CASCADE). Corregido con `IF EXISTS`. Verificado en BD restaurada con el estado de producción: up → down (esquema idéntico al original) → up, sin deriva.
+  3. Texto de ayuda de `heroVideoUrl` prometía YouTube; `HeroMedia` solo reproduce MP4/WebM directos. Corregido el texto (sin cambio de esquema).
+- **Verificaciones:** tipos generados sincronizados con la configuración; migraciones encadenadas desde cero (5) y sobre estado de producción (4 → 5); seeds: `seed-brochure-content.ts` solo-creación; ningún contacto/secreto en archivos versionables; PDF, assets del brochure, `media/` y `.env` ignorados.
+- **Calidad:** typecheck 0, lint 0, tests 78/78 (7 suites), build OK (8 rutas). Navegador: desktop 1440×900 y móvil 375×812 en `/`, `/biografia`, `/booking` sin scroll horizontal, sin imágenes rotas, menú móvil con cierre por Escape; `/epk` 404 mientras no sea público.
+- **Pendientes reales:** ver `08-backlog-and-blockers.md` §12.
+
+### [2026-10-23] — Misión 006-B.2 (Brochure): Migración del brochure oficial a la experiencia web
+- **Misión:** Misión 006-B.2 — Migración del Brochure Oficial (local; sin commit ni despliegue).
+- **Implementaciones realizadas:**
+  - Auditoría completa de las 6 páginas y matriz de verificación: `15-brochure-audit.md` (23 afirmaciones clasificadas, 14 imágenes evaluadas, 13 flyers transcritos).
+  - Payload: colección `career-highlights`, globals `booking` y `press-kit`, ampliación de `media` (galería de shows). Migración `20261023_194032_add_brochure_content_structure` (lote 5 local; verificada desde cero, sin deriva).
+  - Seeds solo-creación `seed-brochure-content.ts` (5 hitos verificados publicados, 4 afirmaciones en borrador, booking y EPK inicializados) e `import-brochure-assets.ts` (14 piezas ocultas, derechos pendientes).
+  - Vistas: `/biografia` (trayectoria y colaboraciones, en vivo), `/booking` (nueva), `/epk` (nueva, 404 hasta `isPublic`), home enlazada; navegación `/#ancla` válida desde subpáginas.
+  - Correcciones responsive preexistentes: desbordamiento horizontal en móvil de la home (brillo de `LatestReleaseSpotlight` y título «SHOWS & PRESENTACIONES»).
+  - Privacidad: datos de contacto fuera del repositorio público; `local/*.pdf` y `local/brochure-assets/` en `.gitignore`.
+- **Calidad:** tests 78/78 (nueva suite `brochure-content.test.tsx`, 15 pruebas), typecheck 0, lint 0, build OK (`/booking` 122 kB First Load JS). Revisión en navegador desktop 1440×900 y móvil 375×812 sin scroll horizontal; 1 h1 por página, sin saltos de encabezado, sin imágenes sin `alt` ni enlaces sin nombre.
+- **Arquitectura y decisiones:** ADR-018.
+- **Pendientes:** BRO-01…BRO-10 en `08-backlog-and-blockers.md`.
+
+### [2026-10-23] — Misión 006-B.2: Official Artist Visual Identity & Media Experience
+- **Misión:** Misión 006-B.2
+- **Implementaciones realizadas:**
+  - **Optimización de Imágenes & Formatos Modernos (`next.config.ts`):**
+    - Habilitados formatos `image/avif` e `image/webp`.
+    - Añadidos `images.remotePatterns` para `i.ytimg.com` e `img.youtube.com`.
+  - **Población Profunda en Consultas CMS (`src/lib/cms-queries.ts`):**
+    - Añadido `depth: 2` a `getArtistProfileData()`, `getPublishedReleasesData()`, `getPublishedVideosData()` y `getHomePageCmsData()`, garantizando la resolución completa de los objetos `Media` vinculados (`heroDesktopMedia`, `heroMobileMedia`, `portraitImage`, `coverImage`, `customThumbnail`).
+  - **Hero Multimedia Cinemático & Accesible (`src/components/hero/HeroMedia.tsx`):**
+    - Soporte responsivo dual: imágenes desktop (`16:10` / `16:9`) y móvil (`9:16` / `4:5`) con `priority={true}` anti-CLS.
+    - Soporte para video en bucle (`heroVideoUrl`) silenciado con fallback a imagen poster.
+    - Control accesible de reproducción/pausa con atributos ARIA (`aria-label`, `aria-pressed`).
+    - Detección activa de `prefers-reduced-motion` que pausa automáticamente el video de fondo respetando preferencias del sistema.
+    - Canvas editorial Dark Cinematic Editorial para estado vacío sin medios cargados.
+  - **Carátulas Oficiales Cuadradas 1:1 (`src/components/music/ReleaseCover.tsx`):**
+    - Proporción 1:1 rigurosa con `<Image>` de Next.js.
+    - Soporte prioritario para el Single Spotlight (`priority={true}`) y lazy loading para el catálogo.
+    - Fallback de vinilo concéntrico con rotulado de catálogo (`DG-REC-001`, etc.) para estados sin arte cargado o en sincronización.
+  - **Retratos Verticales 4:5 (`src/components/artist/ArtistPortrait.tsx`):**
+    - Integración en Home ("El Artista") y en `/biografia`.
+    - Proporción 4:5 vertical con fallback de textura tonal oscura y monograma DG.
+  - **Videoteca Optimizada (`src/components/video/VideoGallery.tsx`):**
+    - Cero iframes en carga inicial.
+    - Priorización de `customThumbnail` sobre la miniatura automática de YouTube con `<Image>` optimizado.
+    - Modal accesible `<dialog>` con foco atrapado y soporte de Escape.
+  - **Quality Gates & Pruebas:**
+    - 63 de 63 pruebas unitarias y de integración pasando en Vitest (6 suites).
+    - `pnpm typecheck`: 0 errores.
+    - `pnpm lint`: 0 errores, 0 warnings.
+    - `pnpm build`: 100% exitoso (Next.js 15 App Router estático `/` y `/biografia`).
+    - Verificación visual con browser subagent en desktop (1440x900) y mobile (390x844).
+- **Arquitectura y decisiones:** Registrado ADR-017 en `05-technical-decisions.md`.
+
+---
+
+
+### [2026-10-23] — Actualización de producción a M006-B.1 (`8ea781f` → `e12f397`)
+- **Procedimiento:** `git pull --ff-only` como `danyglock` (fast-forward, árbol limpio) → `pnpm install --frozen-lockfile` (lockfile sin cambios, nada instalado) → backup verificado `pre-deploy-e12f397-20261023-184623.dump` (46 tablas en `pg_restore --list`) + `media-20261023.tgz` → migración → seed → copia `.next` previo en `/home/danyglock/next-prev-8ea781f` → stop → build → start.
+- **Migración `20261023_180000_add_hero_and_portrait_media`:** aditiva (8 columnas nulables + 3 FK `ON DELETE SET NULL`), aplicada una vez como lote 2. **Incidencia:** la aplicó `prodMigrations` al inicializar Payload durante `pnpm payload migrate:status` (con `.env` cargado, `NODE_ENV=production`), no `payload migrate`. Fue después del backup y sin efectos adversos; documentado en `14-vps-deployment.md`.
+- **Seed:** re-ejecutado (idempotente, 0 creaciones) para actualizar `tagline` y textos del hero; se verificó antes que ningún registro había sido editado desde el CMS (solo `users`, que el seed no toca).
+- **Build:** OK (`/` y `/biografia` estáticas). Interrupción del servicio: 49 s.
+- **Verificación pública:** `/`, `/biografia`, `/admin`, `/admin/login`, API REST/globals 200; 15/15 recursos `/_next/static` 200; miniaturas YouTube y media 200; 404 correcto; `first-register` 403; sin textos de desarrollo en la Home. Logs sin errores. 14/14 dominios del VPS idénticos a la línea base.
+- **Calidad (BD temporal, eliminada después):** tests 57/57, typecheck 0, lint 0 → DEPLOY-02 resuelto.
+
+### [2026-10-23] — Misión DevOps: Despliegue inicial en VPS Ubuntu compartido
+- **Misión:** Despliegue de Dany Glock en `https://dany.forcefilters.com` sin afectar proyectos existentes.
+- **Implementaciones realizadas:**
+  - SSH por clave dedicada (`ssh dany-vps`); acceso por contraseña intacto.
+  - Auditoría: Nginx 1.24 sirve 80/443 (Apache inactivo), PHP-FPM 8.3/8.4, MySQL 8, PostgreSQL 16, Docker (n8n), bot en :3000. Swap 2 GB añadido (autorizado) tras un OOM en `pnpm install`.
+  - PostgreSQL: `danyglock_db` / `danyglock_app`, acceso remoto rechazado solo para esta BD (autorizado); 3 migraciones aplicadas con `payload migrate` previo `pg_dump`; seed idempotente ejecutado (4 releases publicados + 1 borrador, 5 tracks, 6 videos, 1 evento borrador).
+  - Calidad en VPS: typecheck 0 errores, lint 0 errores, tests 54/55 en BD temporal (fallo preexistente de texto del badge, DEPLOY-02), build OK (pico 1.4 GB).
+  - `dany-glock.service` (systemd, usuario `danyglock`, `127.0.0.1:3100`, `Restart=always` verificado con `kill -9`, habilitado al arranque).
+  - Nginx: vhost exclusivo `zz-dany.forcefilters.com`, HTTP→HTTPS 301, HSTS, `client_max_body_size 50m`. Certificado Let's Encrypt (webroot) hasta 2027-01-21, `renew --dry-run` OK.
+  - Admin de Payload creado por el usuario vía túnel SSH con `/admin` bloqueado hasta entonces.
+  - Verificación: 14 dominios existentes con respuesta HTTP/HTTPS idéntica a la línea base.
+- **Arquitectura y decisiones:** ADR-016.
+- **Pendientes:** DEPLOY-01…06, INFRA-01/02 en `08-backlog-and-blockers.md`.
+
+### [2026-10-23] — Misión 006-B.1: Cinematic Artist Experience & Home Redesign
+- **Misión:** Misión 006-B.1
+- **Implementaciones realizadas:**
+  - **Expansión del Modelo de Contenido & Migración Segura (`ArtistProfile`):**
+    - Nuevos campos administrables en `src/globals/ArtistProfile.ts`: `heroDesktopMedia`, `heroMobileMedia`, `heroVideoUrl`, `portraitImage`, `heroTitle`, `heroSubtitle`, `heroCtaPrimary`, `heroCtaSecondary`.
+    - Migración formal `src/migrations/20261023_180000_add_hero_and_portrait_media.ts` ejecutada y registrada en `payload_migrations` (batch 4).
+    - Tipos de TypeScript actualizados con `pnpm payload generate:types`.
+  - **Hero Cinematográfico Asimétrico:**
+    - Tipografía editorial `DANY GLOCK` en gran escala (`text-6xl` a `text-9xl`), subtítulo en `font-serif italic`, badges territoriales (*Pasto, Colombia · Plataforma Oficial*), y canvas visual cinematográfico adaptable (16:10 en desktop, responsive para móviles).
+  - **Single Spotlight — Último Lanzamiento (`src/components/music/LatestReleaseSpotlight.tsx`):**
+    - Sección independiente para *Cicatrices feat. Maick Records* con vinilo concéntrico 1:1, créditos de producción y enlaces a Apple Music y YouTube.
+  - **Discografía Asimétrica & Distinción de Roles:**
+    - Cuadrícula editorial de lanzamientos reales sin textos de scaffolding, distinguiendo artista principal vs. invitado (*EXCESO*).
+  - **Sección Editorial "El Artista" & Ruta Completa `/biografia` (`src/app/(public)/biografia/page.tsx`):**
+    - Nueva sección en Home y ruta dedicada `/biografia` con narrativa territorial y artística verificada (3 capítulos editoriales, ficha técnica, enlaces a discografía y contacto).
+  - **Jerarquía en Videografía (`src/components/video/VideoGallery.tsx`):**
+    - Video principal en formato spotlight 16:9 con badge de tipo (`Videoclip Oficial`) y duración, más cuadrícula de videos complementarios y modal accesible HTML5 `<dialog>`.
+  - **Shows & Booking Unificado:**
+    - Estado editorial elegante sin fechas inventadas; formulario de contacto profesional (`ContactForm.tsx`) con honeypot anti-spam.
+  - **Simplificación Radical del Footer (`src/components/layout/SiteFooter.tsx`):**
+    - Eliminado enlace público a `/admin`; navegación esencial, redes verificadas, copyright y botón volver arriba.
+  - **Limpieza Editorial Estricta:**
+    - Cero términos de desarrollo (`Artist Digital Experience`, `Dark Cinematic Editorial`, `Arte Oficial en Sincronización`, `Fase 005`).
+  - **Quality Gates & Pruebas:**
+    - 57 de 57 pruebas unitarias y de integración pasando en Vitest (`src/tests/public-views.test.tsx` actualizado).
+    - `pnpm typecheck`: 0 errores.
+    - `pnpm lint`: 0 errores, 0 warnings.
+    - `pnpm build`: 100% exitoso (Next.js 15 App Router estático + dinámico).
+    - Verificación visual con browser subagent en desktop (1440x900) y mobile (390x844).
+
+---
+
+### [2026-10-23] — Misión 006-A.2: Transformar la landing demostrativa en la web oficial de Dany Glock
+- **Misión:** Misión 006-A.2
+- **Implementaciones realizadas:**
+  - **Capa de Consultas Públicas del CMS (`src/lib/cms-queries.ts`):**
+    - Métodos para Server Components: `getArtistProfileData`, `getSiteSettingsData`, `getPublishedReleasesData`, `getPublishedVideosData`, `getPublishedEventsData`, `getPublishedArticlesData`, y agregador unificado `getHomePageCmsData`.
+    - Respeto estricto a RBAC (`overrideAccess: false`) y filtrado estricto por `_status: 'published'` y `verification.status: 'verified'` para releases y contenidos.
+  - **Reescritura de la Landing Page Oficial (`src/app/(public)/page.tsx`):**
+    - Dany Glock como protagonista con tipografía póster editorial de impacto (`text-6xl` a `text-9xl`) y origen en Pasto, Nariño, Colombia.
+    - Cero referencias a scaffolding, misiones técnicas, fases o falsas locaciones de Guatemala.
+    - Spotlight automático del último lanzamiento oficial (*Cicatrices feat. Maick Records*).
+    - Catálogo dinámico de los 4 lanzamientos publicados con tratamiento gráfico para artes en sincronización y distinción explícita de "Artista Invitado" en *EXCESO*.
+    - Galería audiovisual interactiva con reproductor modal accesible HTML5 `<dialog>` y embeds privacy-enhanced (`youtube-nocookie.com`).
+    - Estados vacíos editoriales de alta calidad visual para Tours ("Nuevas Presentaciones en Vivo por Anunciar") y Journal ("Comunicados Oficiales en Preparación").
+    - Formulario interactivo de Booking y Prensa conectado a `/api/contacts` con honeypot anti-spam.
+  - **Limpieza de Scaffolding y Endurecimiento de Migraciones:**
+    - `src/components/layout/EditorialMenu.tsx` y `src/components/layout/SiteFooter.tsx` saneados (enlaces limpios a `#contacto`, redes verificadas, sin correos inventados).
+    - `push: false` añadido a `src/payload.config.ts`, permitiendo builds de Next.js desatendidos sin prompts interactivos de migraciones.
+  - **Pruebas y Calidad:**
+    - `src/tests/public-views.test.tsx`: 16 pruebas automatizadas cubriendo consultas CMS, renderizado de componentes, ausencia de placeholders y estados vacíos.
+    - Total de pruebas en repositorio: 6 suites, 55 pruebas pasando al 100%.
+    - `pnpm typecheck`: 0 errores.
+    - `pnpm lint`: 0 errores, 0 advertencias.
+    - `pnpm build`: 100% exitoso con generación estática de ruta `/` (13 kB).
+    - Verificación visual browser: Capturas desktop (1440x900) y mobile (390x844) confirmadas.
+
+---
+
+### [2026-10-23] — Misión 006-A.1: Retomar Trabajo Interrumpido y Sembrar Contenido Real en Payload CMS
+- **Misión:** Misión 006-A.1
+- **Implementaciones realizadas:**
+  - **Trazabilidad y Verificación de Fuentes (`src/fields/verification.ts`):**
+    - Grupo reutilizable con campos `status` (`verified`, `to_confirm`, `editorial_proposal`), `sourceUrl`, `consultedAt`, y `notes` protegido con permisos RBAC (solo legible por usuarios autenticados).
+    - Integrado transversalmente en `Releases`, `Tracks`, `Videos`, `Events`, `Articles`, `ArtistProfile` y `SiteSettings`.
+  - **Expansión y Corrección de Esquema CMS:**
+    - `Releases`: añadidos `artistRole` (`main`, `featured`, `collaborator`), `coverStatus`, enlaces streaming extendidos (`spotifyEmbedUrl`, `amazonMusic`).
+    - `Tracks`: añadidos `artistRole`, `appleMusicUrl`.
+    - `Videos`: añadido tipo `trailer`, `youtubeId` (11 caracteres), `duration`.
+    - `Events`: versión con borradores activada (`versions: { drafts: true }`), control de acceso público condicional (`authenticatedOrPublished`), campo `slug` único, galería multimedia (`gallery`), enlaces de video e Instagram.
+    - `ArtistProfile`: eliminación definitiva de placeholders ficticios de Guatemala; origen corregido a Pasto, Nariño, Colombia; `bioStatus` (`editorial_draft`), grupo de traducciones `translations.en`.
+    - `SiteSettings`: perfiles oficiales verificados de Instagram, canal oficial de YouTube con ID `UCf-4AJMV8QZz1jj4OVBzaxg`, Apple Music; sin correos inventados.
+  - **Migración Segura en PostgreSQL 17:**
+    - Generada y aplicada migración versionada `20261023_150557_add_artist_data_and_verification.ts` con sentencias protegidas e idempotentes (`DO $$ BEGIN ... EXCEPTION WHEN duplicate_object THEN null; END $$;`, `IF NOT EXISTS`).
+    - Adaptador de base de datos en `payload.config.ts` configurado con `prodMigrations: migrations`.
+    - Eliminado registro dev residual (`batch: -1`) garantizando compilaciones y migraciones desatendidas sin bloqueos interactivos.
+  - **Siembra Real e Idempotente (`src/scripts/seed-artist-data.ts`):**
+    - 4 lanzamientos verificados publicados (`sig-sauer`, `so-fresh-so-clean`, `cicatrices`, `exceso` con rol `featured`).
+    - 1 lanzamiento en borrador protegido (`sig-sauer-remix`).
+    - 5 canciones correspondientes vinculadas a sus lanzamientos y créditos de producción (Nick Montana Beatmen, Dark Pro).
+    - 6 producciones audiovisuales en YouTube con metadatos y clasificación oficial.
+    - 1 evento regional en borrador (`pasto-vive-flow-2026`).
+    - Idempotencia probada al 100%: ejecutar el script sucesivamente produce 0 filas duplicadas.
+  - **Utilidades de Contenido Reforzadas (`src/lib/content-utils.ts`):**
+    - Extracción y validación estricta de IDs de YouTube, control de whitelist de hosts, rechazo de protocolos inseguros, y generación de miniaturas y slugs limpios.
+  - **Pruebas y Calidad:**
+    - `src/lib/content-utils.test.ts`: 9 pruebas unitarias pasando.
+    - `src/tests/artist-data-seed.test.ts`: 7 pruebas de integración y seguridad de borradores pasando.
+    - `pnpm test`: 39/39 pruebas pasando (5 suites de test).
+    - `pnpm typecheck`: 0 errores.
+    - `pnpm lint`: 0 errores, 0 advertencias.
+    - `pnpm build`: compilación de producción exitosa al 100%.
+- **Recuento Real en PostgreSQL:**
+  - `Releases`: 7 (4 verificados + 1 borrador + 2 demos previos).
+  - `Tracks`: 6 (5 sembrados + 1 demo previo).
+  - `Videos`: 6 (todos verificados en YouTube).
+  - `Events`: 1 (`pasto-vive-flow-2026` en borrador).
+  - `Articles`: 0 (listo para notas editoriales oficiales).
+  - `Media`: 1 (arte temporal referenciado sin duplicación innecesaria).
+  - `Contacts`: 57 (mensajes de contacto y pruebas de seguridad preservados).
+  - `Users`: 1 (`admin@danyglock.com`).
+- **Arquitectura y decisiones:** Registrado ADR-013 en `05-technical-decisions.md`.
 
 ---
 

@@ -30,14 +30,14 @@ describe('Misión 005 — Kinetic Layout & Navigation Architecture', () => {
 
       // Verify artist identity
       expect(screen.getByText('DANY GLOCK')).toBeDefined();
-      expect(screen.getByText('Artist Digital Experience')).toBeDefined();
+      expect(screen.getByText('Sitio Oficial')).toBeDefined();
 
       // Verify desktop nav anchors
       expect(screen.getByRole('link', { name: 'Música' })).toBeDefined();
       expect(screen.getByRole('link', { name: 'Videos' })).toBeDefined();
+      expect(screen.getByRole('link', { name: 'El Artista' })).toBeDefined();
       expect(screen.getByRole('link', { name: 'Shows' })).toBeDefined();
-      expect(screen.getByRole('link', { name: 'Journal' })).toBeDefined();
-      expect(screen.getByRole('link', { name: 'Press Kit' })).toBeDefined();
+      expect(screen.getByRole('link', { name: 'Contacto' })).toBeDefined();
 
       // Verify booking CTA and menu trigger button
       expect(screen.getByRole('link', { name: /Booking/i })).toBeDefined();

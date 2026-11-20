@@ -246,6 +246,252 @@ Este documento registra las decisiones arquitectónicas fundamentales tomadas pa
 - **Consecuencias:**  
   - *Positivas:* 0 kB añadidos por bibliotecas de modales o animaciones pesadas; accesibilidad nativa y robusta; bundle de primer carga ultraligero (106 kB First Load JS); aislamiento garantizado para `/admin`; 23/23 pruebas automatizadas pasando.
 
+---
+
+## ADR-013: Modelo de Trazabilidad de Fuentes, Idempotencia de Datos del Artista y Sincronización en Payload CMS
+
+- **Estado:** Aceptado (Implementado en Misión 006-A.1)
+- **Fecha:** Octubre 2026
+- **Contexto:**
+  1. Durante la evolución del proyecto, los scaffolds iniciales contenían placeholders inventados (Quetzaltenango/Guatemala, correos falsos `@danyglock.com`, datos de booking no confirmados).
+  2. La investigación real (documentada en `local/_ai-workspace/13-research-inventory.md`) demostró que Dany Glock es un artista de música urbana y trap originario de Pasto, Nariño, Colombia, con discografía en Apple Music (`1739565666`), canal oficial en YouTube (`@danyglock` / `UCf-4AJMV8QZz1jj4OVBzaxg`) e Instagram (`@danyglock_`).
+  3. No se debe publicar información no corroborada como un hecho en la web pública. Se requerían estados estrictos de trazabilidad (`verified`, `to_confirm`, `editorial_proposal`).
+  4. Los lanzamientos o eventos no confirmados formalmente (p. ej., `SIG Sauer (Remix)` y el evento `Pasto Vive Flow 2026`) deben persistir en PostgreSQL como borradores (`_status: 'draft'`) protegidos de consultas públicas anónimas.
+  5. La siembra de datos debe ser estrictamente idempotente: ejecutarla múltiples veces no debe generar filas duplicadas en PostgreSQL ni sobreescribir datos existentes.
+- **Decisión:**
+  1. **Grupo de Campo Reutilizable `verificationField`:**
+     - Implementado en `src/fields/verification.ts` e integrado en `Releases`, `Tracks`, `Videos`, `Events`, `Articles`, `ArtistProfile` y `SiteSettings`.
+     - Incluye `status` (`verified`, `to_confirm`, `editorial_proposal`), `sourceUrl`, `consultedAt` y `notes` (campo privado con control RBAC visible únicamente para usuarios autenticados).
+  2. **Ampliación de Colecciones y Esquema:**
+     - `Releases`: añadidos `artistRole` (`main`, `featured`, `collaborator`), `coverStatus`, enlaces streaming extendidos (`spotifyEmbedUrl`, `amazonMusic`).
+     - `Tracks`: añadidos `artistRole`, `appleMusicUrl`.
+     - `Videos`: añadido tipo `trailer`, `youtubeId` (11 caracteres), `duration`.
+     - `Events`: migrado a control de versiones con borradores (`versions: { drafts: true }`), control de acceso público condicional (`authenticatedOrPublished`), campo `slug` único, galería multimedia (`gallery`), enlaces sociales y videos relacionados.
+     - `ArtistProfile`: eliminación total de placeholders de Guatemala; origen establecido en Pasto, Nariño, Colombia; `bioStatus` (`editorial_draft`), grupo de traducciones `translations.en`.
+     - `SiteSettings`: enlaces verificados de Instagram, YouTube, ID de canal oficial, Apple Music; campos Spotify y booking mantenidos vacíos/nulos sin inventar.
+  3. **Migraciones Seguras e Idempotentes:**
+     - Creación de migración versionada `20261023_150557_add_artist_data_and_verification.ts` con sentencias protegidas contra tipos/tablas existentes (`DO $$ BEGIN ... EXCEPTION WHEN duplicate_object THEN null; END $$;`, `IF NOT EXISTS`).
+     - Inclusión de `prodMigrations` en `payload.config.ts` y saneamiento de registros `batch: -1` residuales del modo dev.
+  4. **Script de Siembra Idempotente (`src/scripts/seed-artist-data.ts`):**
+     - Población de los 4 lanzamientos verificados (`sig-sauer`, `so-fresh-so-clean`, `cicatrices`, `exceso`), 1 lanzamiento en borrador (`sig-sauer-remix`), 5 canciones vinculadas, 6 videos oficiales de YouTube, globals `ArtistProfile` y `SiteSettings`, y 1 evento en borrador (`pasto-vive-flow-2026`).
+     - Búsqueda previa por `slug` o combinación `(title, release)` antes de inserción. Ejecución repetida produce 0 duplicados.
+  5. **Validación de Utilidades y Seguridad:**
+     - Refuerzo de `src/lib/content-utils.ts` con validación estricta de dominios YouTube (whitelist de hosts, regex de 11 caracteres, protocolo HTTPS).
+     - Creación de suite `src/tests/artist-data-seed.test.ts` con 7 pruebas que validan aislamiento de borradores y consistencia de relaciones en PostgreSQL.
+- **Consecuencias:**
+  - *Positivas:* PostgreSQL es ahora la fuente de verdad inmutable y estructurada con datos reales; cero contenido inventado en producción; pruebas pasando al 100% (39/39); build de producción pasando con cero errores de tipo o lint.
+
+---
+
+## ADR-014: Capa de Consultas Públicas del CMS, Eliminación de Placeholders y Transformación de la Landing a Experiencia Artística Oficial
+
+- **Estado:** Aceptado (Implementado en Misión 006-A.2)
+- **Fecha:** Octubre 2026
+- **Contexto:**
+  1. La landing page pública (`src/app/(public)/page.tsx`) conservaba textos de scaffolding heredados de la Fase 005 ("Fase 005 — Cinematic Layout", "Quetzaltenango / Guatemala", "booking@danyglock.com", falsas giras y comunicados inventados).
+  2. Misión 006-A.1 preparó la base de datos PostgreSQL con datos reales investigados (4 lanzamientos verificados, 1 borrador, 6 videos oficiales de YouTube, globals de Pasto, Colombia y evento borrador).
+  3. Era imperativo transformar la experiencia pública en un sitio musical profesional, cinematográfico y administrable, donde Payload CMS sea la única fuente de verdad consumida directamente desde Server Components (`overrideAccess: false`).
+  4. Los borradores y registros en proceso de verificación debían permanecer rigurosamente aislados del frontend público, mostrando estados vacíos editoriales de alta calidad visual donde correspondiera (Shows y Journal).
+- **Decisión:**
+  1. **Capa Unificada de Consultas Públicas (`src/lib/cms-queries.ts`):**
+     - Funciones asíncronas para Server Components: `getArtistProfileData`, `getSiteSettingsData`, `getPublishedReleasesData`, `getPublishedVideosData`, `getPublishedEventsData`, `getPublishedArticlesData`, y `getHomePageCmsData` unificada en paralelo (`Promise.all`).
+     - Consultas configuradas con `overrideAccess: false` para respetar la seguridad RBAC de Payload.
+     - Filtrado estricto por `_status: 'published'` y verificación editorial `verification.status: 'verified'` en Releases, garantizando la exclusión de borradores (`sig-sauer-remix`) y registros de prueba locales.
+  2. **Hero Cinematográfico Oficial:**
+     - Dany Glock como protagonista central con tipografía editorial de gran escala (`text-6xl` a `text-9xl`) y subtítulo en `font-serif italic`.
+     - Origen verificado en Pasto, Nariño, Colombia.
+     - Spotlight automático del lanzamiento oficial más reciente (*Cicatrices feat. Maick Records*), con enlaces directos hacia la discografía y videografía.
+     - Cero referencias a fases de desarrollo, nombres de misiones o tecnologías.
+  3. **Catálogo de Discografía Real:**
+     - Consumo directo de `Releases` con tratamiento visual de vinilo concéntrico para artes en sincronización (`coverStatus: 'pending'`).
+     - Distinción visual explícita entre lanzamientos principales (`artistRole: 'main'`) y participaciones como artista invitado (`artistRole: 'featured'`) como en *EXCESO*.
+     - Enlaces directos a plataformas de streaming verificadas (Apple Music, YouTube, Amazon Music).
+  4. **Videografía Oficial Interactiva (`src/components/video/VideoGallery.tsx`):**
+     - Galería responsiva con miniaturas de YouTube (`i.ytimg.com/vi/<id>/hqdefault.jpg`), badges de tipo (`Video Oficial`, `Trailer`, `Visualizer`), y etiquetas de duración.
+     - Reproductor modal accesible utilizando el elemento nativo `<dialog>`, captura de foco, cierre con teclado (`Escape`) y modo privacy-enhanced (`youtube-nocookie.com/embed/<id>`).
+     - Sin reproducción automática con sonido.
+  5. **Estados Vacíos Editoriales de Shows y Journal:**
+     - Eliminación total de giras inventadas y falsas notas de prensa sobre Guatemala.
+     - Diseño de tarjetas vacías editoriales elegantes: *"Temporada en Programación — Nuevas Presentaciones en Vivo por Anunciar"* y *"Archivo Editorial — Comunicados Oficiales en Preparación"*, dirigiendo el interés hacia el canal de booking y prensa.
+  6. **Canal Oficial de Contacto y Booking (`src/components/contact/ContactForm.tsx`):**
+     - Formulario accesible conectado al endpoint `/api/contacts` con honeypot anti-spam (`websiteHoneypot`), validaciones de tipo, estados visuales de carga, éxito y error.
+     - Reemplazo de enlaces `mailto:` hardcodeados por navegación hacia `#contacto` cuando no existan correos confirmados en `SiteSettings`.
+  7. **Limpieza de Scaffolding y Endurecimiento de Migraciones:**
+     - Saneamiento completo de `EditorialMenu.tsx` y `SiteFooter.tsx`.
+     - Establecimiento de `push: false` en `payload.config.ts` para evitar la inserción del registro dev con `batch: '-1'` en `payload_migrations`, permitiendo que `next build` ejecute limpiamente sin requerir confirmación interactiva.
+  8. **Suite de Pruebas de Integración (`src/tests/public-views.test.tsx`):**
+     - 16 pruebas que verifican: consultas públicas, exclusión de borradores, distinción de roles de artista, presencia de videos, estados vacíos, ausencia total de referencias a Guatemala, falsos emails y textos de misiones.
+- **Consecuencias:**
+  - *Positivas:* Sitio 100% oficial, profesional e inmersivo; navegación y renderizado rápidos (First Load JS 119 kB); 55/55 pruebas automatizadas pasando; build de producción Next.js 15 compilando exitosamente con generación estática de la Home.
+
+---
+
+### ADR-015 — Rediseño Cinematográfico de la Home & Experiencia Editorial de Dany Glock (Misión 006-B.1)
+- **Fecha:** 2026-10-23
+- **Estado:** Aprobado e Implementado
+- **Contexto:**
+  1. La Misión 006-B.1 requirió transformar la Home en una experiencia digital cinematográfica, editorial y auténtica para el artista urbano Dany Glock, superando la estructura de landing funcional previa hacia una composición asimétrica de alto impacto visual.
+  2. La fuente de verdad estricta debe ser Payload CMS 3.91 y PostgreSQL 17, sin arrays estáticos hardcodeados en componentes ni alteración de registros existentes.
+  3. Era mandatorio erradicar de la vista pública cualquier jerga técnica o de desarrollo (`Artist Digital Experience`, `Dark Cinematic Editorial`, `Fase 005`, `Misión`, `Scaffold`, `Arte Oficial en Sincronización`).
+  4. La arquitectura requería preparar campos editables en Payload CMS para medios protagonistas (Hero desktop 16:9, Hero mobile 9:16, video URL, imagen de retrato vertical 4:5, títulos y CTAs) mediante migraciones formales versionadas sin operaciones destructivas sobre PostgreSQL.
+  5. Se requería diseñar secciones independientes: Single Spotlight para el lanzamiento más reciente, discografía asimétrica con distinción artista principal vs. invitado, sección editorial "El Artista — Biografía" en Home y una ruta `/biografia` funcional, videografía con jerarquía visual (video principal spotlight + cuadrícula) y modal accesible, presentación editorial de shows vacíos sin inventar giras, formulario de contacto unificado anti-spam y simplificación radical del footer eliminando el enlace público a `/admin`.
+- **Decisión:**
+  1. **Expansión del Modelo de Contenido & Migración Segura (`ArtistProfile`):**
+     - Añadidos a `src/globals/ArtistProfile.ts`: `heroDesktopMedia` (relación a `media`), `heroMobileMedia` (relación a `media`), `heroVideoUrl` (campo de texto para video de fondo), `portraitImage` (relación a `media` para retrato editorial 4:5), `heroTitle`, `heroSubtitle`, `heroCtaPrimary`, `heroCtaSecondary`.
+     - Creada y ejecutada la migración `src/migrations/20261023_180000_add_hero_and_portrait_media.ts` mediante `payload.db.migrate()`, integrando las columnas `hero_desktop_media_id`, `hero_mobile_media_id`, `hero_video_url`, `portrait_image_id`, `hero_title`, `hero_subtitle`, `hero_cta_primary`, `hero_cta_secondary` en la tabla `artist_profile` y registrándola formalmente en `payload_migrations` (batch 4).
+     - Regenerados los tipos TypeScript de Payload CMS (`pnpm payload generate:types`) en `src/payload-types.ts`.
+  2. **Hero Cinematográfico Asimétrico:**
+     - Composición editorial de gran impacto: Wordmark `DANY GLOCK` tipográfico (`text-6xl` a `text-9xl`), origen territorial (*Pasto, Colombia · Plataforma Oficial*), género (*Música Urbana & Trap Latino*), y canvas visual cinematográfico con proporción adaptable (16:10 en desktop, 4:5 en viewports amplios, responsive para móviles).
+     - CTAs directos: "Explorar Discografía ↓" y "Videografía Oficial →", más acceso directo a "El Artista ↗".
+  3. **Single Spotlight para Último Lanzamiento (`src/components/music/LatestReleaseSpotlight.tsx`):**
+     - Sección dedicada independiente para el lanzamiento más reciente verificado (*Cicatrices feat. Maick Records*).
+     - Arte de vinilo concéntrico a gran escala 1:1, metadatos editoriales de catálogo, créditos de producción (Nick Montana x Dark Pro) y botones de streaming hacia Apple Music y YouTube.
+  4. **Discografía Asimétrica & Distinción de Roles:**
+     - Cuadrícula editorial responsiva eliminando el texto `Arte Oficial en Sincronización` y reemplazándolo por fichas sobrias con año, catálogo y badges de rol (*Artista Principal* vs. *Artista Invitado* en *EXCESO*).
+  5. **Sección Editorial "El Artista" & Ruta Completa `/biografia` (`src/app/(public)/biografia/page.tsx`):**
+     - Sección en Home que destaca la identidad territorial, visión artística y enlace a `/biografia`.
+     - Ruta `/biografia` implementada como Server Component consumiendo `getArtistProfileData` y `getPublishedReleasesData`, estructurada en 3 bloques editoriales verificados: *01 / Trayectoria y Origen*, *02 / Visión Artística*, y *03 / Discografía de Referencia*, con ficha técnica del artista sin inventar premios, colaboraciones ficticias ni giras.
+  6. **Jerarquía Visual en Videografía (`src/components/video/VideoGallery.tsx`):**
+     - Spotlight visual para el video destacado principal (formato 16:9 con badge de tipo `Videoclip Oficial` y duración) acompañado de cuadrícula para el resto de entregas audiovisuales.
+     - Modal accesible HTML5 `<dialog>` con overlay `backdrop-blur-2xl`, cierre por teclado (`Escape`), botón de cierre con foco accesible y reproductor `youtube-nocookie.com`.
+  7. **Shows & Presentaciones:**
+     - Estado editorial elegante sin fechas inventadas: *"Temporada en Programación — Nuevas Presentaciones en Vivo por Anunciar"* con CTA a la sección de contacto para contratación.
+  8. **Simplificación Radical del Footer (`src/components/layout/SiteFooter.tsx`):**
+     - Eliminación del enlace visible a `/admin` (conservando el acceso administrativo legítimo mediante su URL directa).
+     - Eliminación de correos no verificados; inclusión de wordmark del artista, navegación esencial, redes verificadas (YouTube, Instagram, Apple Music), copyright oficial y botón "Volver Arriba".
+  9. **Limpieza Editorial Estricta:**
+     - Eliminados de la interfaz pública: `Artist Digital Experience`, `Dark Cinematic Editorial`, `Fase 005`, `Misión`, `Scaffold`, y `Arte Oficial en Sincronización`. Sustituidos por terminología limpia en español editorial.
+  10. **Alineación de Pruebas & Calidad:**
+      - Actualizada la suite `src/tests/public-views.test.tsx` a 18 pruebas integrales cubriendo Hero, Single Spotlight, Discografía, Biografía, Videografía, Contacto y Footer.
+      - 57 de 57 pruebas superadas en `vitest`.
+      - 0 errores en `pnpm typecheck`.
+      - 0 errores y 0 warnings en `pnpm lint`.
+      - Build de producción `next build` exitoso con generación estática de Home (`/`) y Biografía (`/biografia`).
+- **Consecuencias:**
+  - *Positivas:* Experiencia artística a la altura de estándares internacionales (Travis Scott / The Weeknd); narrativa visual sólida y cinematográfica; responsividad completa en desktop (1440x900) y móvil (390x844); fidelidad estricta al CMS sin datos hardcodeados; 100% de quality gates verdes.
 
 
 
+
+
+
+
+---
+
+### ADR-016 — Despliegue Manual en VPS Compartido (Nginx existente + systemd + PostgreSQL existente)
+- **Fecha:** 2026-10-23
+- **Estado:** Aprobado e Implementado
+- **Contexto:** El VPS `51.83.75.178` ya aloja ~14 dominios (Laravel, WordPress, n8n, phpMyAdmin) servidos por Nginx 1.24 con PHP-FPM 8.3/8.4, MySQL 8 y PostgreSQL 16. Apache está instalado pero inactivo. Solo 1.9 GB de RAM y sin swap. El despliegue no debía afectar a ningún proyecto existente ni introducir CI/CD.
+- **Decisión:**
+  1. Reutilizar Nginx (vhost exclusivo, enlazado como `zz-dany.forcefilters.com` para no convertirse en *default server*) y PostgreSQL 16 (BD y rol propios, `reject` remoto solo para `danyglock_db`).
+  2. `next start` bajo systemd como usuario sin privilegios `danyglock`, ligado a `127.0.0.1:3100`, sin Docker ni PM2.
+  3. Certificado vía `certbot certonly --webroot` para que Certbot no edite configuraciones de Nginx.
+  4. Swap de 2 GB para que el build no dispare el OOM killer sobre servicios ajenos.
+  5. Migraciones con `payload migrate` (respaldo `pg_dump` previo); `prodMigrations` sigue activo como red de seguridad al arrancar.
+  6. Admin inicial creado vía túnel SSH con `/admin` bloqueado públicamente hasta su creación.
+  7. Actualizaciones manuales: `git pull --ff-only` → `pnpm install --frozen-lockfile` → migrate → stop → build → start.
+- **Consecuencias:**
+  - *Positivas:* Aislamiento total respecto a otros proyectos (línea base HTTP idéntica), cero servicios nuevos expuestos, reversible deshabilitando un symlink y un servicio.
+  - *Negativas:* Interrupción de 1–2 min por actualización; la Home estática requiere rebuild para reflejar cambios del CMS (DEPLOY-01); sin backups automáticos (DEPLOY-03).
+
+---
+
+### ADR-017 — Identidad Visual Multimedia, Carga Responsiva y Fallbacks Cinemáticos (M006-B.2)
+- **Fecha:** 2026-10-23
+- **Estado:** Aprobado e Implementado
+- **Contexto:** La plataforma requería elevar la experiencia visual del artista Dany Glock sin depender de plantillas ni placeholders ficticios. Era indispensable soportar imágenes de alta resolución administrables desde Payload CMS (`Media`), selección responsiva (desktop vs. móvil), video de fondo con soporte de accesibilidad estricto (`prefers-reduced-motion`), carátulas 1:1 consistentes, retratos verticales 4:5 y videografía sin sobrecargar la red ni violar WCAG 2.2.
+- **Decisión:**
+  1. **Configuración de Imágenes y Dominios Remotos (`next.config.ts`):** Habilitar formatos modernos `image/avif` e `image/webp`. Declarar `images.remotePatterns` para `i.ytimg.com` e `img.youtube.com` permitiendo la optimización nativa con `<Image>` de miniaturas de YouTube.
+  2. **Profundidad de Relaciones en Payload (`src/lib/cms-queries.ts`):** Configurar `depth: 2` en las consultas de `ArtistProfile`, `Releases` y `Videos` para garantizar la población completa de los objetos `Media` vinculados (`heroDesktopMedia`, `heroMobileMedia`, `portraitImage`, `coverImage`, `customThumbnail`), incluyendo dimensiones, URLs y textos alternativos.
+  3. **Hero Multimedia Cinemático (`src/components/hero/HeroMedia.tsx`):**
+     - Soporte opcional para loop de video (`heroVideoUrl`) silenciado (`muted`), en bucle (`loop`) y sin controles intrusivos (`playsInline`).
+     - Botón accesible flotante para alternar Pausar / Reanudar el video de fondo con indicación ARIA (`aria-label`, `aria-pressed`).
+     - Detección activa de `prefers-reduced-motion` que pausa automáticamente el video de fondo respetando la preferencia del usuario.
+     - Selección responsiva con `<picture>` / imágenes optimizadas para Desktop (`16:10` / `16:9`) y Móvil (`9:16` / `4:5`).
+     - Fallback de póster y canvas Dark Cinematic Editorial generado con gradientes y tipografía monumental en caso de ausencia de medios en el CMS.
+  4. **Componente Estandarizado de Carátulas (`src/components/music/ReleaseCover.tsx`):**
+     - Proporción cuadrada 1:1 consistente en todo el sitio (Single Spotlight y catálogo).
+     - Priorización de carga (`priority={true}`) para el lanzamiento destacado (LCP optimizado) y lazy-loading nativo para el resto de la discografía.
+     - Fallback gráfico elegante de vinilo concéntrico con badge de catálogo para lanzamientos pendientes de arte o artes en sincronización, preservando el layout sin CLS.
+  5. **Retratos Verticales del Artista (`src/components/artist/ArtistPortrait.tsx`):**
+     - Formato editorial 4:5 consistente tanto en la sección Home como en `/biografia`.
+     - Soporte completo para objeto `Media` poblado de Payload y fallback editorial de textura tonal oscura con wordmark monumental del artista.
+  6. **Videoteca Optimizada y Accesible (`src/components/video/VideoGallery.tsx`):**
+     - Priorización de `customThumbnail` (Media de Payload) sobre miniaturas automáticas de YouTube con `<Image>` optimizado de Next.js.
+     - Eliminación del iframe en la carga inicial (cero bytes de YouTube embebido hasta la interacción del usuario).
+     - Reproductor en modal nativo `<dialog>` con atrapamiento de foco accesible por teclado, cierre con tecla Escape y foco restaurado al elemento activador.
+  7. **Calidad y Calibración en Pruebas:**
+     - 63 pruebas automatizadas pasando en Vitest (100% verde en 6 suites).
+     - Mock de `window.matchMedia` en entorno JSDOM para pruebas unitarias de accesibilidad de movimiento.
+     - `pnpm typecheck`: 0 errores.
+     - `pnpm lint`: 0 errores, 0 warnings.
+     - `pnpm build`: compilación de producción exitosa.
+- **Consecuencias:**
+  - *Positivas:* Calidad visual y editorial de primer nivel internacional sin dependencias externas de pago; control editorial 100% administrable desde Payload CMS; rendimiento óptimo (LCP/CLS) con Next.js Image y formatos AVIF/WebP; accesibilidad WCAG 2.2 AA completa.
+  - *Negativas:* Ninguna identificada; la arquitectura de fallbacks garantiza integridad visual incluso ante bases de datos vacías.
+
+
+---
+
+### ADR-018 — Contenido del Brochure: Trayectoria Tipada, Booking con Contacto Privado por Campo y EPK Opt-in (M006-B.2 Brochure)
+- **Fecha:** 2026-10-23
+- **Estado:** Aprobado e Implementado (local, sin desplegar)
+- **Contexto:** El brochure oficial (`local/DANY-GLOCK (2).pdf`) aporta trayectoria, premios, escenarios compartidos, formato del show, flyers y datos de management, pero mezcla hechos verificables con afirmaciones promocionales y datos personales. El repositorio de GitHub es **público**.
+- **Decisión:**
+  1. Una sola colección `career-highlights` tipada por `category` (en lugar de colecciones separadas para premios/colaboraciones), con drafts: lo no confirmado queda en borrador y lo publicado sin verificar se rotula con su fuente. `shared_stage` se separa explícitamente de `collaboration`.
+  2. Global `booking` con control de acceso **a nivel de campo**: el contacto de management solo es legible sin sesión con `publishContact = true`. Los datos de contacto no se versionan (ni en seed ni en documentación).
+  3. Global `press-kit` con `isPublic = false` por defecto; la página web compone datos ya publicados y solo hitos verificados; versión PDF preparada vía `downloadablePdf` + `downloadStatus`.
+  4. Galería reutilizando `media` (categorías `event_flyer`/`live_photo` + grupo `gallery`) en vez de una colección nueva; publicación con doble llave `visible` + `rightsStatus = approved`.
+  5. Seeds **solo-creación**; material fuente (PDF, imágenes extraídas) excluido de Git.
+  6. La migración generada se depuró para no duplicar la 20261023_180000 y su snapshot cubre el hueco de esa migración.
+- **Consecuencias:**
+  - *Positivas:* ninguna afirmación no verificada se publica por defecto; management decide desde el admin; sin datos personales en el repositorio público; esquema sin deriva.
+  - *Negativas:* `/booking`, `/biografia` y `/epk` son estáticas: activar el EPK o aprobar flyers requiere rebuild hasta resolver DEPLOY-01. La galería de producción requiere subir los archivos manualmente.
+
+---
+
+### ADR-019 — Una sola versión de sharp (alineada con Next.js)
+- **Fecha:** 2026-10-23
+- **Estado:** Aprobado e Implementado
+- **Contexto:** Next 15.4.11 depende de `sharp ^0.34.3` (optimizador `next/image`) y el proyecto declaraba `sharp ^0.35.5` para Payload. Con la adopción de `next/image` en M006-B ambas se cargan en el mismo proceso. En Windows comparten el nombre `libvips-42.dll`: si Next carga primero, Payload falla (`ERR_DLOPEN_FAILED`). En Linux no se reproduce.
+- **Decisión:** fijar `sharp` del proyecto a `^0.34.5` (la versión que resuelve Next), dejando una sola copia en el lockfile. Las plantillas oficiales de Payload 3 también usan sharp 0.34.x.
+- **Consecuencias:** desarrollo estable en Windows; producción recibe sharp 0.34.5 (libvips 8.17.3) para Payload — verificado con subida y generación de tamaños. Al actualizar Next.js, revisar que ambas dependencias sigan alineadas (`pnpm why sharp` debe mostrar una sola versión).
+
+---
+
+### ADR-020 — ISR con revalidación bajo demanda desde hooks de Payload (M006-B.3)
+- **Fecha:** 2026-10-23
+- **Estado:** Aprobado e Implementado (local, sin desplegar)
+- **Contexto:** Las páginas públicas eran estáticas sin revalidación (DEPLOY-01): cualquier cambio del CMS exigía `pnpm build` + reinicio (≈ 1–2 min de corte).
+- **Alternativas descartadas:** `dynamic = 'force-dynamic'` (renuncia a la caché y consulta PostgreSQL en cada visita en un VPS de 1.9 GB); webhook/endpoint con token compartido (superficie expuesta innecesaria, Payload ya corre en el mismo proceso); solo revalidación por tiempo (cambios con hasta 1 h de retraso, publicar/retirar no inmediato).
+- **Decisión:** ISR (`revalidate = 3600` como red de seguridad) + `revalidatePath` en `afterChange`/`afterDelete` de colecciones y globals según un mapa de dependencias (`src/lib/revalidate.ts`), siguiendo el patrón de la plantilla oficial de Payload. Consultas que propagan errores para no cachear páginas vacías. Endpoint `POST /api/revalidate` solo para administradores.
+- **Consecuencias:** cambios editoriales visibles en la siguiente visita sin build; HTML sigue sirviéndose desde caché; seeds por CLI requieren revalidación manual o esperar 1 h; diseño válido para una sola instancia (caché en disco local).
+
+> **Nota ADR-020 (2026-10-23, producción):** desplegado en `329157f`. Confirmado que los scripts CLI (Local API en un proceso aparte) no pueden invalidar la caché del servidor Next.js; tras importaciones o seeds se usa `POST /api/revalidate` con sesión admin.
+
+---
+
+### ADR-021 — Archivo de eventos en `events` + autorización del flyer separada de la publicación (M006-C)
+- **Fecha:** 2026-11-19
+- **Estado:** Aprobado e Implementado (local, sin desplegar)
+- **Contexto:** 18 flyers históricos sin año legible en la mayoría, con datos de terceros (teléfonos, direcciones, marcas). `events.date` era obligatoria y `city` tenía «Pasto» por defecto; `media` era legible por cualquiera, incluidos flyers ocultos.
+- **Alternativas descartadas:** colección nueva `stage-history` (duplica `events`, que ya tenía borradores, verificación y póster); solo `media.gallery` (sin borradores, descripción, ciudad ni estado editorial); inferir años por día de la semana (inventaría datos).
+- **Decisión:** ampliar `events` con `listing` (agenda/archivo), `dateLabel`, `artistRole`, `summary`, `sortOrder` y `usageRights`; `date` obligatoria solo en la agenda. Publicar el evento (`_status` + `verification = verified`) es independiente de aprobar el flyer (`usageRights.status = approved`). Los anónimos no leen `event_flyer`/`live_photo` sin derechos aprobados; un hook sincroniza la aprobación del evento con el medio. Ruta dedicada `/escenarios` (404 sin publicados) y `events` revalida todo el sitio.
+- **Consecuencias:** un evento puede publicarse sin flyer; la API de media deja de exponer piezas de terceros no aprobadas; el script E2E de M006-B.3 usa ahora un medio `artwork`. La estrategia inicial de versionar `storage/flyers/` fue revocada en ADR-022 tras verificar que el repositorio remoto es público.
+
+---
+
+### ADR-022 — Almacenamiento privado de flyers fuera de Git y purga de caché `/_next/image` (M006-C.1)
+- **Fecha:** 2026-11-19
+- **Estado:** Aceptado e Implementado (local, sin commit ni despliegue)
+- **Contexto:**
+  1. En M006-C se habían copiado los 18 flyers a `storage/flyers/` sin excluirlos de `.gitignore` a la espera de comprobar si el repositorio remoto era privado. La auditoría directa contra GitHub API (`DanielCriollo/dany-glock`) confirmó `"private": false, "visibility": "public"`. Incluso en un repositorio privado, versionar flyers de terceros con teléfonos, direcciones y QR incrementa la superficie de exposición en el historial Git.
+  2. Durante la auditoría de seguridad se detectaron tres brechas potenciales adicionales: (a) `syncFlyerRights` habilitaba el medio al aprobar `usageRights.status` aunque el evento siguiera en borrador o se despublicara; (b) `usageRights.source` era legible de forma anónima en `/api/events`; (c) Next.js 15 `ImageOptimizerCache` (`.next/cache/images/`) seguía sirviendo copias cacheadas (HTTP 200) de un flyer previamente aprobado incluso después de revocar sus derechos y recibir 403 desde `/api/media/file/*`.
+- **Decisión:**
+  1. **Exclusión permanente en Git:** añadir `storage/flyers/` a `.gitignore` (junto a `/flyers/`). Conservar todos los archivos locales intactos y transferir al VPS únicamente por canal privado SSH/SCP con verificación SHA-256 y permisos `750`/`640`.
+  2. **Importador desacoplado de Git:** `import-stage-history.ts` acepta `--dir <ruta>` y `STAGE_FLYERS_DIR` (por defecto `storage/flyers/`), saliendo limpiamente si la carpeta no existe. Los tests verifican existencia en disco solo cuando la carpeta local está presente.
+  3. **Endurecimiento de acceso y caché:** `syncFlyerRights` exige `_status === 'published' && usageRights.status === 'approved'` y revoca el flyer al despublicar, cambiar `posterImage` o borrar (`revokeFlyerRightsOnDelete`); `usageRights.source` queda restringido a usuarios autenticados; `purgeNextImageCache()` (`src/lib/revalidate.ts`) purga `.next/cache/images` en los hooks de revocación/eliminación de `Events` y `Media`.
+  4. **Migración robusta:** `down()` de `20261120_010900_add_event_archive_fields` usa `IF EXISTS` en todos los `DROP COLUMN` y `DROP TYPE`.
+- **Consecuencias:**
+  - *Positivas:* cero datos personales de terceros en Git; privacidad garantizada en URL directa, REST, GraphQL, variantes redimensionadas y `/_next/image` (incluso tras revocación); suite de tests ejecutable en clones limpios sin flyers.
+  - *Negativas:* el despliegue inicial de los 18 flyers en el VPS requiere un paso manual de `scp` con `SHA256SUMS` (mismo procedimiento ya probado en M006-B.4).

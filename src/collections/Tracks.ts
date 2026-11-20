@@ -1,14 +1,17 @@
 import type { CollectionConfig } from 'payload';
 import { anyone, authenticated } from '@/access';
+import { verificationField } from '@/fields/verification';
+import { revalidationHooks } from '@/lib/revalidate';
 
 export const Tracks: CollectionConfig = {
   slug: 'tracks',
   admin: {
     useAsTitle: 'title',
     group: 'Música',
-    defaultColumns: ['trackNumber', 'title', 'release', 'duration', 'featured'],
+    defaultColumns: ['trackNumber', 'title', 'release', 'artistRole', 'duration', 'featured'],
     description: 'Canciones individuales, metadata técnica, letras oficiales y audio preview.',
   },
+  hooks: revalidationHooks('tracks'),
   access: {
     read: anyone,
     create: authenticated,
@@ -30,6 +33,20 @@ export const Tracks: CollectionConfig = {
       required: true,
       admin: {
         description: 'Asocia esta pista a un single, EP o álbum oficial.',
+      },
+    },
+    {
+      name: 'artistRole',
+      type: 'select',
+      label: 'Rol de Dany Glock en la Pista',
+      defaultValue: 'main',
+      options: [
+        { label: 'Artista Principal (Lead Artist)', value: 'main' },
+        { label: 'Artista Invitado (Featured Artist)', value: 'featured' },
+        { label: 'Colaborador / Co-autor', value: 'collaborator' },
+      ],
+      admin: {
+        description: 'Distingue pistas donde Dany Glock es artista principal o invitado.',
       },
     },
     {
@@ -56,6 +73,14 @@ export const Tracks: CollectionConfig = {
       label: 'Archivo de Audio Preview (MP3/WAV)',
       admin: {
         description: 'Muestra de 30-60 segundos para el reproductor flotante inercial.',
+      },
+    },
+    {
+      name: 'appleMusicUrl',
+      type: 'text',
+      label: 'URL de Apple Music de la Pista (Opcional)',
+      admin: {
+        placeholder: 'https://music.apple.com/...',
       },
     },
     {
@@ -115,5 +140,6 @@ export const Tracks: CollectionConfig = {
       label: 'Destacar como pista principal / Top Track',
       defaultValue: false,
     },
+    verificationField,
   ],
 };

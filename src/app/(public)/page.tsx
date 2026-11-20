@@ -1,176 +1,313 @@
 import React from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import config from '@payload-config';
-import { getPayload } from 'payload';
-import type { ArtistProfile } from '@/payload-types';
+import { getBookingData, getHomePageCmsData, getPressKitData, getStageHistoryData } from '@/lib/cms-queries';
+import { LatestReleaseSpotlight } from '@/components/music/LatestReleaseSpotlight';
+import { ReleaseCover } from '@/components/music/ReleaseCover';
+import { HeroMedia } from '@/components/hero/HeroMedia';
+import { ArtistPortrait } from '@/components/artist/ArtistPortrait';
+import { VideoGallery } from '@/components/video/VideoGallery';
+import { ContactForm } from '@/components/contact/ContactForm';
+
+/**
+ * ISR: la página se regenera bajo demanda cuando Payload publica cambios (src/lib/revalidate.ts).
+ * El intervalo es solo una red de seguridad para cambios que no pasan por los hooks
+ * (seeds por CLI, ediciones directas en la base de datos).
+ */
+export const revalidate = 3600;
 
 export default async function HomePage() {
-  let artistProfile: ArtistProfile | null = null;
+  const {
+    artistProfile,
+    siteSettings,
+    releases,
+    featuredRelease,
+    videos,
+    events,
+  } = await getHomePageCmsData();
+  const [booking, pressKit, stageHistory] = await Promise.all([
+    getBookingData(),
+    getPressKitData(),
+    getStageHistoryData(),
+  ]);
+  const showSpecs = [booking?.specs?.format, booking?.specs?.duration, booking?.specs?.genre].filter(Boolean);
 
-  try {
-    const payload = await getPayload({ config });
-    const profileRes = await payload.findGlobal({ slug: 'artist-profile', overrideAccess: false });
-    artistProfile = profileRes as ArtistProfile;
-  } catch (error) {
-    console.warn('HomePage: Fallback local para artist-profile', error);
-  }
-
-  const stageName = artistProfile?.stageName || 'DANY GLOCK';
-  const tagline = artistProfile?.tagline || 'Artist Digital Experience — Dark Cinematic Editorial';
-  const manifesto =
-    artistProfile?.manifesto ||
-    'La música urbana como cinematografía sonora: una narrativa nocturna nacida en el altiplano de Guatemala y proyectada a la escena global.';
-  const city = artistProfile?.origin?.city || 'Quetzaltenango';
-  const country = artistProfile?.origin?.country || 'Guatemala';
+  const stageName = artistProfile?.stageName || 'Dany Glock';
+  const tagline =
+    artistProfile?.tagline ||
+    'Música urbana, trap latino y estética nocturna desde Pasto, Colombia.';
+  const shortBio =
+    artistProfile?.shortBio ||
+    'Dany Glock es un artista de música urbana y trap originario de Pasto, Nariño, Colombia. Su propuesta combina líricas introspectivas, identidad andina contemporánea y una producción sonora de alto impacto cinematográfico.';
+  const city = artistProfile?.origin?.city || 'Pasto';
+  const country = artistProfile?.origin?.country || 'Colombia';
+  const heroCtaPrimary = artistProfile?.heroCtaPrimary || 'Explorar Música';
+  const heroCtaSecondary = artistProfile?.heroCtaSecondary || 'Videografía Oficial';
 
   return (
     <div className="w-full">
-      {/* 1. HERO EDITORIAL TIPOGRÁFICO */}
-      <section className="relative min-h-[85vh] flex flex-col justify-center px-6 md:px-12 max-w-7xl mx-auto py-16 md:py-24 border-b border-white/10">
-        <div className="space-y-6 max-w-5xl">
-          {/* Badge de Estado & Ubicación */}
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-crimson-signal animate-pulse" aria-hidden="true" />
-            <span className="font-mono text-xs uppercase tracking-[0.25em] text-ash">
-              {city}, {country} · Plataforma Oficial
-            </span>
-            <span className="font-mono text-xs text-smoke hidden sm:inline">|</span>
-            <span className="font-mono text-xs uppercase tracking-wider text-crimson-text hidden sm:inline">
-              Fase 005 — Cinematic Layout
-            </span>
+      {/* ========================================================= */}
+      {/* 1. HERO EDITORIAL CINEMATOGRÁFICO                        */}
+      {/* ========================================================= */}
+      <section className="relative min-h-[92vh] flex flex-col justify-center px-6 md:px-12 max-w-7xl mx-auto py-20 md:py-32 border-b border-white/10 overflow-hidden">
+        {/* Atmósfera e iluminación nocturna sutil */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-25 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-crimson-deep via-ink to-transparent"
+          aria-hidden="true"
+        />
+
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          {/* Columna de Texto Tipográfico */}
+          <div className="lg:col-span-7 space-y-8">
+            {/* Badge de Origen y Estatus Verificado */}
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="w-2.5 h-2.5 rounded-full bg-crimson animate-pulse" aria-hidden="true" />
+              <span className="font-mono text-xs uppercase tracking-[0.25em] text-ash">
+                {city}, {country} · Plataforma Oficial
+              </span>
+              <span className="font-mono text-xs text-smoke hidden sm:inline">|</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-crimson-text hidden sm:inline">
+                Música Urbana & Trap Latino
+              </span>
+            </div>
+
+            {/* Gran Título Póster Tipográfico */}
+            <h1 className="font-sans font-black text-6xl sm:text-8xl lg:text-9xl tracking-tighter uppercase text-bone leading-[0.88] select-none">
+              {stageName}
+            </h1>
+
+            {/* Mensaje Editorial Breve en Español */}
+            <p className="font-serif italic text-2xl sm:text-3xl text-ash max-w-2xl leading-snug">
+              {tagline}
+            </p>
+
+            {/* Botones de Acción */}
+            <div className="pt-2 flex flex-wrap items-center gap-4">
+              <Button variant="primary" href="#musica">
+                {heroCtaPrimary} ↓
+              </Button>
+              <Button variant="secondary" href="#videos">
+                {heroCtaSecondary} →
+              </Button>
+              <Button variant="ghost" href="#biografia" className="font-mono text-xs uppercase tracking-wider">
+                El Artista ↗
+              </Button>
+            </div>
           </div>
 
-          {/* Gran Título Póster */}
-          <h1 className="font-sans font-black text-6xl sm:text-8xl lg:text-9xl tracking-tighter uppercase text-bone leading-[0.9]">
-            {stageName}
-          </h1>
-
-          {/* Subtítulo Editorial con Instrument Serif */}
-          <p className="font-serif italic text-2xl sm:text-3xl md:text-4xl text-ash max-w-3xl leading-snug">
-            {tagline}
-          </p>
-
-          {/* Cita del Manifiesto */}
-          <blockquote className="border-l-2 border-crimson pl-6 py-2 text-ash text-base md:text-lg max-w-2xl font-sans">
-            &ldquo;{manifesto}&rdquo;
-          </blockquote>
-
-          {/* Botones de Acción */}
-          <div className="pt-4 flex flex-wrap items-center gap-4">
-            <Button variant="primary" href="#musica">
-              Explorar Discografía ↓
-            </Button>
-            <Button variant="secondary" href="#tour">
-              Fechas de Tour
-            </Button>
-            <Button variant="ghost" href="#contacto">
-              Booking Directo →
-            </Button>
+          {/* Columna Visual Protagonista (HeroMedia Multimedia) */}
+          <div className="lg:col-span-5">
+            <HeroMedia
+              desktopMedia={artistProfile?.heroDesktopMedia}
+              mobileMedia={artistProfile?.heroMobileMedia}
+              videoUrl={artistProfile?.heroVideoUrl}
+              stageName={stageName}
+              city={city}
+            />
           </div>
         </div>
 
-        {/* Metadato Tipográfico Inferior */}
+        {/* Metadato tipográfico inferior */}
         <div className="mt-16 pt-8 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-mono text-[11px] text-smoke">
-          <div>SOUND DESIGN · VISUAL IDENTITY · STAGE EXPERIENCE</div>
-          <div className="text-ash tracking-widest uppercase">TEMPORADA 2026</div>
+          <div>PRODUCCIÓN MUSICAL · DIRECCIÓN VISUAL · ESCENA EN VIVO</div>
+          <div className="text-ash tracking-widest uppercase">DISCOGRAFÍA OFICIAL · {city.toUpperCase()}, {country.toUpperCase()}</div>
         </div>
       </section>
 
-      {/* 2. SECCIÓN MÚSICA & DISCOGRAFÍA (ANCLA #musica) */}
+      {/* ========================================================= */}
+      {/* 2. ÚLTIMO LANZAMIENTO (SPOTLIGHT INDEPENDIENTE)            */}
+      {/* ========================================================= */}
+      {featuredRelease && <LatestReleaseSpotlight release={featuredRelease} />}
+
+      {/* ========================================================= */}
+      {/* 3. DISCOGRAFÍA & CATÁLOGO REAL                             */}
+      {/* ========================================================= */}
       <section id="musica" className="px-6 md:px-12 max-w-7xl mx-auto py-24 border-b border-white/10 scroll-mt-24">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
           <div>
             <span className="font-mono text-xs uppercase tracking-[0.25em] text-crimson-text block mb-2">
-              01 / Discografía
+              01 / Catálogo Oficial
             </span>
             <h2 className="font-sans font-black text-4xl sm:text-6xl tracking-tight uppercase text-bone">
-              MÚSICA & RELEASES
+              MÚSICA & DISCOGRAFÍA
             </h2>
           </div>
           <p className="font-serif italic text-ash text-lg md:text-xl max-w-md">
-            Producciones de estudio, lanzamientos oficiales y colaboraciones.
+            Lanzamientos oficiales en plataformas digitales de streaming.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-8 bg-carbon/40 border border-white/10 flex flex-col justify-between min-h-[220px]">
-            <div>
-              <span className="font-mono text-xs text-smoke uppercase tracking-wider block mb-2">Catálogo CMS</span>
-              <h3 className="font-sans font-bold text-2xl text-bone mb-3">Singles & EPs</h3>
-              <p className="text-sm text-ash leading-relaxed">
-                Estructura administrable lista en Payload CMS para la catalogación de pistas oficiales.
-              </p>
-            </div>
-            <span className="font-mono text-xs text-crimson-text mt-6">En preparación para Misión 006 →</span>
+        {/* Cuadrícula Asimétrica de Lanzamientos */}
+        {releases && releases.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {releases.map((release) => {
+              const isLead = release.artistRole === 'main';
+              const releaseYear = release.releaseDate ? new Date(release.releaseDate).getFullYear() : '2026';
+
+              return (
+                <article
+                  key={release.id}
+                  className="group bg-carbon/40 border border-white/10 hover:border-crimson/50 transition-all duration-300 flex flex-col justify-between overflow-hidden"
+                >
+                  {/* Arte Editorial de Portada Optimizado */}
+                  <ReleaseCover
+                    coverImage={release.coverImage}
+                    title={release.title}
+                    type={release.type}
+                    coverStatus={release.coverStatus}
+                    catalogNumber={release.catalogNumber}
+                    releaseYear={releaseYear}
+                    isLead={isLead}
+                    size="md"
+                  />
+
+                  {/* Ficha Editorial & Streaming */}
+                  <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                    <div>
+                      <h4 className="font-sans font-bold text-lg text-bone group-hover:text-crimson-text transition-colors">
+                        {release.title}
+                      </h4>
+                      {release.description && (
+                        <p className="font-sans text-xs text-ash mt-1 line-clamp-2 leading-relaxed">
+                          {release.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Enlaces de Streaming */}
+                    <div className="pt-4 border-t border-white/5 space-y-2">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-smoke block">
+                        Plataformas Oficiales
+                      </span>
+                      <div className="flex flex-wrap gap-2 text-xs font-mono">
+                        {release.streamingLinks?.appleMusic && (
+                          <a
+                            href={release.streamingLinks.appleMusic}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 text-bone transition-colors"
+                          >
+                            <span>Apple Music</span>
+                            <span aria-hidden="true">↗</span>
+                          </a>
+                        )}
+                        {release.streamingLinks?.youtube && (
+                          <a
+                            href={release.streamingLinks.youtube}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 text-bone transition-colors"
+                          >
+                            <span>YouTube</span>
+                            <span aria-hidden="true">↗</span>
+                          </a>
+                        )}
+                        {release.streamingLinks?.amazonMusic && (
+                          <a
+                            href={release.streamingLinks.amazonMusic}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 text-bone transition-colors"
+                          >
+                            <span>Amazon</span>
+                            <span aria-hidden="true">↗</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-12 border border-white/10 bg-carbon/30 text-center">
+            <p className="font-serif italic text-lg text-ash">
+              Discografía en proceso de sincronización digital.
+            </p>
+          </div>
+        )}
+      </section>
+
+      {/* ========================================================= */}
+      {/* 4. EL ARTISTA — SECCIÓN EDITORIAL & BIOGRAFÍA              */}
+      {/* ========================================================= */}
+      <section id="biografia" className="px-6 md:px-12 max-w-7xl mx-auto py-24 border-b border-white/10 scroll-mt-24">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+          {/* Columna Izquierda: Retrato Vertical Editorial (ArtistPortrait) */}
+          <div className="lg:col-span-5">
+            <ArtistPortrait
+              portraitImage={artistProfile?.portraitImage}
+              stageName={stageName}
+              city={city}
+              country={country}
+            />
           </div>
 
-          <div className="p-8 bg-carbon/40 border border-white/10 flex flex-col justify-between min-h-[220px]">
-            <div>
-              <span className="font-mono text-xs text-smoke uppercase tracking-wider block mb-2">Audio Engine</span>
-              <h3 className="font-sans font-bold text-2xl text-bone mb-3">Streaming Links</h3>
-              <p className="text-sm text-ash leading-relaxed">
-                Enlaces inteligentes sincronizados con Spotify, Apple Music y YouTube Music.
-              </p>
+          {/* Columna Derecha: Texto Editorial */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="space-y-3">
+              <span className="font-mono text-xs uppercase tracking-[0.25em] text-crimson-text block">
+                02 / El Artista
+              </span>
+              <h2 className="font-sans font-black text-4xl sm:text-5xl md:text-6xl text-bone tracking-tight uppercase">
+                IDENTIDAD & TRAYECTORIA
+              </h2>
             </div>
-            <span className="font-mono text-xs text-smoke mt-6">Arquitectura lista</span>
-          </div>
 
-          <div className="p-8 bg-carbon/40 border border-white/10 flex flex-col justify-between min-h-[220px]">
-            <div>
-              <span className="font-mono text-xs text-smoke uppercase tracking-wider block mb-2">Créditos & Letras</span>
-              <h3 className="font-sans font-bold text-2xl text-bone mb-3">Fichas Técnicas</h3>
-              <p className="text-sm text-ash leading-relaxed">
-                Metadatos de producción, compositores y letrística con tipografía JetBrains Mono.
-              </p>
+            <p className="font-sans text-base md:text-lg text-bone/90 leading-relaxed">
+              {shortBio}
+            </p>
+
+            <p className="font-sans text-sm text-ash leading-relaxed">
+              Su propuesta une la contundencia de las líricas urbanas con una cuidada dirección visual y una ambientación sonora nocturna producida en colaboración con Beatmen Generations y Prix Music Group.
+            </p>
+
+            <div className="pt-4 flex flex-wrap items-center gap-4">
+              <Button variant="primary" href="/biografia">
+                Leer Biografía Completa →
+              </Button>
+              <Button variant="secondary" href="#contacto">
+                Contacto Profesional
+              </Button>
             </div>
-            <span className="font-mono text-xs text-smoke mt-6">Especificación Dark Cinematic</span>
           </div>
         </div>
       </section>
 
-      {/* 3. SECCIÓN VIDEOGRAFÍA (ANCLA #videos) */}
+      {/* ========================================================= */}
+      {/* 5. VIDEOGRAFÍA OFICIAL                                     */}
+      {/* ========================================================= */}
       <section id="videos" className="px-6 md:px-12 max-w-7xl mx-auto py-24 border-b border-white/10 scroll-mt-24">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
           <div>
             <span className="font-mono text-xs uppercase tracking-[0.25em] text-crimson-text block mb-2">
-              02 / Audiovisual
+              03 / Audiovisual
             </span>
             <h2 className="font-sans font-black text-4xl sm:text-6xl tracking-tight uppercase text-bone">
               VIDEOGRAFÍA OFICIAL
             </h2>
           </div>
           <p className="font-serif italic text-ash text-lg md:text-xl max-w-md">
-            Dirección de arte cinematográfica, videoclips y directos visuales.
+            Dirección audiovisual cinematográfica, videoclips y directos visuales.
           </p>
         </div>
 
-        <div className="p-8 md:p-12 bg-graphite border border-white/10 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="space-y-4 max-w-xl">
-            <span className="font-mono text-xs uppercase tracking-widest text-ash">
-              Contenido Audiovisual
-            </span>
-            <h3 className="font-sans font-bold text-2xl md:text-3xl text-bone">
-              Experiencia Cinematográfica en Construcción
-            </h3>
-            <p className="text-sm text-ash leading-relaxed">
-              La galería audiovisual integrará reproductores optimizados sin secuestro de scroll, con soporte para resoluciones widescreen y estética nocturna.
-            </p>
-          </div>
-          <Button variant="secondary" href="#contacto">
-            Consultar Disponibilidad de Prensa
-          </Button>
-        </div>
+        {/* Galería de Videos con Jerarquía */}
+        <VideoGallery videos={videos} />
       </section>
 
-      {/* 4. SECCIÓN TOUR & CONCIERTOS (ANCLA #tour) */}
+      {/* ========================================================= */}
+      {/* 6. TOUR & SHOWS (PRESENTACIONES EN VIVO)                   */}
+      {/* ========================================================= */}
       <section id="tour" className="px-6 md:px-12 max-w-7xl mx-auto py-24 border-b border-white/10 scroll-mt-24">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
           <div>
             <span className="font-mono text-xs uppercase tracking-[0.25em] text-crimson-text block mb-2">
-              03 / En Vivo
+              04 / En Vivo
             </span>
-            <h2 className="font-sans font-black text-4xl sm:text-6xl tracking-tight uppercase text-bone">
-              TOUR & PRESENTACIONES
+            <h2 className="font-sans font-black text-[2rem] sm:text-6xl tracking-tight uppercase text-bone">
+              SHOWS & PRESENTACIONES
             </h2>
           </div>
           <p className="font-serif italic text-ash text-lg md:text-xl max-w-md">
@@ -178,83 +315,187 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <div className="border border-white/10 divide-y divide-white/10 bg-carbon/30">
-          <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-baseline gap-6">
-              <span className="font-mono text-xs text-crimson-text uppercase">Próximamente</span>
-              <div>
-                <h3 className="font-sans font-bold text-xl text-bone">Temporada 2026 — Gira Nacional & Regional</h3>
-                <p className="text-xs font-mono text-ash mt-1">Guatemala / Centroamérica / Fechas en proceso de anuncio</p>
+        {events && events.length > 0 ? (
+          <div className="border border-white/10 divide-y divide-white/10 bg-carbon/30">
+            {events.map((event) => (
+              <div
+                key={event.id}
+                className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4"
+              >
+                <div className="flex items-baseline gap-6">
+                  <span className="font-mono text-xs text-crimson-text uppercase">
+                    {event.date
+                      ? new Date(event.date).toLocaleDateString('es-CO', {
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : 'Fecha oficial'}
+                  </span>
+                  <div>
+                    <h3 className="font-sans font-bold text-xl text-bone">{event.eventName}</h3>
+                    <p className="text-xs font-mono text-ash mt-1">
+                      {event.venue} — {event.city}, {event.country}
+                    </p>
+                  </div>
+                </div>
+                {event.ticketUrl ? (
+                  <Button variant="primary" href={event.ticketUrl}>
+                    Entradas Disponibles ↗
+                  </Button>
+                ) : (
+                  <Button variant="ghost" href="#contacto">
+                    Más Información →
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* Estado Vacío Editorial Elegante y Breve */
+          <div className="p-8 md:p-12 bg-carbon/40 border border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+            <div className="space-y-3 max-w-xl">
+              <span className="font-mono text-xs uppercase tracking-widest text-ash">
+                Próximas Fechas
+              </span>
+              <h3 className="font-sans font-bold text-2xl md:text-3xl text-bone">
+                Nuevas Presentaciones en Vivo por Anunciar
+              </h3>
+              <p className="font-sans text-sm text-ash leading-relaxed">
+                {booking?.showDescription ||
+                  'Las fechas oficiales de conciertos y festivales se publicarán conforme se confirmen los carteles y boleterías.'}
+              </p>
+              {showSpecs.length > 0 && (
+                <p className="font-mono text-xs uppercase tracking-wider text-crimson-text">
+                  {showSpecs.join(' · ')}
+                </p>
+              )}
+            </div>
+            <Button variant="secondary" href="/booking">
+              Shows & Booking →
+            </Button>
+          </div>
+        )}
+
+        {stageHistory.length > 0 && (
+          <Link
+            href="/escenarios"
+            className="group mt-8 flex items-center justify-between gap-6 border border-white/10 hover:border-crimson/50 bg-carbon/20 px-6 py-5 transition-colors duration-300"
+          >
+            <span className="font-mono text-xs uppercase tracking-widest text-ash group-hover:text-bone transition-colors">
+              Trayectoria en escenarios · {stageHistory.length}{' '}
+              {stageHistory.length === 1 ? 'presentación documentada' : 'presentaciones documentadas'}
+            </span>
+            <span className="font-mono text-xs text-crimson-text" aria-hidden="true">
+              →
+            </span>
+          </Link>
+        )}
+      </section>
+
+      {/* ========================================================= */}
+      {/* 7. PRENSA, EPK & CONTACTO (CANAL OFICIAL DIRECTO)          */}
+      {/* ========================================================= */}
+      <section id="contacto" className="px-6 md:px-12 max-w-7xl mx-auto py-24 scroll-mt-24">
+        <div id="press-kit" className="scroll-mt-24">
+          <div className="mb-16">
+            <span className="font-mono text-xs uppercase tracking-[0.25em] text-crimson-text block mb-2">
+              05 / Prensa & Booking
+            </span>
+            <h2 className="font-sans font-black text-4xl sm:text-6xl tracking-tight uppercase text-bone mb-4">
+              CANAL OFICIAL DE CONTACTO
+            </h2>
+            <p className="font-serif italic text-ash text-lg md:text-xl max-w-2xl">
+              Contratación de shows, acreditación de medios y acceso a material para prensa.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Columna Izquierda: Información Editorial y Redes */}
+            <div className="lg:col-span-5 space-y-6">
+              {/* Tarjeta EPK */}
+              <div className="p-8 bg-graphite border border-white/10 space-y-4">
+                <span className="font-mono text-xs uppercase tracking-widest text-ash block">
+                  Material para Medios
+                </span>
+                <h3 className="font-sans font-bold text-2xl text-bone">
+                  Electronic Press Kit (EPK)
+                </h3>
+                <p className="font-sans text-sm text-ash leading-relaxed">
+                  Dossier biográfico oficial, fotografías de prensa y fichas técnicas disponibles bajo solicitud formal para promotores, medios y curadores acreditados.
+                </p>
+                <div className="pt-2">
+                  {pressKit?.isPublic ? (
+                    <Button variant="secondary" href="/epk">
+                      Ver Press Kit →
+                    </Button>
+                  ) : (
+                    <span className="inline-block font-mono text-xs text-smoke bg-white/5 border border-white/10 px-3 py-1">
+                      Disponible vía Solicitud Directa
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Tarjeta de Canales Verificados */}
+              <div className="p-8 bg-carbon/50 border border-white/10 space-y-4">
+                <span className="font-mono text-xs uppercase tracking-widest text-ash block">
+                  Presencia Verificada
+                </span>
+                <h4 className="font-sans font-bold text-lg text-bone">
+                  Ecosistema Digital Oficial
+                </h4>
+                <div className="space-y-3 font-mono text-xs text-ash">
+                  {siteSettings?.socialLinks?.youtube && (
+                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                      <span>YouTube</span>
+                      <a
+                        href={siteSettings.socialLinks.youtube}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-crimson-text hover:underline"
+                      >
+                        @danyglock ↗
+                      </a>
+                    </div>
+                  )}
+                  {siteSettings?.socialLinks?.instagram && (
+                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                      <span>Instagram</span>
+                      <a
+                        href={siteSettings.socialLinks.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-crimson-text hover:underline"
+                      >
+                        @danyglock_ ↗
+                      </a>
+                    </div>
+                  )}
+                  {siteSettings?.socialLinks?.appleMusic && (
+                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                      <span>Apple Music</span>
+                      <a
+                        href={siteSettings.socialLinks.appleMusic}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-crimson-text hover:underline"
+                      >
+                        Perfil Oficial ↗
+                      </a>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pt-1">
+                    <span>Origen</span>
+                    <span className="text-bone">{city}, {country}</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <Button variant="ghost" href="#contacto">
-              Solicitar Fecha →
-            </Button>
-          </div>
-        </div>
-      </section>
 
-      {/* 5. SECCIÓN JOURNAL & COMUNICADOS (ANCLA #journal) */}
-      <section id="journal" className="px-6 md:px-12 max-w-7xl mx-auto py-24 border-b border-white/10 scroll-mt-24">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-          <div>
-            <span className="font-mono text-xs uppercase tracking-[0.25em] text-crimson-text block mb-2">
-              04 / Editorial
-            </span>
-            <h2 className="font-sans font-black text-4xl sm:text-6xl tracking-tight uppercase text-bone">
-              JOURNAL & COMUNICADOS
-            </h2>
-          </div>
-          <p className="font-serif italic text-ash text-lg md:text-xl max-w-md">
-            Notas de prensa, reflexiones de estudio y comunicados oficiales.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="p-8 bg-carbon/30 border border-white/10 space-y-4">
-            <span className="font-mono text-xs text-smoke">Comunicado 01 · 2026</span>
-            <h3 className="font-sans font-bold text-xl text-bone">
-              Lanzamiento de la Plataforma Digital Oficial
-            </h3>
-            <p className="text-sm text-ash leading-relaxed">
-              Dany Glock estrena su nuevo ecosistema digital Dark Cinematic Editorial, desarrollado a medida con Next.js 15 y Payload CMS para centralizar música, giras y contacto directo sin intermediarios.
-            </p>
-          </div>
-
-          <div className="p-8 bg-carbon/30 border border-white/10 space-y-4">
-            <span className="font-mono text-xs text-smoke">Comunicado 02 · 2026</span>
-            <h3 className="font-sans font-bold text-xl text-bone">
-              Nueva Etapa Sonora en el Altiplano Guatemalteco
-            </h3>
-            <p className="text-sm text-ash leading-relaxed">
-              Consolidando la narrativa visual y sonora que posiciona a Quetzaltenango en el radar del movimiento urbano contemporáneo.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. SECCIÓN PRESS KIT & CONTACTO (ANCLAS #press-kit y #contacto) */}
-      <section id="press-kit" className="px-6 md:px-12 max-w-7xl mx-auto py-24 scroll-mt-24">
-        <div id="contacto" className="scroll-mt-24">
-          <span className="font-mono text-xs uppercase tracking-[0.25em] text-crimson-text block mb-2">
-            05 / Prensa & Booking
-          </span>
-          <h2 className="font-sans font-black text-4xl sm:text-6xl tracking-tight uppercase text-bone mb-6">
-            ELECTRONIC PRESS KIT & CONTACTO
-          </h2>
-          <p className="font-serif italic text-ash text-lg md:text-xl max-w-2xl mb-12">
-            Material fotográfico de alta resolución, fichas biográficas oficiales y canales directos de contratación.
-          </p>
-
-          <div className="p-8 bg-graphite border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="space-y-2">
-              <span className="font-mono text-xs text-ash uppercase">Canal Principal de Contratación</span>
-              <p className="font-sans font-bold text-xl text-bone">Booking & Management Directo</p>
-              <p className="font-mono text-xs text-smoke">Respuesta oficial en menos de 48 horas laborales.</p>
+            {/* Columna Derecha: Formulario de Contacto Funcional */}
+            <div className="lg:col-span-7">
+              <ContactForm />
             </div>
-            <Button variant="primary" href="mailto:booking@danyglock.com">
-              Contactar a Booking ↗
-            </Button>
           </div>
         </div>
       </section>

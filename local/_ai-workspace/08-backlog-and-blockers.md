@@ -78,15 +78,161 @@
 
 ---
 
-## 7. Backlog Preparado para Misión 006 (Home Experience & Architectural Scenes)
+## 6-B. Registro de Tareas de Misión 006-A.1 (Real Artist Data Seeding & CMS Expansion)
 
-- [ ] **HOM-01:** Escena 1 — Hero Cinematográfico con soporte de video loop (WCAG 2.2.2 control de pausa), tipografía póster sangrada y CTA dinámico de último lanzamiento.
-- [ ] **HOM-02:** Escena 2 — Último Lanzamiento (Single Spotlight) con arte de portada, ficha técnica, enlaces a plataformas y micro-reproductor de preescucha.
-- [ ] **HOM-03:** Escena 3 — Manifiesto Editorial & Biografía de autor con tipografía `Instrument Serif` y composición asimétrica controlada.
-- [ ] **HOM-04:** Escena 4 — Discografía & Catálogo Filtrable (Singles, EPs, Álbumes) conectado a colección `Releases` y `Tracks`.
-- [ ] **HOM-05:** Escena 5 — Galería Audiovisual (Videoclips & Directos) con modales accesibles y badges de dirección de arte.
-- [ ] **HOM-06:** Escena 6 — Tour & Próximos Shows con estado dinámico de boletería (`sold-out`, `tickets`, `anuncio`) conectado a `Events`.
-- [ ] **HOM-07:** Escena 7 — Journal Editorial & Notas de Prensa conectado a colección `Articles`.
-- [ ] **HOM-08:** Escena 8 — Direct Booking & Contact Form con validación en servidor, protección honeypot y rate limiting.
+- [x] **DATA-01:** Implementar grupo de trazabilidad y verificación de fuentes (`src/fields/verification.ts`) con estados `verified`, `to_confirm`, `editorial_proposal` y campo de notas interno protegido por RBAC. *(Evidencia: `src/fields/verification.ts`)*
+- [x] **DATA-02:** Ampliar esquemas de colecciones (`Releases`, `Tracks`, `Videos`, `Events`, `Articles`) y Globals (`ArtistProfile`, `SiteSettings`) con roles de artista, YouTube IDs, duraciones, galerías y versión con borradores. *(Evidencia: `src/collections/*.ts`, `src/globals/*.ts`)*
+- [x] **DATA-03:** Generar y aplicar migración versionada no destructiva en PostgreSQL 17 (`20261023_150557_add_artist_data_and_verification.ts`) con sentencias idempotentes y seguras contra tipos existentes. *(Evidencia: `payload migrate:status` con 3 lotes completados)*
+- [x] **DATA-04:** Crear script de siembra reproducible e idempotente (`src/scripts/seed-artist-data.ts`) alimentado exclusivamente de `13-research-inventory.md` (4 lanzamientos verificados, 1 borrador, 5 canciones, 6 videos oficiales de YouTube, globals en Pasto/Colombia y 1 evento borrador). *(Evidencia: ejecución doble con 0 duplicados)*
+- [x] **DATA-05:** Proteger estrictamente los borradores (`sig-sauer-remix`, `pasto-vive-flow-2026`) para que no se publiquen accidentalmente ni sean legibles por usuarios anónimos. *(Evidencia: `src/tests/artist-data-seed.test.ts`)*
+- [x] **DATA-06:** Fortalecer utilidades de contenido `src/lib/content-utils.ts` con validación estricta de dominios de YouTube, URLs de miniaturas y slugs normalizados con 9 pruebas unitarias. *(Evidencia: `src/lib/content-utils.test.ts`)*
+- [x] **DATA-07:** Certificación total de calidad: 39/39 pruebas pasando en Vitest, `typecheck` en 0 errores, `lint` en 0 errores, `build` de Next.js 15 completado al 100%.
+
+---
+
+## 7. Registro de Tareas de Misión 006-A.2 (Transformar Landing Demostrativa en Web Oficial)
+
+- [x] **PUB-01:** Conectar el Hero de la Home al perfil oficial del artista y spotlight dinámico del último lanzamiento verificado (*Cicatrices feat. Maick Records*) consumido desde Payload Local API en Server Components. *(Evidencia: `src/lib/cms-queries.ts`, `src/app/(public)/page.tsx`)*
+- [x] **PUB-02:** Renderizar enlaces oficiales verificados de YouTube, Apple Music e Instagram en el header y footer desde `SiteSettings`, eliminando correos y redes inventadas. *(Evidencia: `SiteFooter.tsx`, `EditorialMenu.tsx`)*
+- [x] **PUB-03:** Validar que los borradores del CMS (`sig-sauer-remix`, `pasto-vive-flow-2026`) y registros de prueba locales no se muestren públicamente. *(Evidencia: `src/tests/public-views.test.tsx`)*
+- [x] **PUB-04:** Configurar estados visuales editoriales atractivos (*empty states*) para secciones sin contenido publicado (Shows: "Nuevas Presentaciones en Vivo por Anunciar", Journal: "Comunicados Oficiales en Preparación"). *(Evidencia: `page.tsx`)*
+- [x] **PUB-05:** Implementar galería audiovisual interactiva `VideoGallery` con diálogo accesible `<dialog>` y embeds privacy-enhanced (`youtube-nocookie.com`). *(Evidencia: `src/components/video/VideoGallery.tsx`)*
+- [x] **PUB-06:** Implementar formulario funcional `ContactForm` conectado a `/api/contacts` con honeypot anti-spam. *(Evidencia: `src/components/contact/ContactForm.tsx`)*
+- [x] **PUB-07:** Configurar `push: false` en `payload.config.ts` para posibilitar builds de producción desatendidos. *(Evidencia: `next build` exitoso)*
+- [x] **PUB-08:** Certificación total: 55/55 pruebas automatizadas pasando, `typecheck` 0 errores, `lint` 0 errores, `build` pasando al 100%. *(Evidencia: `src/tests/public-views.test.tsx`)*
+
+---
+
+---
+
+## 8. Registro de Tareas de Misión 006-B.1 (Cinematic Artist Experience & Home Redesign)
+
+- [x] **CIN-01:** Expandir `ArtistProfile` con campos editables para medios del Hero desktop/mobile, video de fondo, retrato vertical 4:5, títulos y CTAs. *(Evidencia: `src/globals/ArtistProfile.ts`, migración SQL `20261023_180000_add_hero_and_portrait_media.ts`)*
+- [x] **CIN-02:** Diseñar e implementar el Hero Cinematográfico asimétrico con tipografía `DANY GLOCK` de gran formato, origen territorial (*Pasto, Colombia · Plataforma Oficial*) y canvas cinematográfico. *(Evidencia: `src/app/(public)/page.tsx`)*
+- [x] **CIN-03:** Implementar el componente independiente Single Spotlight para el último lanzamiento (*Cicatrices feat. Maick Records*) con vinilo concéntrico 1:1, créditos y enlaces de escucha. *(Evidencia: `src/components/music/LatestReleaseSpotlight.tsx`)*
+- [x] **CIN-04:** Rediseñar la sección Discografía con cuadrícula asimétrica, títulos legibles, distinción de artista principal vs. invitado (*EXCESO*) y eliminación de textos de scaffolding. *(Evidencia: `src/app/(public)/page.tsx`)*
+- [x] **CIN-05:** Crear la nueva sección editorial "El Artista — Biografía" en Home y la ruta completa `/biografia` con 3 bloques narrativos verificados y ficha técnica. *(Evidencia: `src/app/(public)/biografia/page.tsx`)*
+- [x] **CIN-06:** Optimizar la sección Videografía con jerarquía visual (video principal spotlight + cuadrícula), badges de tipo precisos y reproductor modal HTML5 `<dialog>`. *(Evidencia: `src/components/video/VideoGallery.tsx`)*
+- [x] **CIN-07:** Presentación editorial sobria de Shows sin inventar giras ni fechas ficticias. *(Evidencia: `src/app/(public)/page.tsx`)*
+- [x] **CIN-08:** Unificar Contacto & Booking profesional con medidas anti-spam y formulario validado. *(Evidencia: `src/components/contact/ContactForm.tsx`)*
+- [x] **CIN-09:** Simplificar radicalmente el Footer eliminando el enlace público a `/admin` y correos no verificados. *(Evidencia: `src/components/layout/SiteFooter.tsx`)*
+- [x] **CIN-10:** Erradicar de toda la interfaz pública términos de desarrollo (`Artist Digital Experience`, `Dark Cinematic Editorial`, `Arte Oficial en Sincronización`, `Fase 005`). *(Evidencia: `public-views.test.tsx`)*
+- [x] **CIN-11:** Calidad total certificada: 57/57 pruebas en Vitest, `typecheck` 0 errores, `lint` 0 errores/warnings, `build` exitoso (First Load JS 119 kB), verificación visual en desktop (1440x900) y móvil (390x844).
+
+---
+
+## 9. Registro de Tareas de Misión 006-B.2 (Official Artist Visual Identity & Media Experience)
+
+- [x] **MED-01:** Implementar renderizado responsivo y accesible para el Hero (`HeroMedia.tsx`): soporte para video en bucle silenciado, detección activa de `prefers-reduced-motion`, botón accesible de reproducción/pausa, selección responsiva desktop/móvil y fallback Dark Cinematic Editorial. *(Evidencia: `src/components/hero/HeroMedia.tsx`)*
+- [x] **MED-02:** Estandarizar carátulas oficiales 1:1 en toda la discografía (`ReleaseCover.tsx`) con soporte para relaciones pobladas de `Media`, carga prioritaria para spotlight (LCP), lazy loading para catálogo y fallback de vinilo concéntrico con código de catálogo. *(Evidencia: `src/components/music/ReleaseCover.tsx`)*
+- [x] **MED-03:** Integrar retrato vertical 4:5 del artista (`ArtistPortrait.tsx`) en Home ("El Artista") y `/biografia` con fallback editorial y tipografía monumental sin deformaciones. *(Evidencia: `src/components/artist/ArtistPortrait.tsx`)*
+- [x] **MED-04:** Optimizar la experiencia audiovisual (`VideoGallery.tsx`): priorización de `customThumbnail` sobre YouTube con Next.js `<Image>`, cero iframes en carga inicial, y modal `<dialog>` accesible con foco atrapado y tecla Escape. *(Evidencia: `src/components/video/VideoGallery.tsx`)*
+- [x] **MED-05:** Habilitar optimización moderna de imágenes en `next.config.ts` (`formats: ['image/avif', 'image/webp']` y dominios remotos `i.ytimg.com` / `img.youtube.com`). *(Evidencia: `next.config.ts`)*
+- [x] **MED-06:** Configurar `depth: 2` en consultas públicas del CMS (`src/lib/cms-queries.ts`) para poblar exhaustivamente los objetos `Media` en Server Components. *(Evidencia: `src/lib/cms-queries.ts`)*
+- [x] **MED-07:** Certificación completa de calidad: 63/63 tests pasando en Vitest, `typecheck` 0 errores, `lint` 0 errores/warnings, `build` exitoso en Next.js 15, y verificación visual con browser subagent en desktop y móvil. *(Evidencia: ADR-017, logs de build y test)*
+
+---
 
 
+## 10. Despliegue VPS — Misión DevOps (2026-10-23)
+
+Guía completa: `14-vps-deployment.md`.
+
+- [x] **DEP-01:** Acceso SSH por clave dedicada (`ssh dany-vps`) sin tocar acceso por contraseña.
+- [x] **DEP-02:** Auditoría del VPS compartido y línea base HTTP de 14 dominios existentes (sin cambios tras el despliegue).
+- [x] **DEP-03:** PostgreSQL `danyglock_db` / `danyglock_app` con rechazo de acceso remoto exclusivo; 3 migraciones aplicadas; seed verificado.
+- [x] **DEP-04:** Build de producción, `dany-glock.service` (systemd, `127.0.0.1:3100`, auto-restart probado), vhost Nginx exclusivo y HTTPS Let's Encrypt con renovación.
+- [x] **DEP-05:** Admin inicial creado por el usuario vía túnel SSH antes de exponer `/admin`.
+
+### Pendientes derivados del despliegue
+- [ ] **DEPLOY-01 (Alta):** La Home `/` (y `/biografia` en el código local) se prerenderiza estáticamente y no existe revalidación (`revalidate`, `revalidatePath` en hooks `afterChange`). Los cambios del CMS **no aparecen en producción hasta un nuevo build**. Resolver en código (p. ej. `export const revalidate = 60` o hooks de revalidación) mediante el flujo Git.
+- [x] **DEPLOY-02:** Test roto en `8ea781f` (badge `Video Oficial`). *(Resuelto en `e12f397`: 57/57 en BD temporal del VPS.)*
+- [ ] **DEPLOY-03 (Media):** Sin backups automáticos ni externos de `danyglock_db` y `media/`. Definir copia periódica fuera del VPS.
+- [ ] **DEPLOY-04 (Media):** `seed-artist-data.ts` no se ejecuta vía `pnpm payload run` (guarda `argv[1]`). Añadir script `package.json` explícito (`seed:artist`).
+- [ ] **DEPLOY-05 (Baja):** Sin adaptador de email en Payload (los correos se escriben en consola): recuperación de contraseña del admin no funcional por email.
+- [ ] **DEPLOY-07 (Media):** Cualquier comando CLI de Payload (`migrate:status`, `payload run`, seed) ejecutado con el `.env` de producción aplica migraciones pendientes vía `prodMigrations`. Respaldar siempre antes de la primera invocación tras un `pull`.
+- [ ] **DEPLOY-06 (Baja):** Añadir `packageManager: "pnpm@10.34.4"` a `package.json` para fijar pnpm en todos los entornos.
+- [ ] **INFRA-01 (Alta, ajeno al proyecto):** PostgreSQL del VPS escucha en `0.0.0.0:5432` con `host all all 0.0.0.0/0 md5` y UFW inactivo: las BD de otros proyectos (`smart`, `qwikymenu`, `swiftfield`) son accesibles desde internet. Varios certificados de otros dominios están expirados. No se modificó (fuera de alcance).
+- [ ] **INFRA-02 (Media):** RAM ajustada (1.9 GB). El build requiere detener el servicio; considerar ampliar RAM si crecen los proyectos.
+
+---
+
+## 11. Misión 006-B.2 (Brochure) — Contenido pendiente de aprobación y tareas
+
+Detalle y evidencias en `15-brochure-audit.md`.
+
+### Requiere aprobación del equipo del artista / management
+- [ ] **BRO-01:** «Artista del Año» — confirmar años (p.1 dice 2024; p.2/p.5 dicen 2024 y 2025), entidad (Premios Kiwid Line) y evidencia. Hito `artista-del-ano-premios-kiwid-line` en borrador.
+- [ ] **BRO-02:** *Pistolón* — enlace oficial, artista principal y fecha. Hito `colaboracion-pistolon` en borrador.
+- [ ] **BRO-03:** Escenarios compartidos — evento y fecha por artista (solo Mishell Master Boys y Carlos Cortez/Milo Mae tienen flyer). Hito `escenarios-compartidos` en borrador.
+- [ ] **BRO-04:** Show en el INPEC — año, permiso de difusión y enlace del mini documental. Hito `show-inpec-pasto` en borrador.
+- [ ] **BRO-05:** Management — vigencia de la persona, correo y WhatsApp de contrataciones (brochure p.6) y autorización expresa; cargar en el global `booking` y activar `publishContact`.
+- [ ] **BRO-06:** URLs oficiales de TikTok y Facebook.
+- [ ] **BRO-07:** Confirmar especificaciones del show (duración, formato, bailarines) → `specsStatus = confirmed`.
+- [ ] **BRO-08:** Derechos de uso de los 12 flyers y 2 fotos en vivo + créditos; la foto de entrevista con presentadora requiere consentimiento (no importada).
+- [ ] **BRO-09:** Fotografías de prensa originales en alta resolución (≥ 3000 px) para hero, retrato y EPK; decidir publicación del EPK (`isPublic`).
+
+### Técnicas
+- [ ] **BRO-10:** Despliegue (cuando se autorice): commit → pull en VPS → backup → `payload migrate` → `seed-brochure-content.ts` → build. Los assets del brochure no viajan por Git: subirlos desde el admin. Recordar DEPLOY-01 (rebuild tras aprobar contenido).
+- [ ] **BRO-11:** `seed-artist-data.ts` actualiza `ArtistProfile`/`SiteSettings` sin comprobar ediciones previas: convertirlo en solo-creación antes de volver a ejecutarlo en producción.
+
+---
+
+## 12. Integración M006-B — estado consolidado (2026-10-23)
+
+### Resueltos en la integración
+- [x] **INT-01:** Doble sharp (0.34.5/0.35.5) rompía `pnpm dev` en Windows → alineado a 0.34.5 (ADR-019).
+- [x] **INT-02:** `down` de `20261023_194032` fallaba → `IF EXISTS`; up/down/up verificado sobre estado de producción.
+- [x] **INT-03:** Ayuda de `heroVideoUrl` corregida (solo MP4/WebM).
+
+### Pendientes reales
+- [ ] **DEPLOY-01 (Alta):** sin revalidación: `/`, `/biografia`, `/booking` y `/epk` son estáticas. Aprobar contenido en el CMS (hitos, flyers, EPK, contacto) exige rebuild + restart.
+- [ ] **INT-04 (Media):** Ítem «Journal» del menú apunta a `/#journal`, sección inexistente (desde M005). Decidir: ocultarlo o construir la sección con `articles`.
+- [ ] **INT-05 (Media):** `ReleaseCover` solo muestra la portada si `coverStatus = confirmed`; al subir carátulas, management debe cambiar también ese estado (todas están en `pending`).
+- [ ] **INT-06 (Baja):** `HeroMedia` marca `priority` en la imagen móvil y en la de escritorio → ambas se precargan en cualquier dispositivo cuando existan las dos. Optimizar con `<picture>`/`getImageProps` cuando se carguen fotos reales.
+- [ ] **INT-07 (Baja):** Commit único con trabajo de dos agentes: revisar el diff antes del commit; considerar dos commits (Multimedia / Brochure) para trazabilidad.
+- [ ] **BRO-01…BRO-09:** aprobaciones editoriales del brochure (§11).
+- [ ] **BRO-11:** `seed-artist-data.ts` sobrescribe `ArtistProfile`/`SiteSettings` → **no ejecutarlo en producción** hasta convertirlo en solo-creación.
+
+### Actualización 2026-10-23 20:30 UTC — M006-B desplegado
+- [x] **BRO-10:** Despliegue de M006-B en producción (`45b84d2`): migración lote 3, `seed-brochure-content.ts` ejecutado, verificaciones públicas y de privacidad superadas.
+- Siguen abiertos: DEPLOY-01 (revalidación), INT-04 (Journal), INT-05 (`coverStatus`), INT-06 (priority hero), BRO-01…BRO-09 (aprobaciones), BRO-11 (seed-artist-data).
+- Para publicar contenido aprobado en producción: editar en `/admin` → rebuild + restart (§4 de `14-vps-deployment.md`).
+
+### Actualización M006-B.3 — Revalidación (local, sin desplegar)
+- [x] **DEPLOY-01:** Revalidación bajo demanda implementada y verificada (ver `16-cache-revalidation.md`, ADR-020). Efectiva en producción tras desplegar.
+- [ ] **REV-01 (Media):** Desplegar M006-B.3 (sin migración ni cambios de dependencias).
+- [ ] **REV-02 (Baja):** Tras ejecutar seeds por CLI en producción, llamar a `POST /api/revalidate` con sesión admin (o esperar ≤ 1 h).
+- [ ] **REV-03 (Baja):** Si el sitio pasa a varias instancias, configurar un cache handler compartido para ISR.
+
+### Actualización M006-B.4 — Imágenes oficiales (local, sin desplegar)
+- [x] **INT-05:** portadas oficiales asignadas con `coverStatus = confirmed` (local).
+- [ ] **MED-05 (Alta):** Solicitar al equipo fotos de prensa originales: retrato 4:5 ≥ 1600×2000, Hero 16:9 ≥ 1920×1080 sin texto, Hero móvil 9:16 ≥ 1080×1920, 3–6 fotos EPK con crédito (`17-media-inventory.md` §4).
+- [ ] **MED-06 (Media):** Portada de Cicatrices en ≥ 3000² (Apple solo publica 1400²).
+- [ ] **MED-07 (Media):** Producción: las imágenes no viajan por Git. Tras desplegar código, subir desde `/admin` las 4 portadas y el retrato (archivos en `local/official-assets/web/`) o ejecutar `import-official-assets.ts` copiando antes esa carpeta al VPS. La revalidación (M006-B.3) las publica sin rebuild.
+- [ ] **MED-08 (Baja):** Conservar por escrito la conformidad de los sellos (Beatmen Generations, Prix Music Group) para el uso de portadas.
+
+### Actualización 2026-10-23 21:45 UTC — M006-B.3 + M006-B.4 desplegados (`329157f`)
+- [x] **REV-01:** M006-B.3 desplegado.
+- [x] **MED-07:** Portadas y retrato importados en producción (`17-media-inventory.md` §7).
+- [x] **REV-04:** Caché regenerada con `POST /api/revalidate` (sesión admin, 200) y portadas/retrato verificados en el HTML público.
+- [ ] **REV-05 (Baja):** Validar en producción la revalidación desde `/admin` con un cambio editorial real autorizado (p. ej. al aprobar el primer contenido pendiente).
+- Siguen abiertos: MED-05, MED-06, MED-08, BRO-01…BRO-09, BRO-11, INT-04, INT-06, REV-02, REV-03.
+
+---
+
+## 13. Misión 006-C / 006-C.1 — Trayectoria en escenarios (lista para despliegue) — 2026-11-19
+
+Detalle completo en `18-stage-history.md` y guía de despliegue en `14-vps-deployment.md` §11.
+
+### Requiere aprobación del equipo del artista / management
+- [ ] **STG-01 (Alta):** Aprobar uno a uno los 18 eventos del archivo (todos en borrador): confirmar año, lugar y participación; marcar `Verificado`, autorizar el flyer (`usageRights`) y publicar. Prioridad: Pasto Vive Flow (2026), SIG Sauer Remix (2024), Baby Nico/EXCESO, Macondo/Cicatrices, Aniversario ATM (2025).
+- [ ] **STG-04 (Alta):** Show en el INPEC — autorización expresa del artista y del INPEC antes de publicar el evento o su flyer.
+- [ ] **STG-05 (Media):** Confirmar venues dudosos: «Rey Arlequín» (Luna Roja), «Macondo» (Macondo Bye Bye), lugar de Dancehall Selekta y Alfombra Dance Hall; ciudad de Ñejo «El Broko» (Centro de Eventos Andino).
+- [ ] **STG-06 (Baja):** Pedir a promotores los originales de los 4 flyers de calidad media (capturas de Instagram/historia).
+
+### Técnicas
+- [x] **STG-02 (Alta — RESUELTO en M006-C.1):** Comprobado vía GitHub API que `DanielCriollo/dany-glock` es **público**. `storage/flyers/` excluido permanentemente de `.gitignore` (junto a `/flyers/`), 0 flyers en historial Git, originales locales intactos, importador desacoplado de Git (`--dir`/`STAGE_FLYERS_DIR`), y procedimiento de transferencia privada SSH/SCP documentado (`18-stage-history.md` §5, `14-vps-deployment.md` §11, ADR-022).
+- [ ] **STG-03 (Alta):** Commit, push y despliegue de M006-C + M006-C.1 (cuando se autorice): transferencia privada SCP + `SHA256SUMS` de los 18 flyers a `/var/www/dany-glock/storage/flyers/` (`750`/`640`) → backup `pg_dump` + `media/` → `pnpm payload migrate` (`20261120_010900_add_event_archive_fields`) → `import-stage-history.ts` (entra todo en borrador) → build → verificación post-despliegue (`14-vps-deployment.md` §11).
+- [ ] **STG-07 (Baja):** Limpieza opcional de los 9 medios del brochure duplicados en menor resolución (`flyer-*.jpg`), si management lo aprueba. No se borraron.
+- [ ] **STG-08 (Baja):** `media` bloquea anónimos para `event_flyer`/`live_photo` sin derechos aprobados (y purga `.next/cache/images` al revocar); revisar si otras categorías necesitan la misma regla (p. ej. `document` cuando se cargue el rider técnico o PDF del EPK).

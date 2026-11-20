@@ -13,8 +13,13 @@ import { Videos } from './collections/Videos';
 import { Events } from './collections/Events';
 import { Articles } from './collections/Articles';
 import { Contacts } from './collections/Contacts';
+import { CareerHighlights } from './collections/CareerHighlights';
 import { ArtistProfile } from './globals/ArtistProfile';
 import { SiteSettings } from './globals/SiteSettings';
+import { Booking } from './globals/Booking';
+import { PressKit } from './globals/PressKit';
+import { migrations } from './migrations';
+import { revalidateSiteEndpoint } from './endpoints/revalidateSite';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -38,11 +43,15 @@ export default buildConfig({
     Events,
     Articles,
     Contacts,
+    CareerHighlights,
   ],
   globals: [
     ArtistProfile,
     SiteSettings,
+    Booking,
+    PressKit,
   ],
+  endpoints: [revalidateSiteEndpoint],
   editor: lexicalEditor(),
   sharp: sharp as unknown as Parameters<typeof buildConfig>[0]['sharp'],
   secret: (() => {
@@ -59,5 +68,7 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/dany_glock_dev',
     },
+    push: false,
+    prodMigrations: migrations,
   }),
 });

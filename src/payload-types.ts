@@ -75,6 +75,7 @@ export interface Config {
     events: Event;
     articles: Article;
     contacts: Contact;
+    'career-highlights': CareerHighlight;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -90,6 +91,7 @@ export interface Config {
     events: EventsSelect<false> | EventsSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     contacts: ContactsSelect<false> | ContactsSelect<true>;
+    'career-highlights': CareerHighlightsSelect<false> | CareerHighlightsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -102,10 +104,14 @@ export interface Config {
   globals: {
     'artist-profile': ArtistProfile;
     'site-settings': SiteSetting;
+    booking: Booking;
+    'press-kit': PressKit;
   };
   globalsSelect: {
     'artist-profile': ArtistProfileSelect<false> | ArtistProfileSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    booking: BookingSelect<false> | BookingSelect<true>;
+    'press-kit': PressKitSelect<false> | PressKitSelect<true>;
   };
   locale: null;
   widgets: {
@@ -173,8 +179,20 @@ export interface Media {
   id: number;
   alt: string;
   caption?: string | null;
-  category: 'artwork' | 'photo_shoot' | 'press_photo' | 'audio_preview' | 'document';
+  category: 'artwork' | 'photo_shoot' | 'press_photo' | 'audio_preview' | 'document' | 'event_flyer' | 'live_photo';
   isPressAsset?: boolean | null;
+  credit?: string | null;
+  /**
+   * Solo se muestra en la galería pública si "Visible en galería" está activo y los derechos de uso están aprobados. Transcribir únicamente datos legibles; no inferir años ni lugares.
+   */
+  gallery?: {
+    visible?: boolean | null;
+    rightsStatus?: ('pending' | 'approved' | 'third_party_consent') | null;
+    eventLabel?: string | null;
+    dateLabel?: string | null;
+    venueLabel?: string | null;
+    sortOrder?: number | null;
+  };
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -231,20 +249,36 @@ export interface Release {
   id: number;
   title: string;
   /**
-   * Texto normalizado para la URL (ej: los-glocks-no-lloran).
+   * Texto normalizado para la URL (ej: sig-sauer).
    */
   slug: string;
   type: 'single' | 'ep' | 'album';
+  /**
+   * Distingue lanzamientos donde Dany Glock es el artista principal de colaboraciones como invitado.
+   */
+  artistRole?: ('main' | 'featured' | 'collaborator') | null;
   coverImage: number | Media;
+  coverStatus?: ('confirmed' | 'pending' | 'placeholder') | null;
   releaseDate: string;
   description?: string | null;
   catalogNumber?: string | null;
   featured?: boolean | null;
   streamingLinks?: {
     spotify?: string | null;
+    spotifyEmbedUrl?: string | null;
     appleMusic?: string | null;
     youtube?: string | null;
+    amazonMusic?: string | null;
     tidal?: string | null;
+  };
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
   };
   seo?: {
     metaTitle?: string | null;
@@ -267,12 +301,17 @@ export interface Track {
    * Asocia esta pista a un single, EP o álbum oficial.
    */
   release: number | Release;
+  /**
+   * Distingue pistas donde Dany Glock es artista principal o invitado.
+   */
+  artistRole?: ('main' | 'featured' | 'collaborator') | null;
   trackNumber: number;
   duration: string;
   /**
    * Muestra de 30-60 segundos para el reproductor flotante inercial.
    */
   audioPreview?: (number | null) | Media;
+  appleMusicUrl?: string | null;
   featuredArtists?: string | null;
   credits?: {
     producers?: string | null;
@@ -286,6 +325,15 @@ export interface Track {
    */
   lyrics?: string | null;
   featured?: boolean | null;
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -299,8 +347,13 @@ export interface Video {
   id: number;
   title: string;
   slug: string;
-  type: 'official_music_video' | 'live_session' | 'visualizer' | 'behind_the_scenes';
+  type: 'official_music_video' | 'trailer' | 'live_session' | 'visualizer' | 'behind_the_scenes';
   youtubeUrl: string;
+  /**
+   * Identificador único de 11 caracteres del video en YouTube para embeds y miniaturas.
+   */
+  youtubeId?: string | null;
+  duration?: string | null;
   /**
    * Póster de alta definición para anular la miniatura automática de YouTube.
    */
@@ -311,12 +364,21 @@ export interface Video {
   cinematographer?: string | null;
   description?: string | null;
   featured?: boolean | null;
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Conciertos en vivo, festivales internacionales y fechas de gira.
+ * Próximos conciertos y archivo histórico de presentaciones. Solo se publican eventos verificados; el flyer requiere derechos aprobados.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "events".
@@ -324,17 +386,72 @@ export interface Video {
 export interface Event {
   id: number;
   eventName: string;
-  date: string;
-  city: string;
+  /**
+   * Identificador para URLs y rutas del evento (ej: pasto-vive-flow-2026).
+   */
+  slug: string;
+  /**
+   * La agenda solo muestra fechas futuras; el archivo muestra presentaciones ya realizadas.
+   */
+  listing: 'upcoming' | 'archive';
+  /**
+   * Menor número = aparece antes. Se usa cuando no hay fecha exacta.
+   */
+  sortOrder?: number | null;
+  /**
+   * Obligatoria para la agenda. En el archivo, completar solo si el año está confirmado; si no, usar "Fecha tal como aparece".
+   */
+  date?: string | null;
+  /**
+   * Transcribir sin inferir el año.
+   */
+  dateLabel?: string | null;
+  /**
+   * Dejar vacío si la ciudad no está confirmada.
+   */
+  city?: string | null;
   country: string;
-  venue: string;
-  ticketStatus: 'available' | 'sold_out' | 'presale' | 'free' | 'cancelled';
+  /**
+   * Nombre del lugar. No publicar direcciones ni teléfonos de terceros.
+   */
+  venue?: string | null;
+  artistRole?: ('headliner' | 'special_guest' | 'opening_act' | 'lineup' | 'release_event' | 'unspecified') | null;
+  /**
+   * Solo datos visibles en el flyer o confirmados por el equipo. Sin teléfonos, precios ni direcciones.
+   */
+  summary?: string | null;
+  ticketStatus?: ('available' | 'sold_out' | 'presale' | 'free' | 'cancelled') | null;
   ticketUrl?: string | null;
   vipPackageUrl?: string | null;
   posterImage?: (number | null) | Media;
+  /**
+   * El flyer solo se muestra en la web si el estado es "Aprobado". Los flyers pueden incluir imágenes, marcas y datos de terceros.
+   */
+  usageRights?: {
+    status?: ('pending' | 'approved' | 'third_party_consent' | 'rejected') | null;
+    source?: string | null;
+    credit?: string | null;
+    approvalNote?: string | null;
+  };
+  /**
+   * Fotografías oficiales del show para cobertura editorial.
+   */
+  gallery?: (number | Media)[] | null;
+  relatedVideoUrl?: string | null;
+  instagramPostUrl?: string | null;
   additionalInfo?: string | null;
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Diario del artista, notas de prensa, comunicados editoriales y entrevistas.
@@ -372,6 +489,15 @@ export interface Article {
     metaTitle?: string | null;
     metaDescription?: string | null;
   };
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -396,6 +522,47 @@ export interface Contact {
   websiteHoneypot?: string | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * Reconocimientos, hitos, colaboraciones musicales y escenarios compartidos. Solo los registros publicados aparecen en la web; los datos no verificados se muestran con la etiqueta de su fuente.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "career-highlights".
+ */
+export interface CareerHighlight {
+  id: number;
+  title: string;
+  slug: string;
+  category: 'award' | 'milestone' | 'collaboration' | 'shared_stage' | 'social_impact';
+  year?: number | null;
+  /**
+   * Ej.: "2024 — 2025". No inferir años a partir de flyers sin año legible.
+   */
+  dateLabel?: string | null;
+  description?: string | null;
+  people?:
+    | {
+        name: string;
+        origin?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  relatedRelease?: (number | null) | Release;
+  externalUrl?: string | null;
+  sourceType: 'platform' | 'press' | 'artist_brochure' | 'management';
+  sortOrder?: number | null;
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -452,6 +619,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'contacts';
         value: number | Contact;
+      } | null)
+    | ({
+        relationTo: 'career-highlights';
+        value: number | CareerHighlight;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -529,6 +700,17 @@ export interface MediaSelect<T extends boolean = true> {
   caption?: T;
   category?: T;
   isPressAsset?: T;
+  credit?: T;
+  gallery?:
+    | T
+    | {
+        visible?: T;
+        rightsStatus?: T;
+        eventLabel?: T;
+        dateLabel?: T;
+        venueLabel?: T;
+        sortOrder?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -593,7 +775,9 @@ export interface ReleasesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   type?: T;
+  artistRole?: T;
   coverImage?: T;
+  coverStatus?: T;
   releaseDate?: T;
   description?: T;
   catalogNumber?: T;
@@ -602,9 +786,19 @@ export interface ReleasesSelect<T extends boolean = true> {
     | T
     | {
         spotify?: T;
+        spotifyEmbedUrl?: T;
         appleMusic?: T;
         youtube?: T;
+        amazonMusic?: T;
         tidal?: T;
+      };
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
       };
   seo?:
     | T
@@ -623,9 +817,11 @@ export interface ReleasesSelect<T extends boolean = true> {
 export interface TracksSelect<T extends boolean = true> {
   title?: T;
   release?: T;
+  artistRole?: T;
   trackNumber?: T;
   duration?: T;
   audioPreview?: T;
+  appleMusicUrl?: T;
   featuredArtists?: T;
   credits?:
     | T
@@ -638,6 +834,14 @@ export interface TracksSelect<T extends boolean = true> {
   isrcCode?: T;
   lyrics?: T;
   featured?: T;
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -650,6 +854,8 @@ export interface VideosSelect<T extends boolean = true> {
   slug?: T;
   type?: T;
   youtubeUrl?: T;
+  youtubeId?: T;
+  duration?: T;
   customThumbnail?: T;
   releaseDate?: T;
   relatedTrack?: T;
@@ -657,6 +863,14 @@ export interface VideosSelect<T extends boolean = true> {
   cinematographer?: T;
   description?: T;
   featured?: T;
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -667,17 +881,43 @@ export interface VideosSelect<T extends boolean = true> {
  */
 export interface EventsSelect<T extends boolean = true> {
   eventName?: T;
+  slug?: T;
+  listing?: T;
+  sortOrder?: T;
   date?: T;
+  dateLabel?: T;
   city?: T;
   country?: T;
   venue?: T;
+  artistRole?: T;
+  summary?: T;
   ticketStatus?: T;
   ticketUrl?: T;
   vipPackageUrl?: T;
   posterImage?: T;
+  usageRights?:
+    | T
+    | {
+        status?: T;
+        source?: T;
+        credit?: T;
+        approvalNote?: T;
+      };
+  gallery?: T;
+  relatedVideoUrl?: T;
+  instagramPostUrl?: T;
   additionalInfo?: T;
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -697,6 +937,14 @@ export interface ArticlesSelect<T extends boolean = true> {
         metaTitle?: T;
         metaDescription?: T;
       };
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -715,6 +963,40 @@ export interface ContactsSelect<T extends boolean = true> {
   websiteHoneypot?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "career-highlights_select".
+ */
+export interface CareerHighlightsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  category?: T;
+  year?: T;
+  dateLabel?: T;
+  description?: T;
+  people?:
+    | T
+    | {
+        name?: T;
+        origin?: T;
+        id?: T;
+      };
+  relatedRelease?: T;
+  externalUrl?: T;
+  sourceType?: T;
+  sortOrder?: T;
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -766,6 +1048,30 @@ export interface ArtistProfile {
   id: number;
   stageName: string;
   tagline?: string | null;
+  /**
+   * Imagen fotográfica o visual oficial del artista para pantallas de escritorio.
+   */
+  heroDesktopMedia?: (number | null) | Media;
+  /**
+   * Fotografía o encuadre vertical oficial para dispositivos móviles.
+   */
+  heroMobileMedia?: (number | null) | Media;
+  /**
+   * URL directa a un archivo de video MP4 o WebM (silenciado, en bucle). Los enlaces de YouTube no se reproducen como fondo.
+   */
+  heroVideoUrl?: string | null;
+  /**
+   * Retrato oficial para la sección editorial de biografía.
+   */
+  portraitImage?: (number | null) | Media;
+  heroTitle?: string | null;
+  heroSubtitle?: string | null;
+  heroCtaPrimary?: string | null;
+  heroCtaSecondary?: string | null;
+  /**
+   * Indica si la biografía ha sido revisada y confirmada directamente por el artista o su management.
+   */
+  bioStatus?: ('editorial_draft' | 'approved') | null;
   manifesto?: string | null;
   /**
    * Usada en tarjetas de vista rápida, metadatos y programas de prensa.
@@ -794,6 +1100,22 @@ export interface ArtistProfile {
     city?: string | null;
     country?: string | null;
   };
+  translations?: {
+    en?: {
+      status?: ('draft_pending_review' | 'approved') | null;
+      shortBio?: string | null;
+      mediumBio?: string | null;
+    };
+  };
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -809,12 +1131,16 @@ export interface SiteSetting {
   siteDescription?: string | null;
   socialLinks?: {
     instagram?: string | null;
-    spotify?: string | null;
     youtube?: string | null;
+    youtubeChannelId?: string | null;
     appleMusic?: string | null;
+    spotify?: string | null;
     tiktok?: string | null;
     twitter?: string | null;
   };
+  /**
+   * Correos oficiales de contacto. Solo publicar cuando hayan sido confirmados por el management.
+   */
   contactEmails?: {
     booking?: string | null;
     press?: string | null;
@@ -822,6 +1148,86 @@ export interface SiteSetting {
   };
   copyrightText?: string | null;
   maintenanceMode?: boolean | null;
+  /**
+   * Indica el origen del dato. Solo "Verificado" debe presentarse como hecho. No se publican inferencias como datos confirmados.
+   */
+  verification?: {
+    status?: ('verified' | 'to_confirm' | 'editorial_proposal') | null;
+    sourceUrl?: string | null;
+    consultedAt?: string | null;
+    notes?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Formato del espectáculo, tipos de evento y management. No incluir tarifas, disponibilidad ni requisitos técnicos sin confirmación.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "booking".
+ */
+export interface Booking {
+  id: number;
+  showTitle?: string | null;
+  showDescription?: string | null;
+  specsStatus: 'declared' | 'confirmed';
+  specs?: {
+    duration?: string | null;
+    format?: string | null;
+    genre?: string | null;
+    audience?: string | null;
+    includesDancers?: boolean | null;
+  };
+  liveFeatures?:
+    | {
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  eventTypes?:
+    | {
+        title: string;
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  baseLocation?: string | null;
+  availabilityNote?: string | null;
+  quoteNote?: string | null;
+  technicalRider?: (number | null) | Media;
+  /**
+   * Los datos de contacto permanecen privados (solo usuarios autenticados) hasta activar "Publicar contacto".
+   */
+  management?: {
+    publishContact?: boolean | null;
+    name?: string | null;
+    role?: string | null;
+    email?: string | null;
+    whatsapp?: string | null;
+    confirmedAt?: string | null;
+    sourceNote?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Dossier para promotores y medios. Solo muestra contenido publicado y verificado.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "press-kit".
+ */
+export interface PressKit {
+  id: number;
+  isPublic?: boolean | null;
+  headline?: string | null;
+  intro?: string | null;
+  bioVariant?: ('short' | 'medium') | null;
+  pressPhotos?: (number | Media)[] | null;
+  featuredReleases?: (number | Release)[] | null;
+  featuredVideos?: (number | Video)[] | null;
+  includeShowInfo?: boolean | null;
+  downloadStatus?: ('not_available' | 'in_preparation' | 'available') | null;
+  downloadablePdf?: (number | null) | Media;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -832,6 +1238,15 @@ export interface SiteSetting {
 export interface ArtistProfileSelect<T extends boolean = true> {
   stageName?: T;
   tagline?: T;
+  heroDesktopMedia?: T;
+  heroMobileMedia?: T;
+  heroVideoUrl?: T;
+  portraitImage?: T;
+  heroTitle?: T;
+  heroSubtitle?: T;
+  heroCtaPrimary?: T;
+  heroCtaSecondary?: T;
+  bioStatus?: T;
   manifesto?: T;
   shortBio?: T;
   mediumBio?: T;
@@ -841,6 +1256,25 @@ export interface ArtistProfileSelect<T extends boolean = true> {
     | {
         city?: T;
         country?: T;
+      };
+  translations?:
+    | T
+    | {
+        en?:
+          | T
+          | {
+              status?: T;
+              shortBio?: T;
+              mediumBio?: T;
+            };
+      };
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -857,9 +1291,10 @@ export interface SiteSettingsSelect<T extends boolean = true> {
     | T
     | {
         instagram?: T;
-        spotify?: T;
         youtube?: T;
+        youtubeChannelId?: T;
         appleMusic?: T;
+        spotify?: T;
         tiktok?: T;
         twitter?: T;
       };
@@ -872,6 +1307,82 @@ export interface SiteSettingsSelect<T extends boolean = true> {
       };
   copyrightText?: T;
   maintenanceMode?: T;
+  verification?:
+    | T
+    | {
+        status?: T;
+        sourceUrl?: T;
+        consultedAt?: T;
+        notes?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "booking_select".
+ */
+export interface BookingSelect<T extends boolean = true> {
+  showTitle?: T;
+  showDescription?: T;
+  specsStatus?: T;
+  specs?:
+    | T
+    | {
+        duration?: T;
+        format?: T;
+        genre?: T;
+        audience?: T;
+        includesDancers?: T;
+      };
+  liveFeatures?:
+    | T
+    | {
+        text?: T;
+        id?: T;
+      };
+  eventTypes?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  baseLocation?: T;
+  availabilityNote?: T;
+  quoteNote?: T;
+  technicalRider?: T;
+  management?:
+    | T
+    | {
+        publishContact?: T;
+        name?: T;
+        role?: T;
+        email?: T;
+        whatsapp?: T;
+        confirmedAt?: T;
+        sourceNote?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "press-kit_select".
+ */
+export interface PressKitSelect<T extends boolean = true> {
+  isPublic?: T;
+  headline?: T;
+  intro?: T;
+  bioVariant?: T;
+  pressPhotos?: T;
+  featuredReleases?: T;
+  featuredVideos?: T;
+  includeShowInfo?: T;
+  downloadStatus?: T;
+  downloadablePdf?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

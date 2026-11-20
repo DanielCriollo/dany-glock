@@ -76,7 +76,7 @@ flowchart TD
 
 ---
 
-### ✅ Misión 005 — Cinematic Layout & Kinetic Navigation *(Completada — En espera de revisión humana)*
+### ✅ Misión 005 — Cinematic Layout & Kinetic Navigation *(Completada)*
 - **Objetivo:** Transformar el scaffold técnico en una experiencia pública cinematográfica con navegación editorial, header adaptable al scroll, menú modal nativo accesible y footer conectado al CMS.
 - **Entregables:**
   - `SiteHeader`: barra de navegación con wordmark tipográfico póster, desktop links con tracking editorial, scrim/glassmorphism dinámico adaptable al scroll y activación accesible del menú editorial.
@@ -89,13 +89,64 @@ flowchart TD
 
 ---
 
-### ⏳ Misión 006 — Discografía, reproductor y lanzamientos
-- **Objetivo:** Construir la experiencia musical central para los fans.
-- **Alcance:**
-  - Hero Showcase del último lanzamiento con preview audiovisual y CTAs de streaming.
-  - Catálogo de discografía con filtros por tipo (Álbum, EP, Single).
-  - Ficha detallada de lanzamiento con carátula fija (*pinned scroll*), tracklist y créditos.
-  - Reproductor de audio flotante persistente con control de reproducción, volumen, scrubber y visualizador de onda sonora accesible.
+### ✅ Misión 006-A.1 — Retomar Trabajo Interrumpido y Sembrar Contenido Real en Payload CMS *(Completada)*
+- **Objetivo:** Auditar el estado tras interrupción de cuota, extender esquemas CMS con trazabilidad de fuentes (`verificationField`), generar migraciones versionadas y sembrar PostgreSQL con contenido real verificado (discografía, videos, perfiles, biografía editorial) e idempotente.
+- **Entregables:**
+  - Grupo `verificationField` (`src/fields/verification.ts`) integrado en todas las colecciones y globals.
+  - Campos `artistRole`, `coverStatus`, `youtubeId`, `duration`, `slug`, `gallery` y versionado con borradores en `Events`.
+  - Migración versionada `20261023_150557_add_artist_data_and_verification.ts` aplicada sin pérdida de datos ni operaciones destructivas.
+  - Script idempotente de siembra `src/scripts/seed-artist-data.ts` que puebla 4 lanzamientos verificados publicados, 1 lanzamiento en borrador, 5 canciones, 6 videos oficiales de YouTube, globals corregidos a Pasto/Colombia y 1 evento en borrador (`pasto-vive-flow-2026`).
+  - Utilidades robustas de YouTube y slugs en `src/lib/content-utils.ts` con pruebas unitarias (9/9 tests).
+  - Suite de regresión y seguridad `src/tests/artist-data-seed.test.ts` (7/7 tests).
+  - Verificación de calidad: 39/39 pruebas pasando, `pnpm typecheck` en 0 errores, `pnpm lint` en 0 errores, `pnpm build` exitoso.
+
+---
+
+### ✅ Misión 006-A.2 — Transformar la landing demostrativa en la web oficial de Dany Glock *(Completada)*
+- **Objetivo:** Convertir la landing Dark Cinematic Editorial en la web oficial del artista alimentada por Payload CMS y PostgreSQL, eliminando cualquier dato provisional o de scaffolding.
+- **Entregables:**
+  - Capa de consultas unificada `src/lib/cms-queries.ts` (`getHomePageCmsData`, etc.) con filtrado estricto por publicación y verificación editorial.
+  - Landing oficial `src/app/(public)/page.tsx` con Dany Glock como protagonista, origen en Pasto, Colombia, spotlight dinámico de lanzamiento, catálogo discográfico real con vinilo visual para artes en sincronización y distinción de artista invitado en *EXCESO*.
+  - Galería de videografía interactiva `src/components/video/VideoGallery.tsx` con modal `<dialog>` y embeds privacy-enhanced (`youtube-nocookie.com`).
+  - Estados vacíos editoriales de alta calidad visual para Tour & Shows y Journal sin datos inventados.
+  - Formulario de Contacto & Booking accesible `src/components/contact/ContactForm.tsx` con honeypot anti-spam conectado a `/api/contacts`.
+  - Saneamiento completo de `EditorialMenu.tsx` y `SiteFooter.tsx` (cero menciones a Guatemala ni correos inventados).
+  - Configuración de `push: false` en `payload.config.ts` y saneamiento de registros dev en migraciones.
+  - Suite de pruebas de integración `src/tests/public-views.test.tsx` (16 pruebas pasando; total 55 pruebas en el repo).
+  - Compilación Next.js 15 de producción exitosa al 100% (First Load JS 119 kB).
+
+---
+
+### ✅ Misión 006-B.1 — Cinematic Artist Experience & Home Redesign *(Completada)*
+- **Objetivo:** Rediseñar la Home como una experiencia digital cinematográfica, editorial y auténtica para Dany Glock, alimentada exclusivamente por Payload CMS y PostgreSQL.
+- **Entregables:**
+  - Expansión de `ArtistProfile` con campos administrables para Hero desktop (16:9), Hero mobile (9:16), video de fondo, retrato editorial (4:5), títulos y CTAs.
+  - Migración versionada `src/migrations/20261023_180000_add_hero_and_portrait_media.ts` ejecutada y registrada formalmente.
+  - Hero asimétrico de gran escala con wordmark `DANY GLOCK`, identidad territorial (*Pasto, Colombia*) y canvas cinematográfico.
+  - Single Spotlight dedicado para el último lanzamiento (*Cicatrices feat. Maick Records*).
+  - Discografía editorial asimétrica distinguiendo artista principal vs. invitado (*EXCESO*).
+  - Sección editorial "El Artista — Biografía" en Home y ruta completa `/biografia` con narrativa y ficha técnica verificada.
+  - Videografía con jerarquía visual (video principal spotlight + cuadrícula) y modal HTML5 `<dialog>`.
+  - Shows con estado editorial elegante sin fechas inventadas.
+  - Formulario de contacto y booking unificado con protección anti-spam.
+  - Simplificación radical del footer (eliminación de enlace a `/admin` y correos inventados).
+  - Erradicación total de textos técnicos y de desarrollo (`Artist Digital Experience`, `Dark Cinematic Editorial`, `Fase 005`).
+  - Suite de 18 pruebas en `src/tests/public-views.test.tsx` (57 de 57 pruebas totales pasando).
+  - 100% de calidad: `typecheck` 0 errores, `lint` 0 errores/warnings, `build` exitoso, verificación visual desktop y móvil.
+
+---
+
+### ✅ Misión 006-B.2 — Official Artist Visual Identity & Media Experience *(Completada)*
+- **Objetivo:** Elevar la identidad visual de Dany Glock con una arquitectura multimedia responsiva, editorial y administrable en Payload CMS, respetando accesibilidad, rendimiento y fallbacks cinemáticos.
+- **Entregables:**
+  - `HeroMedia.tsx`: Integración responsiva de medios de fondo (desktop 16:10 / 16:9 y móvil 9:16 / 4:5), soporte de video opcional en bucle silenciado, control accesible de pausa/reproducción, detección de `prefers-reduced-motion` y fallback Dark Cinematic Editorial.
+  - `ReleaseCover.tsx`: Estandarización de carátulas 1:1 cuadradas con `<Image>` de Next.js, carga prioritaria para spotlight, lazy loading para catálogo y fallback de vinilo concéntrico con código de catálogo.
+  - `ArtistPortrait.tsx`: Componente vertical 4:5 integrado en Home ("El Artista") y `/biografia` con fallback editorial y tipografía monumental.
+  - `VideoGallery.tsx`: Priorización de `customThumbnail` sobre la miniatura automática de YouTube, modal `<dialog>` accesible con atrapamiento de foco y cero iframes en carga inicial.
+  - `next.config.ts`: Formatos modernos `image/avif`, `image/webp` y dominios remotos de YouTube autorizados.
+  - `cms-queries.ts`: `depth: 2` para poblar exhaustivamente relaciones de `Media`.
+  - Quality Gates certificados: 63/63 tests pasando en Vitest, typecheck 0, lint 0, build Next.js 15 en PASS, verificación visual en navegador desktop y móvil.
+
 
 ---
 
@@ -135,3 +186,16 @@ flowchart TD
   - Configuración de script de migraciones de PostgreSQL para entorno de producción.
   - Archivo de configuración modelo para Nginx (Reverse Proxy + SSL Let's Encrypt).
   - Manual operativo de despliegue, copias de seguridad de base de datos y restauración.
+
+### ✅ Misión 006-B.3 — Revalidación del CMS sin rebuild *(Completada y desplegada, `d6bd589`)*
+- ISR con revalidación bajo demanda desde hooks de Payload; endpoint `POST /api/revalidate` solo admin. Ver `16-cache-revalidation.md`.
+
+### ✅ Misión 006-B.4 — Imágenes oficiales *(Completada y desplegada, `329157f`)*
+- 4 portadas oficiales y retrato del canal oficial en producción; medios reales sin superposiciones. Ver `17-media-inventory.md`.
+
+### ✅ Misión 006-C + 006-C.1 — Historial de eventos, flyers privados y cierre de seguridad *(Completada en local, lista para commit y despliegue)*
+- 18 flyers inventariados e importados en borrador; ruta `/escenarios` «Trayectoria en escenarios» con visor ampliado; autorización del flyer separada de la publicación; flyers excluidos de Git (`storage/flyers/` y `/flyers/` en `.gitignore`), endurecimiento de acceso y purga de caché `/_next/image`, migración validada y transferencia privada SCP al VPS documentada. Ver `18-stage-history.md` y `14-vps-deployment.md` §11.
+
+### ⏳ Siguiente
+- Commit, push y despliegue de M006-C + M006-C.1 con transferencia privada de flyers al VPS (STG-03), y aprobación editorial de los 18 eventos en `/admin` (STG-01).
+- Fotos de prensa en alta resolución (MED-05/06), aprobaciones editoriales del brochure (BRO-01…09) y Misión 007.
