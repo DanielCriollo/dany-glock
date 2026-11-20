@@ -142,3 +142,27 @@ Los 18 eventos (ver tabla §2). Prioridad sugerida: los de año legible o muy pr
   - `verify-revalidation.ts` **13/13** (regresión verde).
 - **QA visual (M006-C):** desktop ~800–1440 px y móvil 375 px con publicación temporal y restauración automática, sin overflow horizontal y visor `<dialog>` validado.
 - **Estado final verificado en BD local:** 18/18 eventos en borrador (`listing=archive`, `to_confirm`, `usageRights=pending`), 32/32 medios `event_flyer`/`live_photo` ocultos (`visible=false`, `rightsStatus=pending`), 0 eventos/flyers legibles por anónimos, 1 único usuario (`admin@danyglock.com`), 6 migraciones limpias.
+
+---
+
+## 9. Auditoría y corrección de estados editoriales (Misión 006-C.4)
+
+### Diagnóstico de causa raíz (Payload CMS 3.91)
+- Al inspeccionar `payload@3.91.0` (`createOperation`, `updateByIDOperation`, `utilities/update.js`, `saveVersion`) y reproducir el flujo en una BD PostgreSQL aislada con `NODE_ENV=production`:
+  1. `payload.create({ collection: 'events', draft: true, data: { _status: 'draft', ... } })` **sí** crea 1 único registro en `events` (`_status = 'draft'`) y 1 única versión en `_events_v` (`version__status = 'draft', latest = true`). `createOperation` llama a `saveVersion` una sola vez.
+  2. La existencia simultánea en producción de **17 versiones `draft` (`latest=false`) + 17 versiones `published` (`latest=true`)** y `events._status = 'published'` implica necesariamente una **segunda operación `update`** con `_status = 'published'` posterior a la creación inicial.
+  3. **Brechas detectadas en el código:**
+     - En `src/scripts/import-stage-history.ts`, la rama de actualización de borradores existentes (`payload.update`) omitía `draft: true`, lo que hacía que Payload ejecutara `utilities/update.js` con `isSavingDraft = false` (semántica de guardado completo en lugar de borrador); además, ni `create` ni `update` validaban `_status === 'draft'` en el documento retornado.
+     - Aunque `/escenarios` devuelve `404` cuando `verification.status = 'to_confirm'` (filtrado en `getStageHistoryData()`), `Events.access.read` (`authenticatedOrPublished`) solo exige `_status = 'published'`: cualquier evento con `_status = 'published'` queda expuesto en `GET /api/events` y `POST /api/graphql` aunque no esté verificado.
+- **Corrección y endurecimiento implementados:**
+  - `src/scripts/import-stage-history.ts`: añadido `draft: true` en `payload.update` de borradores existentes y verificación estricta post-escritura (`created._status === 'draft'` y `updated._status === 'draft'`).
+  - `src/scripts/repair-stage-history-drafts.ts`: script idempotente que usa exclusivamente la Local API oficial (`payload.find`, `payload.update` sin `draft: true` con `data: { _status: 'draft' }` para actualizar tabla principal e historial) sobre el lote cerrado de 17 slugs de archivo (`listing: 'archive'`, `verificationStatus: 'to_confirm'`, `usageRights.status: 'pending'`), excluyendo explícitamente `pasto-vive-flow-2026`. Valida precondiciones completas antes de escribir (aborta con 0 escrituras si el conteo !== 17 o si el estado es mixto), detiene inmediatamente ante fallo parcial sin rollback destructivo automático y verifica post-reparación que los 17 queden en `draft` y `pasto-vive-flow-2026` conserve `id`, `_status`, `listing` y `updatedAt`.
+  - `src/scripts/verify-stage-history.ts`: separación explícita entre chequeos anónimos HTTP reales (`GET /api/events?limit=100` y `POST /api/graphql` sin cookies, autenticación ni `draft=true`) y consultas Local API (`overrideAccess: false, draft: false`).
+  - `src/tests/stage-history.test.tsx`: aserciones directas sobre `events` y `_events_v` (`latest = true`) y suite §6 probando aborto seguro sin escrituras con lote incompleto, `--dry-run`, reparación completa de los 17, verificación post-reparación, preservación de `Media`/`usageRights`, intangibilidad de `pasto-vive-flow-2026`, ocultamiento anónimo `draft: false` e idempotencia.
+
+### Procedimiento de reparación en producción (ver `14-vps-deployment.md` §12)
+1. **Respaldo previo obligatorio:** verificación de directorio, permisos, `pg_dump -Fc` de `danyglock_db`, `chmod 600`, `test -s` y `pg_restore --list`.
+2. **Simulación (`--dry-run`):** `pnpm dlx tsx src/scripts/repair-stage-history-drafts.ts --dry-run` (compatible con VPS sin `tsx` local) debe inspeccionar 17 candidatos sin escrituras.
+3. **Ejecución controlada:** `pnpm dlx tsx src/scripts/repair-stage-history-drafts.ts`, seguido de una 2.ª corrida idempotente (`repaired: 0`, `alreadyDraft: 17`, `verifiedAllDraftAfter: true`, `protectedEventIntact: true`).
+4. **Verificación pública anónima HTTP real (sin cookies, sin auth y sin `draft=true`):** `GET /api/events?limit=100` (solo `pasto-vive-flow-2026`, `totalDocs: 1`), `POST /api/graphql`, `/escenarios` (`404`), `/api/media/file/escenario-*.jpg` (`403`).
+5. **Contingencia sin rollback destructivo automático:** ante fallo parcial, detener ejecución, diagnosticar estado en BD y reintentar o restaurar manualmente desde el dump validado. Ninguna operación toca otros proyectos del VPS compartido.

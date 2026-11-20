@@ -9,6 +9,7 @@ import { getPayload, type Payload } from 'payload';
 import type { Event, Media } from '@/payload-types';
 import { STAGE_HISTORY } from '@/data/stage-history';
 import { FLYERS_DIR, importStageHistory, resolveFlyersDir } from '@/scripts/import-stage-history';
+import { repairStageHistoryDrafts } from '@/scripts/repair-stage-history-drafts';
 import { artistRoleLabel, eventDateLabel, publicFlyer, toStageHistoryItem } from '@/lib/stage-history';
 import { getPublishedEvents, getStageHistory } from '@/lib/cms-queries';
 import { CONTENT_DEPENDENCIES, PUBLIC_PATHS } from '@/lib/revalidate';
@@ -127,7 +128,7 @@ describe('Misión 006-C — Trayectoria en escenarios', () => {
   });
 
   describe('3. Datos locales: todo en borrador', () => {
-    it('los 18 eventos importados existen en borrador, sin duplicados', async () => {
+    it('los 18 eventos importados existen en borrador en tabla principal e historial, sin duplicados', async () => {
       const res = await payload.find({
         collection: 'events',
         where: { slug: { in: STAGE_HISTORY.map((e) => e.slug) } },
@@ -138,6 +139,16 @@ describe('Misión 006-C — Trayectoria en escenarios', () => {
       expect(res.docs.every((d) => d._status === 'draft')).toBe(true);
       expect(res.docs.every((d) => d.listing === 'archive')).toBe(true);
       expect(res.docs.every((d) => d.posterImage)).toBe(true);
+
+      const mainTable = await payload.db.drizzle.execute(
+        `SELECT count(*)::int AS published_count FROM events WHERE listing = 'archive' AND _status = 'published';`,
+      );
+      expect((mainTable.rows[0] as { published_count: number }).published_count).toBe(0);
+
+      const latestVersions = await payload.db.drizzle.execute(
+        `SELECT count(*)::int AS published_latest FROM _events_v WHERE version_listing = 'archive' AND latest = true AND version__status = 'published';`,
+      );
+      expect((latestVersions.rows[0] as { published_latest: number }).published_latest).toBe(0);
     });
 
     it('un visitante anónimo no ve eventos del archivo ni sus flyers', async () => {
@@ -310,6 +321,143 @@ describe('Misión 006-C — Trayectoria en escenarios', () => {
       expect(screen.getByText('Telonero oficial')).toBeTruthy();
       expect(screen.queryByRole('button', { name: /Sin flyer/ })).toBeNull();
       expect(screen.getAllByText('Sin flyer').length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('6. Reparación de estados editoriales (M006-C.4)', () => {
+    let archiveEvents: Event[] = [];
+    let protectedEv: Event;
+    let protectedBeforeUpdatedAt: string;
+
+    beforeAll(async () => {
+      const res = await payload.find({
+        collection: 'events',
+        where: { listing: { equals: 'archive' } },
+        limit: 100,
+        pagination: false,
+        depth: 0,
+      });
+      archiveEvents = (res.docs as Event[]).filter((d) => d.slug !== 'pasto-vive-flow-2026');
+      const pastoRes = await payload.find({
+        collection: 'events',
+        where: { slug: { equals: 'pasto-vive-flow-2026' } },
+        depth: 0,
+      });
+      protectedEv = pastoRes.docs[0] as Event;
+      protectedBeforeUpdatedAt = protectedEv.updatedAt;
+    });
+
+    afterAll(async () => {
+      for (const ev of archiveEvents) {
+        await payload.update({
+          collection: 'events',
+          id: ev.id,
+          data: {
+            _status: 'draft',
+            verification: ev.verification,
+            usageRights: ev.usageRights,
+          },
+          context: { disableRevalidate: true },
+        });
+      }
+    });
+
+    it('aborta sin realizar escrituras si el lote de candidatos es parcial (menos de 17)', async () => {
+      const single = archiveEvents[0];
+      await payload.update({
+        collection: 'events',
+        id: single.id,
+        data: { _status: 'published', verification: { status: 'to_confirm' }, usageRights: { status: 'pending' } },
+        context: { disableRevalidate: true },
+      });
+
+      await expect(repairStageHistoryDrafts({ dryRun: false })).rejects.toThrow(/Validación previa fallida/);
+
+      // Confirmar que no escribió nada y restaurar single a draft
+      const stillPublished = (await payload.findByID({ collection: 'events', id: single.id, depth: 0 })) as Event;
+      expect(stillPublished._status).toBe('published');
+      await payload.update({
+        collection: 'events',
+        id: single.id,
+        data: { _status: 'draft' },
+        context: { disableRevalidate: true },
+      });
+    });
+
+    it('repairStageHistoryDrafts devuelve los 17 eventos a borrador, valida --dry-run, preserva historial y deja pasto-vive-flow-2026 intacto', async () => {
+      expect(archiveEvents).toHaveLength(17);
+
+      // Simular estado exacto de producción: los 17 archive publicados con to_confirm y pending
+      for (const ev of archiveEvents) {
+        await payload.update({
+          collection: 'events',
+          id: ev.id,
+          data: { _status: 'published', verification: { status: 'to_confirm' }, usageRights: { status: 'pending' } },
+          context: { disableRevalidate: true },
+        });
+      }
+
+      const sample = archiveEvents[0];
+      const versionsBeforeDryRun = await payload.db.drizzle.execute(
+        `SELECT count(*)::int AS c FROM _events_v WHERE parent_id = ${sample.id};`,
+      );
+
+      const dry = await repairStageHistoryDrafts({ dryRun: true });
+      expect(dry.inspected).toBe(17);
+      expect(dry.repaired).toBe(17);
+      expect(dry.protectedEventIntact).toBe(true);
+
+      // Confirmar que --dry-run no realizó ninguna escritura ni en events ni en _events_v
+      const afterDrySample = (await payload.findByID({ collection: 'events', id: sample.id, depth: 0 })) as Event;
+      expect(afterDrySample._status).toBe('published');
+      const versionsAfterDryRun = await payload.db.drizzle.execute(
+        `SELECT count(*)::int AS c FROM _events_v WHERE parent_id = ${sample.id};`,
+      );
+      expect((versionsAfterDryRun.rows[0] as { c: number }).c).toBe(
+        (versionsBeforeDryRun.rows[0] as { c: number }).c,
+      );
+
+      const applied = await repairStageHistoryDrafts({ dryRun: false });
+      expect(applied.inspected).toBe(17);
+      expect(applied.repaired).toBe(17);
+      expect(applied.verifiedAllDraftAfter).toBe(true);
+      expect(applied.protectedEventIntact).toBe(true);
+      expect(applied.anonLocalApiVisibleAfter).toBe(0);
+
+      // Verificar exposición pública anónima sin draft=true
+      const anonNoDraft = await payload.find({
+        collection: 'events',
+        where: { listing: { equals: 'archive' } },
+        overrideAccess: false,
+        draft: false,
+        limit: 100,
+      });
+      expect(anonNoDraft.totalDocs).toBe(0);
+
+      const repairedSample = (await payload.findByID({ collection: 'events', id: sample.id, depth: 0 })) as Event;
+      expect(repairedSample._status).toBe('draft');
+      expect(repairedSample.eventName).toBe(sample.eventName);
+      expect(repairedSample.posterImage).toBe(sample.posterImage);
+      expect(repairedSample.usageRights?.status).toBe('pending');
+      expect(repairedSample.verification?.status).toBe('to_confirm');
+
+      const versionsAfterRepair = await payload.db.drizzle.execute(
+        `SELECT count(*)::int AS c FROM _events_v WHERE parent_id = ${sample.id};`,
+      );
+      expect((versionsAfterRepair.rows[0] as { c: number }).c).toBeGreaterThan(
+        (versionsBeforeDryRun.rows[0] as { c: number }).c,
+      );
+
+      // Confirmar que pasto-vive-flow-2026 no fue modificado
+      const pastoAfter = (await payload.findByID({ collection: 'events', id: protectedEv.id, depth: 0 })) as Event;
+      expect(pastoAfter.updatedAt).toBe(protectedBeforeUpdatedAt);
+
+      // Idempotencia: segunda corrida no modifica nada
+      const second = await repairStageHistoryDrafts({ dryRun: false });
+      expect(second.repaired).toBe(0);
+      expect(second.alreadyDraft).toBe(17);
+      expect(second.verifiedAllDraftAfter).toBe(true);
+      expect(second.protectedEventIntact).toBe(true);
     });
   });
 });

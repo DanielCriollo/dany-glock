@@ -104,6 +104,20 @@ async function main() {
     }
 
     await check('Sin eventos publicados /escenarios es 404', '/escenarios', (p) => p.status === 404);
+    const anonRestNoDraft = (await fetch(`${BASE_URL}/api/events?limit=100`).then((r) => r.json())) as Json;
+    results.push({
+      name: 'REST anónimo sin draft=true: 0 eventos visibles',
+      ok: (anonRestNoDraft.totalDocs as number) === 0,
+    });
+    const anonGqlNoDraft = (await fetch(`${BASE_URL}/api/graphql`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: '{ Events(limit: 100) { docs { slug listing _status } } }' }),
+    }).then((r) => r.json())) as { data?: { Events?: { docs?: unknown[] } } };
+    results.push({
+      name: 'GraphQL anónimo sin auth ni draft=true: 0 eventos visibles',
+      ok: (anonGqlNoDraft.data?.Events?.docs?.length ?? -1) === 0,
+    });
     await check(
       'Sin eventos publicados el menú no enlaza /escenarios ni anclas rotas (#journal)',
       '/',

@@ -234,14 +234,16 @@ export async function importStageHistory(
         continue;
       }
       if (!isDryRun) {
-        await payload.update({
+        const updated = (await payload.update({
           collection: 'events',
           id: existing.id,
-          // Sin `draft: true`: el registro nunca se publicó (se comprobó arriba), así que se guarda
-          // en la tabla principal y en el historial de versiones manteniendo `_status = draft`.
+          draft: true,
           data: { ...patch, _status: 'draft' },
           context: { disableRevalidate: true },
-        });
+        })) as Event;
+        if (updated._status !== 'draft') {
+          throw new Error(`Estado editorial inesperado tras actualizar ${entry.slug}: ${String(updated._status)}`);
+        }
       }
       console.log(`  ~ ${entry.slug}: completados ${Object.keys(patch).join(', ')} (${action})`);
       summary.completed++;
@@ -249,7 +251,7 @@ export async function importStageHistory(
     }
 
     if (!isDryRun) {
-      await payload.create({
+      const created = (await payload.create({
         collection: 'events',
         draft: true,
         data: {
@@ -271,7 +273,10 @@ export async function importStageHistory(
           verification: { status: 'to_confirm', notes: buildNotes(entry) },
         },
         context: { disableRevalidate: true },
-      });
+      })) as Event;
+      if (created._status !== 'draft') {
+        throw new Error(`Estado editorial inesperado tras crear ${entry.slug}: ${String(created._status)}`);
+      }
     }
     console.log(`  + ${entry.slug} (borrador; ${action})`);
     summary.created++;

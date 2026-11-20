@@ -291,3 +291,78 @@ Estado: **listo para commit y despliegue** (sin commit, push ni despliegue todav
    - `GET /api/events?draft=true&limit=100` → `totalDocs: 0`; `GET /api/media?limit=100` → 0 registros `event_flyer`/`live_photo`.
    - **No ejecutar** `verify-stage-history.ts` ni `verify-revalidation.ts` en producción (ambos lo bloquean para `forcefilters.com`).
    - Opcional tras verificar la importación: limpiar `/var/www/dany-glock/storage/flyers/*.jpg` (Payload ya guardó sus copias en `media/`) o conservar con permisos `750`/`640`.
+
+---
+
+## 12. Procedimiento de reparación de estados editoriales (M006-C.4)
+
+Para devolver a `_status = 'draft'` los 17 eventos históricos en producción mediante la Local API oficial de Payload (sin SQL directo, sin tocar `pasto-vive-flow-2026` y **sin afectar ningún otro proyecto, base de datos ni servicio del VPS compartido** — todo opera únicamente sobre `/var/www/dany-glock`, `/var/backups/dany-glock`, `danyglock_db` y `dany-glock.service`):
+
+1. **Respaldo previo obligatorio con verificación de directorio, permisos, integridad y restaurabilidad:**
+   ```bash
+   ssh dany-vps
+   sudo -iu danyglock
+   cd /var/www/dany-glock && set -a && . ./.env && set +a
+
+   # Verificar directorio de backups (propietario danyglock, permisos 750)
+   ls -ld /var/backups/dany-glock
+   test -d /var/backups/dany-glock && test -w /var/backups/dany-glock
+
+   B=/var/backups/dany-glock/pre-repair-m006c4-$(date +%Y%m%d-%H%M%S).dump
+   pg_dump -Fc "$DATABASE_URL" -f "$B"
+   chmod 600 "$B"
+   ls -lh "$B"
+   test -s "$B"
+   # Verificar integridad y restaurabilidad del dump antes de continuar:
+   pg_restore --list "$B" > /dev/null && pg_restore --list "$B" | grep -c TABLE
+   ```
+2. **Actualizar código (`git pull --ff-only`) y simular (`--dry-run`):**
+   ```bash
+   git fetch origin && git log --oneline HEAD..origin/wip/mision-006a
+   git pull --ff-only origin wip/mision-006a
+   pnpm dlx tsx src/scripts/repair-stage-history-drafts.ts --dry-run
+   # Esperado: 17 inspeccionados, 17 por reparar, pasto-vive-flow-2026 intacto.
+   # Si el conteo != 17, el script aborta SIN escribir nada.
+   ```
+3. **Ejecución controlada e idempotencia:**
+   ```bash
+   pnpm dlx tsx src/scripts/repair-stage-history-drafts.ts
+   # Segunda pasada (idempotencia): esperado 17 inspeccionados, 0 reparados, 17 ya en borrador, pasto-vive-flow-2026 intacto.
+   pnpm dlx tsx src/scripts/repair-stage-history-drafts.ts
+   exit
+   ```
+4. **Rebuild y reinicio controlado:**
+   ```bash
+   sudo systemctl stop dany-glock
+   sudo -iu danyglock bash -c 'cd /var/www/dany-glock && NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=1536 pnpm build'
+   sudo systemctl start dany-glock
+   systemctl status dany-glock --no-pager
+   ```
+5. **Verificación pública HTTP real (sin cookies, sin autenticación y sin `draft=true`):**
+   ```bash
+   curl -s "https://dany.forcefilters.com/api/events?limit=100" | grep -o '"slug":"[^"]*"'
+   # Esperado: solo "slug":"pasto-vive-flow-2026" (0 eventos archive)
+   curl -s "https://dany.forcefilters.com/api/events?draft=true&limit=100" | grep -o '"slug":"[^"]*"'
+   # Esperado: solo "slug":"pasto-vive-flow-2026"
+   curl -s -X POST https://dany.forcefilters.com/api/graphql \
+     -H 'Content-Type: application/json' \
+     -d '{"query":"{ Events(limit:100){ docs { slug listing _status } } }"}'
+   # Esperado: solo pasto-vive-flow-2026 (0 archive)
+   curl -s -o /dev/null -w "/escenarios:%{http_code}\n" https://dany.forcefilters.com/escenarios
+   # Esperado: 404
+   curl -s -o /dev/null -w "flyer:%{http_code}\n" https://dany.forcefilters.com/api/media/file/escenario-club-xilon.jpg
+   # Esperado: 403
+   ```
+6. **Plan ante fallo parcial (NO ejecutar rollback destructivo automático):**
+   - Si el script aborta antes de escribir (`Validación previa fallida`) o falla a mitad del lote: **no ejecutar `pg_restore --clean` automáticamente**.
+   - **Detenerse y diagnosticar primero** (solo lectura):
+     ```bash
+     sudo -iu danyglock bash -c 'cd /var/www/dany-glock && set -a && . ./.env && set +a && psql "$DATABASE_URL" -c "SELECT id, slug, listing, _status, verification_status, usage_rights_status FROM events ORDER BY id;"'
+     journalctl -u dany-glock -n 50 --no-pager
+     ```
+   - Solo si existe corrupción confirmada de datos y tras re-validar `"$B"` (`pg_restore --list "$B" > /dev/null`), ejecutar restauración manual con el servicio detenido:
+     ```bash
+     sudo systemctl stop dany-glock
+     sudo -iu danyglock bash -c "cd /var/www/dany-glock && set -a && . ./.env && set +a && pg_restore --clean --if-exists --no-owner -d \"\$DATABASE_URL\" \"$B\""
+     sudo systemctl start dany-glock
+     ```

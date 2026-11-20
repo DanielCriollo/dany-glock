@@ -25,6 +25,18 @@
 
 ---
 
+### [2026-11-20] — Misión 006-C.4: Auditoría y corrección de estados editoriales en Payload CMS (local)
+- **Misión:** Misión 006-C.4 — Diagnóstico de causa raíz de los 17 eventos publicados en producción, endurecimiento del importador y script oficial de reparación. Detalle en `18-stage-history.md` §9 y `14-vps-deployment.md` §12.
+- **Diagnóstico:** En `payload@3.91.0`, `payload.create({ draft: true, data: { _status: 'draft' } })` crea 1 solo registro en `draft` y 1 sola versión `draft` (`latest=true`) — verificado leyendo `create.js`/`saveVersion.js` y reproducido en BD PostgreSQL temporal aislada. La presencia en producción de 17 versiones `draft (latest=false)` + 17 `published (latest=true)` implica una segunda operación `update` con `_status = 'published'` posterior al alta. Además se detectó que `import-stage-history.ts` omitía `draft: true` en su rama `payload.update` de borradores y que `Events.access.read` (`authenticatedOrPublished`) expone en REST/GraphQL cualquier evento con `_status = 'published'` aunque `verification.status = 'to_confirm'` y `/escenarios` devuelva `404`.
+- **Implementaciones y endurecimiento realizados:**
+  - `src/scripts/import-stage-history.ts`: añadido `draft: true` en `payload.update` de borradores y aserción estricta `_status === 'draft'` tras `create` y `update`.
+  - `src/scripts/repair-stage-history-drafts.ts`: script idempotente (`--dry-run` y ejecución con `pnpm dlx tsx`) usando exclusivamente Local API (`payload.find` + `payload.update` sin `draft: true` con `_status: 'draft'` para actualizar tabla principal e historial). Valida los 17 candidatos completos y hace snapshot de `pasto-vive-flow-2026` antes de escribir (aborta con 0 escrituras si el conteo !== 17), detiene ante fallo parcial sin rollback destructivo automático y verifica post-reparación que los 17 queden en `draft` y `pasto-vive-flow-2026` permanezca intacto.
+  - `src/scripts/verify-stage-history.ts`: separación explícita de verificación anónima HTTP real (`GET /api/events?limit=100` y `POST /api/graphql` sin cookies, autenticación ni `draft=true`) frente a Local API.
+  - `src/tests/stage-history.test.tsx`: aserciones en tabla principal `events` e historial `_events_v` y suite §6 probando aborto por conteo incompleto, `--dry-run`, reparación de los 17, verificación post-reparación, preservación de `pasto-vive-flow-2026` e idempotencia.
+  - `local/_ai-workspace/14-vps-deployment.md` §12: procedimiento VPS endurecido con verificación de directorio/permisos/integridad/restaurabilidad del backup (`pg_restore --list`), ejecución con `pnpm dlx tsx`, diagnóstico sin rollback destructivo automático y aislamiento respecto a otros proyectos del VPS compartido.
+- **Pruebas ejecutadas:** reproducción aislada en BD temporal + simulación completa del estado de producción y reparación (`17 → draft`, `pasto-vive-flow-2026` intacto, `anon` 0 eventos `archive`); `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` y E2E (`verify-stage-history.ts`, `verify-revalidation.ts`) validados tras los cambios.
+- **Pendientes:** Ejecutar `repair-stage-history-drafts.ts` en el VPS tras `pg_dump` cuando se autorice (`14-vps-deployment.md` §12).
+
 ### [2026-11-20] — Misión 006-C.3: Auditoría integral de rutas, shows y navegación (local, sin commit ni despliegue)
 - **Misión:** Misión 006-C.3 — Auditoría y unificación de rutas, Shows (`/#tour`), Booking (`/booking`) y Trayectoria (`/escenarios`). Detalle en `19-navigation-and-routes.md`; ADR-023.
 - **Implementaciones realizadas:**
